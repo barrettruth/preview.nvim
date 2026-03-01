@@ -10,14 +10,12 @@ describe('render', function()
 
   describe('config', function()
     it('accepts nil config', function()
-      vim.g.render = nil
       assert.has_no.errors(function()
         render.get_config()
       end)
     end)
 
     it('applies default values', function()
-      vim.g.render = nil
       local config = render.get_config()
       assert.is_false(config.debug)
       assert.are.same({}, config.providers)
@@ -25,15 +23,14 @@ describe('render', function()
     end)
 
     it('merges user config with defaults', function()
-      vim.g.render = { debug = true }
-      helpers.reset_config()
+      helpers.reset_config({ debug = true })
       local config = require('render').get_config()
       assert.is_true(config.debug)
       assert.are.same({}, config.providers)
     end)
 
     it('accepts full provider config', function()
-      vim.g.render = {
+      helpers.reset_config({
         providers = {
           typst = {
             cmd = { 'typst', 'compile' },
@@ -43,8 +40,7 @@ describe('render', function()
         providers_by_ft = {
           typst = 'typst',
         },
-      }
-      helpers.reset_config()
+      })
       local config = require('render').get_config()
       assert.is_not_nil(config.providers.typst)
       assert.are.equal('typst', config.providers_by_ft.typst)
@@ -53,15 +49,14 @@ describe('render', function()
 
   describe('resolve_provider', function()
     before_each(function()
-      vim.g.render = {
+      helpers.reset_config({
         providers = {
           typst = { cmd = { 'typst', 'compile' } },
         },
         providers_by_ft = {
           typst = 'typst',
         },
-      }
-      helpers.reset_config()
+      })
       render = require('render')
     end)
 
@@ -80,11 +75,10 @@ describe('render', function()
     end)
 
     it('returns nil when provider name maps to missing config', function()
-      vim.g.render = {
+      helpers.reset_config({
         providers = {},
         providers_by_ft = { typst = 'typst' },
-      }
-      helpers.reset_config()
+      })
       local bufnr = helpers.create_buffer({}, 'typst')
       local name = require('render').resolve_provider(bufnr)
       assert.is_nil(name)

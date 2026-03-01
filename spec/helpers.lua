@@ -19,8 +19,8 @@ function M.delete_buffer(bufnr)
   end
 end
 
-function M.reset_config()
-  vim.g.render = nil
+function M.reset_config(opts)
+  vim.g.render = opts
   require('render')._test.reset()
 end
 

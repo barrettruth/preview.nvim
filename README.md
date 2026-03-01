@@ -3,15 +3,15 @@
 Async document compilation for Neovim.
 
 A framework for compiling documents (LaTeX, Typst, Markdown, etc.)
-asynchronously with error diagnostics. Ships with zero defaults — you
-configure your own providers.
+asynchronously with error diagnostics. Ships with zero defaults — you configure
+your own providers.
 
 ## Features
 
 - Async compilation via `vim.system()`
 - Compiler errors as native `vim.diagnostic`
-- User events for extensibility (`RenderCompileStarted`,
-  `RenderCompileSuccess`, `RenderCompileFailed`)
+- User events for extensibility (`RenderCompileStarted`, `RenderCompileSuccess`,
+  `RenderCompileFailed`)
 - `:checkhealth` integration
 - Zero dependencies beyond Neovim 0.10.0+
 
