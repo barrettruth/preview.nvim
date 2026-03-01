@@ -1,0 +1,198 @@
+*render.nvim.txt*                     Async document compilation for Neovim
+
+Author: Raphael
+License: MIT
+
+==============================================================================
+INTRODUCTION                                                      *render.nvim*
+
+render.nvim is an extensible framework for compiling documents asynchronously
+in Neovim. It provides a unified interface for any compilation workflow —
+LaTeX, Typst, Markdown, or anything else with a CLI compiler.
+
+The plugin ships with zero provider defaults. Users must explicitly configure
+their compiler commands. render.nvim is purely an orchestration framework.
+
+==============================================================================
+REQUIREMENTS                                            *render.nvim-requirements*
+
+- Neovim >= 0.10.0
+- A compiler binary for each configured provider (e.g. `typst`, `latexmk`)
+
+==============================================================================
+INSTALLATION                                            *render.nvim-installation*
+
+With luarocks (recommended):
+>
+    :Rocks install render.nvim
+<
+
+With lazy.nvim:
+>lua
+    {
+      'barrettruth/render.nvim',
+    }
+<
+
+==============================================================================
+CONFIGURATION                                        *render.nvim-configuration*
+
+Configure via the `vim.g.render` global table before the plugin loads.
+
+                                                              *render.Config*
+Fields:~
+
+  `debug`            boolean|string   Enable debug logging. A string value
+                                    is treated as a log file path.
+                                    Default: `false`
+
+  `providers`        table            Provider configurations keyed by name.
+                                    Default: `{}`
+
+  `providers_by_ft`  table            Maps filetypes to provider names.
+                                    Default: `{}`
+
+                                                      *render.ProviderConfig*
+Provider fields:~
+
+  `cmd`              string[]         The compiler command (required).
+
+  `args`             string[]|function  Additional arguments. If a function,
+                                      receives a |render.Context| and returns
+                                      a string[].
+
+  `cwd`              string|function   Working directory. If a function,
+                                      receives a |render.Context|. Default:
+                                      git root or file directory.
+
+  `env`              table             Environment variables.
+
+  `output`           string|function   Output file path. If a function,
+                                      receives a |render.Context|.
+
+  `error_parser`     function          Receives (stderr, |render.Context|)
+                                      and returns vim.Diagnostic[].
+
+  `clean`            string[]|function  Command to remove build artifacts.
+                                       If a function, receives a
+                                       |render.Context|.
+
+                                                          *render.Context*
+Context fields:~
+
+  `bufnr`   integer    Buffer number.
+  `file`    string     Absolute file path.
+  `root`    string     Project root (git root or file directory).
+  `ft`      string     Filetype.
+
+Example:~
+>lua
+    vim.g.render = {
+      providers = {
+        typst = {
+          cmd = { 'typst', 'compile' },
+          args = function(ctx)
+            return { ctx.file }
+          end,
+          output = function(ctx)
+            return ctx.file:gsub('%.typ$', '.pdf')
+          end,
+          error_parser = function(stderr, ctx)
+            local diagnostics = {}
+            for line, col, msg in stderr:gmatch('error:.-(%d+):(%d+):%s*(.-)%\n') do
+              table.insert(diagnostics, {
+                lnum = tonumber(line) - 1,
+                col = tonumber(col) - 1,
+                message = msg,
+                severity = vim.diagnostic.severity.ERROR,
+              })
+            end
+            return diagnostics
+          end,
+        },
+        latexmk = {
+          cmd = { 'latexmk' },
+          args = { '-pdf', '-interaction=nonstopmode' },
+          clean = { 'latexmk', '-c' },
+        },
+      },
+      providers_by_ft = {
+        typst = 'typst',
+        tex = 'latexmk',
+      },
+    }
+<
+
+==============================================================================
+COMMANDS                                                *render.nvim-commands*
+
+:Render [subcommand]                                                 *:Render*
+
+    Subcommands:~
+
+    `compile`    Compile the current buffer (default if omitted).
+    `stop`       Kill active compilation for the current buffer.
+    `clean`      Run the provider's clean command.
+    `status`     Echo compilation status (idle or compiling).
+
+==============================================================================
+API                                                          *render.nvim-api*
+
+render.compile({bufnr?})                                   *render.compile()*
+    Compile the document in the given buffer (default: current).
+
+render.stop({bufnr?})                                         *render.stop()*
+    Kill the active compilation process for the buffer.
+
+render.clean({bufnr?})                                       *render.clean()*
+    Run the provider's clean command for the buffer.
+
+render.status({bufnr?})                                     *render.status()*
+    Returns a |render.Status| table.
+
+                                                            *render.Status*
+Status fields:~
+
+  `compiling`    boolean    Whether compilation is active.
+  `provider`     string?    Name of the active provider.
+  `output_file`  string?    Path to the output file.
+
+render.get_config()                                     *render.get_config()*
+    Returns the resolved |render.Config|.
+
+==============================================================================
+EVENTS                                                    *render.nvim-events*
+
+render.nvim fires User autocmds with structured data:
+
+`RenderCompileStarted`   Compilation began.
+                        data: `{ bufnr, provider }`
+
+`RenderCompileSuccess`   Compilation succeeded (exit code 0).
+                        data: `{ bufnr, provider, output }`
+
+`RenderCompileFailed`    Compilation failed (non-zero exit).
+                        data: `{ bufnr, provider, code, stderr }`
+
+Example:~
+>lua
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'RenderCompileSuccess',
+      callback = function(args)
+        local data = args.data
+        vim.notify('Compiled ' .. data.output .. ' with ' .. data.provider)
+      end,
+    })
+<
+
+==============================================================================
+HEALTH                                                    *render.nvim-health*
+
+Run `:checkhealth render` to verify:
+
+- Neovim version >= 0.10.0
+- Each configured provider's binary is executable
+- Filetype-to-provider mappings are valid
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

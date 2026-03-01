@@ -1,0 +1,5 @@
+std = 'vim'
+exclude = ['.direnv', 'result', 'result-*', 'node_modules']
+
+[lints]
+bad_string_escape = 'allow'
