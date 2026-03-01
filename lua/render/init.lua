@@ -4,7 +4,7 @@
 ---@field cwd? string|fun(ctx: render.Context): string
 ---@field env? table<string, string>
 ---@field output? string|fun(ctx: render.Context): string
----@field error_parser? fun(stderr: string, ctx: render.Context): vim.Diagnostic[]
+---@field error_parser? fun(stderr: string, ctx: render.Context): render.Diagnostic[]
 ---@field clean? string[]|fun(ctx: render.Context): string[]
 
 ---@class render.Config
@@ -18,8 +18,17 @@
 ---@field root string
 ---@field ft string
 
+---@class render.Diagnostic
+---@field lnum integer
+---@field col integer
+---@field message string
+---@field severity? integer
+---@field end_lnum? integer
+---@field end_col? integer
+---@field source? string
+
 ---@class render.Process
----@field obj vim.SystemObj
+---@field obj table
 ---@field provider string
 ---@field output_file string
 

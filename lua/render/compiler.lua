@@ -114,14 +114,16 @@ function M.stop(bufnr)
     return
   end
   log.dbg('stopping process for buffer %d', bufnr)
-  proc.obj:kill('sigterm')
+  ---@type fun(self: table, signal: string|integer)
+  local kill = proc.obj.kill
+  kill(proc.obj, 'sigterm')
 
   local timer = vim.uv.new_timer()
   if timer then
     timer:start(5000, 0, function()
       timer:close()
       if active[bufnr] and active[bufnr].obj == proc.obj then
-        proc.obj:kill('sigkill')
+        kill(proc.obj, 'sigkill')
         active[bufnr] = nil
       end
     end)

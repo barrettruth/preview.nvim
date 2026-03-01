@@ -12,7 +12,7 @@ end
 
 ---@param bufnr integer
 ---@param name string
----@param error_parser fun(stderr: string, ctx: render.Context): vim.Diagnostic[]
+---@param error_parser fun(stderr: string, ctx: render.Context): render.Diagnostic[]
 ---@param stderr string
 ---@param ctx render.Context
 function M.set(bufnr, name, error_parser, stderr, ctx)
