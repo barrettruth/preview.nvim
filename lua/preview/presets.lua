@@ -138,8 +138,7 @@ M.markdown = {
   ft = 'markdown',
   cmd = { 'pandoc' },
   args = function(ctx)
-    local output = ctx.file:gsub('%.md$', '.html')
-    return { ctx.file, '-s', '--embed-resources', '-o', output }
+    return { ctx.file, '-s', '--embed-resources', '-o', ctx.output }
   end,
   output = function(ctx)
     return (ctx.file:gsub('%.md$', '.html'))
@@ -158,7 +157,6 @@ M.github = {
   ft = 'markdown',
   cmd = { 'pandoc' },
   args = function(ctx)
-    local output = ctx.file:gsub('%.md$', '.html')
     return {
       '-f',
       'gfm',
@@ -168,7 +166,7 @@ M.github = {
       '--css',
       'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
       '-o',
-      output,
+      ctx.output,
     }
   end,
   output = function(ctx)

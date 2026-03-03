@@ -150,6 +150,7 @@ describe('presets', function()
       file = '/tmp/document.md',
       root = '/tmp',
       ft = 'markdown',
+      output = '/tmp/document.html',
     }
 
     it('has ft', function()
@@ -233,6 +234,7 @@ describe('presets', function()
       file = '/tmp/document.md',
       root = '/tmp',
       ft = 'markdown',
+      output = '/tmp/document.html',
     }
 
     it('has ft', function()
