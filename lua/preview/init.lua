@@ -9,6 +9,7 @@
 ---@field errors? false|'diagnostic'|'quickfix'
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
+---@field reload? boolean|string[]|fun(ctx: preview.Context): string[]
 
 ---@class preview.Config
 ---@field debug boolean|string
@@ -98,6 +99,7 @@ function M.setup(opts)
       return x == nil or x == false or x == 'diagnostic' or x == 'quickfix'
     end, 'false, "diagnostic", or "quickfix"')
     vim.validate(prefix .. '.open', provider.open, { 'boolean', 'table' }, true)
+    vim.validate(prefix .. '.reload', provider.reload, { 'boolean', 'table', 'function' }, true)
   end
 
   config = vim.tbl_deep_extend('force', default_config, {
