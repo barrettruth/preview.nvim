@@ -91,7 +91,8 @@ function M.compile(bufnr, name, provider, ctx)
       table.concat(reload_cmd, ' ')
     )
 
-    local obj = vim.system(
+    local obj
+    obj = vim.system(
       reload_cmd,
       {
         cwd = cwd,
@@ -182,7 +183,8 @@ function M.compile(bufnr, name, provider, ctx)
 
   log.dbg('compiling buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
 
-  local obj = vim.system(
+  local obj
+  obj = vim.system(
     cmd,
     {
       cwd = cwd,
