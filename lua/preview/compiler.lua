@@ -53,19 +53,21 @@ function M.compile(bufnr, name, provider, ctx)
     M.stop(bufnr)
   end
 
+  local output_file = ''
+  if provider.output then
+    output_file = eval_string(provider.output, ctx)
+  end
+
+  local resolved_ctx = vim.tbl_extend('force', ctx, { output = output_file })
+
   local cmd = vim.list_extend({}, provider.cmd)
   if provider.args then
-    vim.list_extend(cmd, eval_list(provider.args, ctx))
+    vim.list_extend(cmd, eval_list(provider.args, resolved_ctx))
   end
 
   local cwd = ctx.root
   if provider.cwd then
-    cwd = eval_string(provider.cwd, ctx)
-  end
-
-  local output_file = ''
-  if provider.output then
-    output_file = eval_string(provider.output, ctx)
+    cwd = eval_string(provider.cwd, resolved_ctx)
   end
 
   if output_file ~= '' then
