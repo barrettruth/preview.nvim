@@ -1,14 +1,14 @@
 rockspec_format = '3.0'
-package = 'render.nvim'
+package = 'preview.nvim'
 version = 'scm-1'
 
 source = {
-  url = 'git+https://github.com/barrettruth/render.nvim.git',
+  url = 'git+https://github.com/barrettruth/preview.nvim.git',
 }
 
 description = {
   summary = 'Async document compilation for Neovim',
-  homepage = 'https://github.com/barrettruth/render.nvim',
+  homepage = 'https://github.com/barrettruth/preview.nvim',
   license = 'MIT',
 }
 

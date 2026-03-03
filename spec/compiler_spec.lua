@@ -5,19 +5,19 @@ describe('compiler', function()
 
   before_each(function()
     helpers.reset_config()
-    compiler = require('render.compiler')
+    compiler = require('preview.compiler')
   end)
 
   describe('compile', function()
     it('spawns a process and tracks it in active table', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/render_test.txt')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test.txt')
       vim.bo[bufnr].modified = false
 
       local provider = { cmd = { 'echo', 'ok' } }
       local ctx = {
         bufnr = bufnr,
-        file = '/tmp/render_test.txt',
+        file = '/tmp/preview_test.txt',
         root = '/tmp',
         ft = 'text',
       }
@@ -35,14 +35,14 @@ describe('compiler', function()
       helpers.delete_buffer(bufnr)
     end)
 
-    it('fires RenderCompileStarted event', function()
+    it('fires PreviewCompileStarted event', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/render_test_event.txt')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_event.txt')
       vim.bo[bufnr].modified = false
 
       local fired = false
       vim.api.nvim_create_autocmd('User', {
-        pattern = 'RenderCompileStarted',
+        pattern = 'PreviewCompileStarted',
         once = true,
         callback = function()
           fired = true
@@ -52,7 +52,7 @@ describe('compiler', function()
       local provider = { cmd = { 'echo', 'ok' } }
       local ctx = {
         bufnr = bufnr,
-        file = '/tmp/render_test_event.txt',
+        file = '/tmp/preview_test_event.txt',
         root = '/tmp',
         ft = 'text',
       }
@@ -67,14 +67,14 @@ describe('compiler', function()
       helpers.delete_buffer(bufnr)
     end)
 
-    it('fires RenderCompileSuccess on exit code 0', function()
+    it('fires PreviewCompileSuccess on exit code 0', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/render_test_success.txt')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_success.txt')
       vim.bo[bufnr].modified = false
 
       local succeeded = false
       vim.api.nvim_create_autocmd('User', {
-        pattern = 'RenderCompileSuccess',
+        pattern = 'PreviewCompileSuccess',
         once = true,
         callback = function()
           succeeded = true
@@ -84,7 +84,7 @@ describe('compiler', function()
       local provider = { cmd = { 'true' } }
       local ctx = {
         bufnr = bufnr,
-        file = '/tmp/render_test_success.txt',
+        file = '/tmp/preview_test_success.txt',
         root = '/tmp',
         ft = 'text',
       }
@@ -99,14 +99,14 @@ describe('compiler', function()
       helpers.delete_buffer(bufnr)
     end)
 
-    it('fires RenderCompileFailed on non-zero exit', function()
+    it('fires PreviewCompileFailed on non-zero exit', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/render_test_fail.txt')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail.txt')
       vim.bo[bufnr].modified = false
 
       local failed = false
       vim.api.nvim_create_autocmd('User', {
-        pattern = 'RenderCompileFailed',
+        pattern = 'PreviewCompileFailed',
         once = true,
         callback = function()
           failed = true
@@ -116,7 +116,7 @@ describe('compiler', function()
       local provider = { cmd = { 'false' } }
       local ctx = {
         bufnr = bufnr,
-        file = '/tmp/render_test_fail.txt',
+        file = '/tmp/preview_test_fail.txt',
         root = '/tmp',
         ft = 'text',
       }
@@ -148,13 +148,13 @@ describe('compiler', function()
 
     it('returns compiling during active process', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/render_test_status.txt')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_status.txt')
       vim.bo[bufnr].modified = false
 
       local provider = { cmd = { 'sleep', '10' } }
       local ctx = {
         bufnr = bufnr,
-        file = '/tmp/render_test_status.txt',
+        file = '/tmp/preview_test_status.txt',
         root = '/tmp',
         ft = 'text',
       }
@@ -170,6 +170,135 @@ describe('compiler', function()
         return compiler._test.active[bufnr] == nil
       end, 50)
 
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
+
+  describe('watch', function()
+    it('registers autocmd and tracks in watching table', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch.txt')
+
+      local provider = { cmd = { 'echo', 'ok' } }
+      local ctx_builder = function(b)
+        return { bufnr = b, file = '/tmp/preview_test_watch.txt', root = '/tmp', ft = 'text' }
+      end
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      assert.is_not_nil(compiler._test.watching[bufnr])
+
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('fires PreviewWatchStarted event', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_event.txt')
+
+      local fired = false
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'PreviewWatchStarted',
+        once = true,
+        callback = function()
+          fired = true
+        end,
+      })
+
+      local provider = { cmd = { 'echo', 'ok' } }
+      local ctx_builder = function(b)
+        return { bufnr = b, file = '/tmp/preview_test_watch_event.txt', root = '/tmp', ft = 'text' }
+      end
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      assert.is_true(fired)
+
+      compiler.unwatch(bufnr)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('toggles off when called again', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_toggle.txt')
+
+      local provider = { cmd = { 'echo', 'ok' } }
+      local ctx_builder = function(b)
+        return { bufnr = b, file = '/tmp/preview_test_watch_toggle.txt', root = '/tmp', ft = 'text' }
+      end
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      assert.is_not_nil(compiler._test.watching[bufnr])
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      assert.is_nil(compiler._test.watching[bufnr])
+
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('fires PreviewWatchStopped on unwatch', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_stop.txt')
+
+      local stopped = false
+      vim.api.nvim_create_autocmd('User', {
+        pattern = 'PreviewWatchStopped',
+        once = true,
+        callback = function()
+          stopped = true
+        end,
+      })
+
+      local provider = { cmd = { 'echo', 'ok' } }
+      local ctx_builder = function(b)
+        return { bufnr = b, file = '/tmp/preview_test_watch_stop.txt', root = '/tmp', ft = 'text' }
+      end
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.unwatch(bufnr)
+      assert.is_true(stopped)
+      assert.is_nil(compiler._test.watching[bufnr])
+
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('stop_all clears watches', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_stopall.txt')
+
+      local provider = { cmd = { 'echo', 'ok' } }
+      local ctx_builder = function(b)
+        return {
+          bufnr = b,
+          file = '/tmp/preview_test_watch_stopall.txt',
+          root = '/tmp',
+          ft = 'text',
+        }
+      end
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      assert.is_not_nil(compiler._test.watching[bufnr])
+
+      compiler.stop_all()
+      assert.is_nil(compiler._test.watching[bufnr])
+
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('status includes watching state', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_status.txt')
+
+      local s = compiler.status(bufnr)
+      assert.is_false(s.watching)
+
+      local provider = { cmd = { 'echo', 'ok' } }
+      local ctx_builder = function(b)
+        return { bufnr = b, file = '/tmp/preview_test_watch_status.txt', root = '/tmp', ft = 'text' }
+      end
+
+      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      s = compiler.status(bufnr)
+      assert.is_true(s.watching)
+
+      compiler.unwatch(bufnr)
       helpers.delete_buffer(bufnr)
     end)
   end)

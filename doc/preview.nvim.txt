@@ -1,0 +1,238 @@
+*preview.nvim.txt*                    Async document compilation for Neovim
+
+Author: Raphael
+License: MIT
+
+==============================================================================
+INTRODUCTION                                                    *preview.nvim*
+
+preview.nvim is an extensible framework for compiling documents asynchronously
+in Neovim. It provides a unified interface for any compilation workflow —
+LaTeX, Typst, Markdown, or anything else with a CLI compiler.
+
+The plugin ships with zero provider defaults. Users must explicitly configure
+their compiler commands. preview.nvim is purely an orchestration framework.
+
+==============================================================================
+REQUIREMENTS                                          *preview.nvim-requirements*
+
+- Neovim >= 0.11.0
+- A compiler binary for each configured provider (e.g. `typst`, `latexmk`)
+
+==============================================================================
+INSTALLATION                                          *preview.nvim-installation*
+
+With luarocks (recommended):
+>
+    :Rocks install preview.nvim
+<
+
+With lazy.nvim:
+>lua
+    {
+      'barrettruth/preview.nvim',
+    }
+<
+
+==============================================================================
+CONFIGURATION                                      *preview.nvim-configuration*
+
+Configure via the `vim.g.preview` global table before the plugin loads.
+
+                                                            *preview.Config*
+Fields:~
+
+  `debug`            boolean|string   Enable debug logging. A string value
+                                    is treated as a log file path.
+                                    Default: `false`
+
+  `providers`        table            Provider configurations keyed by
+                                    filetype. Default: `{}`
+
+                                                    *preview.ProviderConfig*
+Provider fields:~
+
+  `cmd`              string[]         The compiler command (required).
+
+  `args`             string[]|function  Additional arguments. If a function,
+                                      receives a |preview.Context| and returns
+                                      a string[].
+
+  `cwd`              string|function   Working directory. If a function,
+                                      receives a |preview.Context|. Default:
+                                      git root or file directory.
+
+  `env`              table             Environment variables.
+
+  `output`           string|function   Output file path. If a function,
+                                      receives a |preview.Context|.
+
+  `error_parser`     function          Receives (stderr, |preview.Context|)
+                                      and returns vim.Diagnostic[].
+
+  `clean`            string[]|function  Command to remove build artifacts.
+                                       If a function, receives a
+                                       |preview.Context|.
+
+                                                        *preview.Context*
+Context fields:~
+
+  `bufnr`   integer    Buffer number.
+  `file`    string     Absolute file path.
+  `root`    string     Project root (git root or file directory).
+  `ft`      string     Filetype.
+
+Example:~
+>lua
+    vim.g.preview = {
+      providers = {
+        typst = {
+          cmd = { 'typst', 'compile' },
+          args = function(ctx)
+            return { ctx.file }
+          end,
+          output = function(ctx)
+            return ctx.file:gsub('%.typ$', '.pdf')
+          end,
+          error_parser = function(stderr, ctx)
+            local diagnostics = {}
+            for line, col, msg in stderr:gmatch('error:.-(%d+):(%d+):%s*(.-)%\n') do
+              table.insert(diagnostics, {
+                lnum = tonumber(line) - 1,
+                col = tonumber(col) - 1,
+                message = msg,
+                severity = vim.diagnostic.severity.ERROR,
+              })
+            end
+            return diagnostics
+          end,
+        },
+        tex = {
+          cmd = { 'latexmk' },
+          args = { '-pdf', '-interaction=nonstopmode' },
+          clean = { 'latexmk', '-c' },
+        },
+      },
+    }
+<
+
+==============================================================================
+PRESETS                                                *preview.nvim-presets*
+
+preview.nvim ships with pre-built provider configurations for common tools.
+Import them from `preview.presets`:
+
+  `presets.typst`      typst compile → PDF
+  `presets.latex`      latexmk -pdf → PDF (with clean support)
+  `presets.markdown`   pandoc → PDF
+
+Example:~
+>lua
+    local presets = require('preview.presets')
+    vim.g.preview = {
+      providers = {
+        typst = presets.typst,
+        tex = presets.latex,
+        markdown = presets.markdown,
+      },
+    }
+<
+
+Override individual fields with `vim.tbl_deep_extend`:
+>lua
+    local presets = require('preview.presets')
+    vim.g.preview = {
+      providers = {
+        typst = vim.tbl_deep_extend('force', presets.typst, {
+          env = { TYPST_FONT_PATHS = '/usr/share/fonts' },
+        }),
+      },
+    }
+<
+
+==============================================================================
+COMMANDS                                              *preview.nvim-commands*
+
+:Preview [subcommand]                                             *:Preview*
+
+    Subcommands:~
+
+    `compile`    Compile the current buffer (default if omitted).
+    `stop`       Kill active compilation for the current buffer.
+    `clean`      Run the provider's clean command.
+    `watch`      Toggle auto-compile on save for the current buffer.
+    `status`     Echo compilation status (idle, compiling, watching).
+
+==============================================================================
+API                                                        *preview.nvim-api*
+
+preview.compile({bufnr?})                                *preview.compile()*
+    Compile the document in the given buffer (default: current).
+
+preview.stop({bufnr?})                                      *preview.stop()*
+    Kill the active compilation process for the buffer.
+
+preview.clean({bufnr?})                                    *preview.clean()*
+    Run the provider's clean command for the buffer.
+
+preview.watch({bufnr?})                                    *preview.watch()*
+    Toggle watch mode for the buffer. When enabled, the buffer is
+    automatically compiled on each save (`BufWritePost`). Call again
+    to stop watching.
+
+preview.status({bufnr?})                                  *preview.status()*
+    Returns a |preview.Status| table.
+
+                                                          *preview.Status*
+Status fields:~
+
+  `compiling`    boolean    Whether compilation is active.
+  `watching`     boolean    Whether watch mode is active.
+  `provider`     string?    Name of the active provider.
+  `output_file`  string?    Path to the output file.
+
+preview.get_config()                                  *preview.get_config()*
+    Returns the resolved |preview.Config|.
+
+==============================================================================
+EVENTS                                                  *preview.nvim-events*
+
+preview.nvim fires User autocmds with structured data:
+
+`PreviewCompileStarted`  Compilation began.
+                        data: `{ bufnr, provider }`
+
+`PreviewCompileSuccess`  Compilation succeeded (exit code 0).
+                        data: `{ bufnr, provider, output }`
+
+`PreviewCompileFailed`   Compilation failed (non-zero exit).
+                        data: `{ bufnr, provider, code, stderr }`
+
+`PreviewWatchStarted`   Watch mode enabled for a buffer.
+                        data: `{ bufnr, provider }`
+
+`PreviewWatchStopped`   Watch mode disabled for a buffer.
+                        data: `{ bufnr }`
+
+Example:~
+>lua
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'PreviewCompileSuccess',
+      callback = function(args)
+        local data = args.data
+        vim.notify('Compiled ' .. data.output .. ' with ' .. data.provider)
+      end,
+    })
+<
+
+==============================================================================
+HEALTH                                                  *preview.nvim-health*
+
+Run `:checkhealth preview` to verify:
+
+- Neovim version >= 0.11.0
+- Each configured provider's binary is executable
+- Each configured provider's filetype mapping is valid
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

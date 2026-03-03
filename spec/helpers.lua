@@ -20,8 +20,8 @@ function M.delete_buffer(bufnr)
 end
 
 function M.reset_config(opts)
-  vim.g.render = opts
-  require('render')._test.reset()
+  vim.g.preview = opts
+  require('preview')._test.reset()
 end
 
 return M

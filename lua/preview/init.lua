@@ -1,24 +1,23 @@
----@class render.ProviderConfig
+---@class preview.ProviderConfig
 ---@field cmd string[]
----@field args? string[]|fun(ctx: render.Context): string[]
----@field cwd? string|fun(ctx: render.Context): string
+---@field args? string[]|fun(ctx: preview.Context): string[]
+---@field cwd? string|fun(ctx: preview.Context): string
 ---@field env? table<string, string>
----@field output? string|fun(ctx: render.Context): string
----@field error_parser? fun(stderr: string, ctx: render.Context): render.Diagnostic[]
----@field clean? string[]|fun(ctx: render.Context): string[]
+---@field output? string|fun(ctx: preview.Context): string
+---@field error_parser? fun(stderr: string, ctx: preview.Context): preview.Diagnostic[]
+---@field clean? string[]|fun(ctx: preview.Context): string[]
 
----@class render.Config
+---@class preview.Config
 ---@field debug boolean|string
----@field providers table<string, render.ProviderConfig>
----@field providers_by_ft table<string, string>
+---@field providers table<string, preview.ProviderConfig>
 
----@class render.Context
+---@class preview.Context
 ---@field bufnr integer
 ---@field file string
 ---@field root string
 ---@field ft string
 
----@class render.Diagnostic
+---@class preview.Diagnostic
 ---@field lnum integer
 ---@field col integer
 ---@field message string
@@ -27,30 +26,30 @@
 ---@field end_col? integer
 ---@field source? string
 
----@class render.Process
+---@class preview.Process
 ---@field obj table
 ---@field provider string
 ---@field output_file string
 
----@class render
+---@class preview
 ---@field compile fun(bufnr?: integer)
 ---@field stop fun(bufnr?: integer)
 ---@field clean fun(bufnr?: integer)
----@field status fun(bufnr?: integer): render.Status
----@field get_config fun(): render.Config
+---@field watch fun(bufnr?: integer)
+---@field status fun(bufnr?: integer): preview.Status
+---@field get_config fun(): preview.Config
 local M = {}
 
-local compiler = require('render.compiler')
-local log = require('render.log')
+local compiler = require('preview.compiler')
+local log = require('preview.log')
 
----@type render.Config
+---@type preview.Config
 local default_config = {
   debug = false,
   providers = {},
-  providers_by_ft = {},
 }
 
----@type render.Config
+---@type preview.Config
 local config = vim.deepcopy(default_config)
 
 local initialized = false
@@ -61,17 +60,14 @@ local function init()
   end
   initialized = true
 
-  local opts = vim.g.render or {}
+  local opts = vim.g.preview or {}
 
-  vim.validate('render config', opts, 'table')
+  vim.validate('preview config', opts, 'table')
   if opts.debug ~= nil then
-    vim.validate('render config.debug', opts.debug, { 'boolean', 'string' })
+    vim.validate('preview config.debug', opts.debug, { 'boolean', 'string' })
   end
   if opts.providers ~= nil then
-    vim.validate('render config.providers', opts.providers, 'table')
-  end
-  if opts.providers_by_ft ~= nil then
-    vim.validate('render config.providers_by_ft', opts.providers_by_ft, 'table')
+    vim.validate('preview config.providers', opts.providers, 'table')
   end
 
   config = vim.tbl_deep_extend('force', default_config, opts)
@@ -79,7 +75,7 @@ local function init()
   log.dbg('initialized with %d providers', vim.tbl_count(config.providers))
 end
 
----@return render.Config
+---@return preview.Config
 function M.get_config()
   init()
   return config
@@ -91,20 +87,15 @@ function M.resolve_provider(bufnr)
   init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local ft = vim.bo[bufnr].filetype
-  local name = config.providers_by_ft[ft]
-  if not name then
-    log.dbg('no provider mapped for filetype: %s', ft)
+  if not config.providers[ft] then
+    log.dbg('no provider configured for filetype: %s', ft)
     return nil
   end
-  if not config.providers[name] then
-    log.dbg('provider "%s" mapped for ft "%s" but not configured', name, ft)
-    return nil
-  end
-  return name
+  return ft
 end
 
 ---@param bufnr? integer
----@return render.Context
+---@return preview.Context
 function M.build_context(bufnr)
   init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -124,7 +115,7 @@ function M.compile(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
-    vim.notify('[render.nvim] no provider configured for this filetype', vim.log.levels.WARN)
+    vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
   local provider = config.providers[name]
@@ -145,7 +136,7 @@ function M.clean(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
-    vim.notify('[render.nvim] no provider configured for this filetype', vim.log.levels.WARN)
+    vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
   local provider = config.providers[name]
@@ -153,13 +144,27 @@ function M.clean(bufnr)
   compiler.clean(bufnr, name, provider, ctx)
 end
 
----@class render.Status
+---@param bufnr? integer
+function M.watch(bufnr)
+  init()
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local name = M.resolve_provider(bufnr)
+  if not name then
+    vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
+    return
+  end
+  local provider = config.providers[name]
+  compiler.watch(bufnr, name, provider, M.build_context)
+end
+
+---@class preview.Status
 ---@field compiling boolean
+---@field watching boolean
 ---@field provider? string
 ---@field output_file? string
 
 ---@param bufnr? integer
----@return render.Status
+---@return preview.Status
 function M.status(bufnr)
   init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()

@@ -5,7 +5,7 @@ describe('diagnostic', function()
 
   before_each(function()
     helpers.reset_config()
-    diagnostic = require('render.diagnostic')
+    diagnostic = require('preview.diagnostic')
   end)
 
   describe('clear', function()

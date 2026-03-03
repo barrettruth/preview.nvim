@@ -1,8 +1,8 @@
 local M = {}
 
-local log = require('render.log')
+local log = require('preview.log')
 
-local ns = vim.api.nvim_create_namespace('render')
+local ns = vim.api.nvim_create_namespace('preview')
 
 ---@param bufnr integer
 function M.clear(bufnr)
@@ -12,9 +12,9 @@ end
 
 ---@param bufnr integer
 ---@param name string
----@param error_parser fun(stderr: string, ctx: render.Context): render.Diagnostic[]
+---@param error_parser fun(stderr: string, ctx: preview.Context): preview.Diagnostic[]
 ---@param stderr string
----@param ctx render.Context
+---@param ctx preview.Context
 function M.set(bufnr, name, error_parser, stderr, ctx)
   local ok, diagnostics = pcall(error_parser, stderr, ctx)
   if not ok then

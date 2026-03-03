@@ -1,4 +1,4 @@
-# render.nvim
+# preview.nvim
 
 Async document compilation for Neovim.
 
@@ -10,32 +10,47 @@ your own providers.
 
 - Async compilation via `vim.system()`
 - Compiler errors as native `vim.diagnostic`
-- User events for extensibility (`RenderCompileStarted`, `RenderCompileSuccess`,
-  `RenderCompileFailed`)
+- User events for extensibility (`PreviewCompileStarted`, `PreviewCompileSuccess`,
+  `PreviewCompileFailed`)
 - `:checkhealth` integration
-- Zero dependencies beyond Neovim 0.10.0+
+- Zero dependencies beyond Neovim 0.11.0+
 
 ## Requirements
 
-- Neovim >= 0.10.0
+- Neovim >= 0.11.0
 - A compiler binary for each provider you configure
 
 ## Installation
 
 ```lua
 -- lazy.nvim
-{ 'barrettruth/render.nvim' }
+{ 'barrettruth/preview.nvim' }
 ```
 
 ```vim
 " luarocks
-:Rocks install render.nvim
+:Rocks install preview.nvim
 ```
 
 ## Configuration
 
+Use built-in presets for common tools:
+
 ```lua
-vim.g.render = {
+local presets = require('preview.presets')
+vim.g.preview = {
+  providers = {
+    typst = presets.typst,
+    tex = presets.latex,
+    markdown = presets.markdown,
+  },
+}
+```
+
+Or define providers manually:
+
+```lua
+vim.g.preview = {
   providers = {
     typst = {
       cmd = { 'typst', 'compile' },
@@ -46,19 +61,10 @@ vim.g.render = {
         return ctx.file:gsub('%.typ$', '.pdf')
       end,
     },
-    latexmk = {
-      cmd = { 'latexmk' },
-      args = { '-pdf', '-interaction=nonstopmode' },
-      clean = { 'latexmk', '-c' },
-    },
-  },
-  providers_by_ft = {
-    typst = 'typst',
-    tex = 'latexmk',
   },
 }
 ```
 
 ## Documentation
 
-See `:help render.nvim` for full documentation.
+See `:help preview.nvim` for full documentation.

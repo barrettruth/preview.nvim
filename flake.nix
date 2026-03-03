@@ -1,5 +1,5 @@
 {
-  description = "render.nvim — async document compilation for Neovim";
+  description = "preview.nvim — async document compilation for Neovim";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

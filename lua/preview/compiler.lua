@@ -1,13 +1,16 @@
 local M = {}
 
-local diagnostic = require('render.diagnostic')
-local log = require('render.log')
+local diagnostic = require('preview.diagnostic')
+local log = require('preview.log')
 
----@type table<integer, render.Process>
+---@type table<integer, preview.Process>
 local active = {}
 
----@param val string[]|fun(ctx: render.Context): string[]
----@param ctx render.Context
+---@type table<integer, integer>
+local watching = {}
+
+---@param val string[]|fun(ctx: preview.Context): string[]
+---@param ctx preview.Context
 ---@return string[]
 local function eval_list(val, ctx)
   if type(val) == 'function' then
@@ -16,8 +19,8 @@ local function eval_list(val, ctx)
   return val
 end
 
----@param val string|fun(ctx: render.Context): string
----@param ctx render.Context
+---@param val string|fun(ctx: preview.Context): string
+---@param ctx preview.Context
 ---@return string
 local function eval_string(val, ctx)
   if type(val) == 'function' then
@@ -28,8 +31,8 @@ end
 
 ---@param bufnr integer
 ---@param name string
----@param provider render.ProviderConfig
----@param ctx render.Context
+---@param provider preview.ProviderConfig
+---@param ctx preview.Context
 function M.compile(bufnr, name, provider, ctx)
   if vim.bo[bufnr].modified then
     vim.cmd('silent! update')
@@ -70,7 +73,7 @@ function M.compile(bufnr, name, provider, ctx)
         log.dbg('compilation succeeded for buffer %d', bufnr)
         diagnostic.clear(bufnr)
         vim.api.nvim_exec_autocmds('User', {
-          pattern = 'RenderCompileSuccess',
+          pattern = 'PreviewCompileSuccess',
           data = { bufnr = bufnr, provider = name, output = output_file },
         })
       else
@@ -79,7 +82,7 @@ function M.compile(bufnr, name, provider, ctx)
           diagnostic.set(bufnr, name, provider.error_parser, result.stderr or '', ctx)
         end
         vim.api.nvim_exec_autocmds('User', {
-          pattern = 'RenderCompileFailed',
+          pattern = 'PreviewCompileFailed',
           data = {
             bufnr = bufnr,
             provider = name,
@@ -102,7 +105,7 @@ function M.compile(bufnr, name, provider, ctx)
   })
 
   vim.api.nvim_exec_autocmds('User', {
-    pattern = 'RenderCompileStarted',
+    pattern = 'PreviewCompileStarted',
     data = { bufnr = bufnr, provider = name },
   })
 end
@@ -134,15 +137,69 @@ function M.stop_all()
   for bufnr, _ in pairs(active) do
     M.stop(bufnr)
   end
+  for bufnr, _ in pairs(watching) do
+    M.unwatch(bufnr)
+  end
 end
 
 ---@param bufnr integer
 ---@param name string
----@param provider render.ProviderConfig
----@param ctx render.Context
+---@param provider preview.ProviderConfig
+---@param ctx_builder fun(bufnr: integer): preview.Context
+function M.watch(bufnr, name, provider, ctx_builder)
+  if watching[bufnr] then
+    M.unwatch(bufnr)
+    return
+  end
+
+  local au_id = vim.api.nvim_create_autocmd('BufWritePost', {
+    buffer = bufnr,
+    callback = function()
+      local ctx = ctx_builder(bufnr)
+      M.compile(bufnr, name, provider, ctx)
+    end,
+  })
+
+  watching[bufnr] = au_id
+  log.dbg('watching buffer %d with provider "%s"', bufnr, name)
+
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    buffer = bufnr,
+    once = true,
+    callback = function()
+      M.unwatch(bufnr)
+    end,
+  })
+
+  vim.api.nvim_exec_autocmds('User', {
+    pattern = 'PreviewWatchStarted',
+    data = { bufnr = bufnr, provider = name },
+  })
+end
+
+---@param bufnr integer
+function M.unwatch(bufnr)
+  local au_id = watching[bufnr]
+  if not au_id then
+    return
+  end
+  vim.api.nvim_del_autocmd(au_id)
+  watching[bufnr] = nil
+  log.dbg('unwatched buffer %d', bufnr)
+
+  vim.api.nvim_exec_autocmds('User', {
+    pattern = 'PreviewWatchStopped',
+    data = { bufnr = bufnr },
+  })
+end
+
+---@param bufnr integer
+---@param name string
+---@param provider preview.ProviderConfig
+---@param ctx preview.Context
 function M.clean(bufnr, name, provider, ctx)
   if not provider.clean then
-    vim.notify('[render.nvim] provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
+    vim.notify('[preview.nvim] provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
     return
   end
 
@@ -160,27 +217,33 @@ function M.clean(bufnr, name, provider, ctx)
     vim.schedule_wrap(function(result)
       if result.code == 0 then
         log.dbg('clean succeeded for buffer %d', bufnr)
-        vim.notify('[render.nvim] clean complete', vim.log.levels.INFO)
+        vim.notify('[preview.nvim] clean complete', vim.log.levels.INFO)
       else
         log.dbg('clean failed for buffer %d (exit code %d)', bufnr, result.code)
-        vim.notify('[render.nvim] clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+        vim.notify('[preview.nvim] clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
       end
     end)
   )
 end
 
 ---@param bufnr integer
----@return render.Status
+---@return preview.Status
 function M.status(bufnr)
   local proc = active[bufnr]
   if proc then
-    return { compiling = true, provider = proc.provider, output_file = proc.output_file }
+    return {
+      compiling = true,
+      watching = watching[bufnr] ~= nil,
+      provider = proc.provider,
+      output_file = proc.output_file,
+    }
   end
-  return { compiling = false }
+  return { compiling = false, watching = watching[bufnr] ~= nil }
 end
 
 M._test = {
   active = active,
+  watching = watching,
 }
 
 return M
