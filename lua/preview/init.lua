@@ -5,7 +5,7 @@
 ---@field cwd? string|fun(ctx: preview.Context): string
 ---@field env? table<string, string>
 ---@field output? string|fun(ctx: preview.Context): string
----@field error_parser? fun(stderr: string, ctx: preview.Context): preview.Diagnostic[]
+---@field error_parser? fun(output: string, ctx: preview.Context): preview.Diagnostic[]
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
 
