@@ -2,6 +2,7 @@ local M = {}
 
 local PORT = 5554
 local server_handle = nil
+local actual_port = nil
 local clients = {}
 
 local function make_script(port)
@@ -14,12 +15,15 @@ local function make_script(port)
 end
 
 function M.start(port)
-  port = port or PORT
   if server_handle then
     return
   end
   local server = vim.uv.new_tcp()
-  server:bind('127.0.0.1', port)
+  server:bind('127.0.0.1', port or 0)
+  local sockname = server:getsockname()
+  if sockname then
+    actual_port = sockname.port
+  end
   server:listen(128, function(err)
     if err then
       return
@@ -66,6 +70,7 @@ function M.stop()
     server_handle:close()
     server_handle = nil
   end
+  actual_port = nil
 end
 
 function M.broadcast()
@@ -85,7 +90,7 @@ function M.broadcast()
 end
 
 function M.inject(path, port)
-  port = port or PORT
+  port = actual_port or port or PORT
   local f = io.open(path, 'r')
   if not f then
     return
