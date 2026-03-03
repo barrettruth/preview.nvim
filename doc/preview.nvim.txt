@@ -1,6 +1,6 @@
 *preview.nvim.txt*                    Async document compilation for Neovim
 
-Author: Raphael
+Author:  Barrett Ruth <br.barrettruth@gmail.com>
 License: MIT
 
 ==============================================================================
@@ -20,19 +20,14 @@ REQUIREMENTS                                          *preview.nvim-requirements
 - A compiler binary for each configured provider (e.g. `typst`, `latexmk`)
 
 ==============================================================================
-INSTALLATION                                          *preview.nvim-installation*
+SETUP                                                  *preview.nvim-setup*
 
-With luarocks (recommended):
->
-    :Rocks install preview.nvim
-<
-
-With lazy.nvim:
->lua
+Load preview.nvim with your package manager. For example, with lazy.nvim: >lua
     {
       'barrettruth/preview.nvim',
     }
 <
+Call |preview.setup()| to configure providers before use.
 
 ==============================================================================
 CONFIGURATION                                      *preview.nvim-configuration*
@@ -161,7 +156,7 @@ COMMANDS                                              *preview.nvim-commands*
     `stop`       Kill active compilation for the current buffer.
     `clean`      Run the provider's clean command.
     `toggle`     Toggle auto-compile on save for the current buffer.
-    `status`     Echo compilation status (idle, compiling, watching).
+    `status`     Echo compilation status (idle, compiling, toggled).
 
 ==============================================================================
 API                                                        *preview.nvim-api*
@@ -176,9 +171,9 @@ preview.clean({bufnr?})                                    *preview.clean()*
     Run the provider's clean command for the buffer.
 
 preview.toggle({bufnr?})                                  *preview.toggle()*
-    Toggle watch mode for the buffer. When enabled, the buffer is
+    Toggle auto-compile for the buffer. When enabled, the buffer is
     immediately compiled and automatically recompiled on each save
-    (`BufWritePost`). Call again to stop watching.
+    (`BufWritePost`). Call again to stop.
 
 preview.status({bufnr?})                                  *preview.status()*
     Returns a |preview.Status| table.
@@ -187,7 +182,7 @@ preview.status({bufnr?})                                  *preview.status()*
 Status fields:~
 
   `compiling`    boolean    Whether compilation is active.
-  `watching`     boolean    Whether watch mode is active.
+  `watching`     boolean    Whether auto-compile is active.
   `provider`     string?    Name of the active provider.
   `output_file`  string?    Path to the output file.
 
@@ -207,12 +202,6 @@ preview.nvim fires User autocmds with structured data:
 
 `PreviewCompileFailed`   Compilation failed (non-zero exit).
                         data: `{ bufnr, provider, code, stderr }`
-
-`PreviewWatchStarted`   Watch mode enabled for a buffer.
-                        data: `{ bufnr, provider }`
-
-`PreviewWatchStopped`   Watch mode disabled for a buffer.
-                        data: `{ bufnr }`
 
 Example:~
 >lua

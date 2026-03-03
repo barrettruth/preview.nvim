@@ -190,31 +190,6 @@ describe('compiler', function()
       helpers.delete_buffer(bufnr)
     end)
 
-    it('fires PreviewWatchStarted event', function()
-      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_event.txt')
-
-      local fired = false
-      vim.api.nvim_create_autocmd('User', {
-        pattern = 'PreviewWatchStarted',
-        once = true,
-        callback = function()
-          fired = true
-        end,
-      })
-
-      local provider = { cmd = { 'echo', 'ok' } }
-      local ctx_builder = function(b)
-        return { bufnr = b, file = '/tmp/preview_test_watch_event.txt', root = '/tmp', ft = 'text' }
-      end
-
-      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      assert.is_true(fired)
-
-      compiler.unwatch(bufnr)
-      helpers.delete_buffer(bufnr)
-    end)
-
     it('toggles off when called again', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_toggle.txt')
@@ -228,32 +203,6 @@ describe('compiler', function()
       assert.is_not_nil(compiler._test.watching[bufnr])
 
       compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      assert.is_nil(compiler._test.watching[bufnr])
-
-      helpers.delete_buffer(bufnr)
-    end)
-
-    it('fires PreviewWatchStopped on unwatch', function()
-      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
-      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch_stop.txt')
-
-      local stopped = false
-      vim.api.nvim_create_autocmd('User', {
-        pattern = 'PreviewWatchStopped',
-        once = true,
-        callback = function()
-          stopped = true
-        end,
-      })
-
-      local provider = { cmd = { 'echo', 'ok' } }
-      local ctx_builder = function(b)
-        return { bufnr = b, file = '/tmp/preview_test_watch_stop.txt', root = '/tmp', ft = 'text' }
-      end
-
-      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      compiler.unwatch(bufnr)
-      assert.is_true(stopped)
       assert.is_nil(compiler._test.watching[bufnr])
 
       helpers.delete_buffer(bufnr)
