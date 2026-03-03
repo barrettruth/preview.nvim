@@ -132,6 +132,108 @@ describe('compiler', function()
     end)
   end)
 
+  describe('errors mode', function()
+    it('errors = false suppresses error parser', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_errors_false.txt')
+      vim.bo[bufnr].modified = false
+
+      local parser_called = false
+      local provider = {
+        cmd = { 'false' },
+        errors = false,
+        error_parser = function()
+          parser_called = true
+          return {}
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_errors_false.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return compiler._test.active[bufnr] == nil
+      end, 50)
+
+      assert.is_false(parser_called)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('errors = quickfix populates quickfix list', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_errors_qf.txt')
+      vim.bo[bufnr].modified = false
+
+      local provider = {
+        cmd = { 'sh', '-c', 'echo "line 1 error" >&2; exit 1' },
+        errors = 'quickfix',
+        error_parser = function()
+          return {
+            { lnum = 0, col = 0, message = 'test error', severity = vim.diagnostic.severity.ERROR },
+          }
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_errors_qf.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      vim.fn.setqflist({}, 'r')
+      compiler.compile(bufnr, 'qfcmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return compiler._test.active[bufnr] == nil
+      end, 50)
+
+      local qflist = vim.fn.getqflist()
+      assert.are.equal(1, #qflist)
+      assert.are.equal('test error', qflist[1].text)
+      assert.are.equal(1, qflist[1].lnum)
+
+      vim.fn.setqflist({}, 'r')
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('errors = quickfix clears quickfix on success', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_errors_qf_clear.txt')
+      vim.bo[bufnr].modified = false
+
+      vim.fn.setqflist({ { text = 'old error', lnum = 1 } }, 'r')
+      assert.are.equal(1, #vim.fn.getqflist())
+
+      local provider = {
+        cmd = { 'true' },
+        errors = 'quickfix',
+        error_parser = function()
+          return {}
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_errors_qf_clear.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'truecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return compiler._test.active[bufnr] == nil
+      end, 50)
+
+      assert.are.equal(0, #vim.fn.getqflist())
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
+
   describe('stop', function()
     it('does nothing when no process is active', function()
       assert.has_no.errors(function()
