@@ -106,7 +106,8 @@ function M.compile(bufnr, name, provider, ctx)
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
         if provider.error_parser then
-          diagnostic.set(bufnr, name, provider.error_parser, result.stderr or '', ctx)
+          local output = (result.stdout or '') .. (result.stderr or '')
+          diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
         end
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',

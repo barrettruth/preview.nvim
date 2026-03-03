@@ -12,11 +12,11 @@ end
 
 ---@param bufnr integer
 ---@param name string
----@param error_parser fun(stderr: string, ctx: preview.Context): preview.Diagnostic[]
----@param stderr string
+---@param error_parser fun(output: string, ctx: preview.Context): preview.Diagnostic[]
+---@param output string
 ---@param ctx preview.Context
-function M.set(bufnr, name, error_parser, stderr, ctx)
-  local ok, diagnostics = pcall(error_parser, stderr, ctx)
+function M.set(bufnr, name, error_parser, output, ctx)
+  local ok, diagnostics = pcall(error_parser, output, ctx)
   if not ok then
     log.dbg('error_parser for "%s" failed: %s', name, diagnostics)
     return

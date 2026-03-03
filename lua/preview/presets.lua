@@ -1,11 +1,11 @@
 local M = {}
 
----@param stderr string
+---@param output string
 ---@return preview.Diagnostic[]
-local function parse_typst(stderr)
+local function parse_typst(output)
   local diagnostics = {}
-  for line in stderr:gmatch('[^\r\n]+') do
-    local file, lnum, col, severity, msg = line:match('^(.+):(%d+):(%d+): (%w+): (.+)$')
+  for line in output:gmatch('[^\r\n]+') do
+    local _, lnum, col, severity, msg = line:match('^(.+):(%d+):(%d+): (%w+): (.+)$')
     if lnum then
       local sev = vim.diagnostic.severity.ERROR
       if severity == 'warning' then
@@ -16,18 +16,17 @@ local function parse_typst(stderr)
         col = tonumber(col) - 1,
         message = msg,
         severity = sev,
-        source = file,
       })
     end
   end
   return diagnostics
 end
 
----@param stderr string
+---@param output string
 ---@return preview.Diagnostic[]
-local function parse_latexmk(stderr)
+local function parse_latexmk(output)
   local diagnostics = {}
-  for line in stderr:gmatch('[^\r\n]+') do
+  for line in output:gmatch('[^\r\n]+') do
     local _, lnum, msg = line:match('^%.?/?(.+%.tex):(%d+): (.+)$')
     if lnum then
       table.insert(diagnostics, {
@@ -51,41 +50,45 @@ local function parse_latexmk(stderr)
   return diagnostics
 end
 
----@param stderr string
+---@param output string
 ---@return preview.Diagnostic[]
-local function parse_pandoc(stderr)
+local function parse_pandoc(output)
   local diagnostics = {}
-  for line in stderr:gmatch('[^\r\n]+') do
-    local lnum, col, msg = line:match('Error at .+ %(line (%d+), column (%d+)%): (.+)$')
+  local lines = vim.split(output, '\n')
+  local i = 1
+  while i <= #lines do
+    local line = lines[i]
+    local lnum, col, msg = line:match('%(line (%d+), column (%d+)%):%s*(.*)$')
     if lnum then
-      table.insert(diagnostics, {
-        lnum = tonumber(lnum) - 1,
-        col = tonumber(col) - 1,
-        message = msg,
-        severity = vim.diagnostic.severity.ERROR,
-      })
-    else
-      local ylnum, ycol, ymsg =
-        line:match('YAML parse exception at line (%d+), column (%d+)[,:]%s*(.+)$')
-      if ylnum then
-        table.insert(diagnostics, {
-          lnum = tonumber(ylnum) - 1,
-          col = tonumber(ycol) - 1,
-          message = ymsg,
-          severity = vim.diagnostic.severity.ERROR,
-        })
-      else
-        local errmsg = line:match('^pandoc: (.+)$')
-        if errmsg and not errmsg:match('^Error at') then
-          table.insert(diagnostics, {
-            lnum = 0,
-            col = 0,
-            message = errmsg,
-            severity = vim.diagnostic.severity.ERROR,
-          })
+      if msg == '' then
+        for j = i + 1, math.min(i + 2, #lines) do
+          local next_line = lines[j]:match('^%s*(.+)$')
+          if next_line and not next_line:match('^YAML parse exception') then
+            msg = next_line
+            break
+          end
         end
       end
+      if msg ~= '' then
+        table.insert(diagnostics, {
+          lnum = tonumber(lnum) - 1,
+          col = tonumber(col) - 1,
+          message = msg,
+          severity = vim.diagnostic.severity.ERROR,
+        })
+      end
+    else
+      local errmsg = line:match('^pandoc: (.+)$')
+      if errmsg then
+        table.insert(diagnostics, {
+          lnum = 0,
+          col = 0,
+          message = errmsg,
+          severity = vim.diagnostic.severity.ERROR,
+        })
+      end
     end
+    i = i + 1
   end
   return diagnostics
 end
@@ -100,8 +103,8 @@ M.typst = {
   output = function(ctx)
     return (ctx.file:gsub('%.typ$', '.pdf'))
   end,
-  error_parser = function(stderr)
-    return parse_typst(stderr)
+  error_parser = function(output)
+    return parse_typst(output)
   end,
   open = true,
 }
@@ -121,8 +124,8 @@ M.latex = {
   output = function(ctx)
     return (ctx.file:gsub('%.tex$', '.pdf'))
   end,
-  error_parser = function(stderr)
-    return parse_latexmk(stderr)
+  error_parser = function(output)
+    return parse_latexmk(output)
   end,
   clean = function(ctx)
     return { 'latexmk', '-c', ctx.file }
@@ -141,8 +144,8 @@ M.markdown = {
   output = function(ctx)
     return (ctx.file:gsub('%.md$', '.html'))
   end,
-  error_parser = function(stderr)
-    return parse_pandoc(stderr)
+  error_parser = function(output)
+    return parse_pandoc(output)
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
@@ -171,8 +174,8 @@ M.github = {
   output = function(ctx)
     return (ctx.file:gsub('%.md$', '.html'))
   end,
-  error_parser = function(stderr)
-    return parse_pandoc(stderr)
+  error_parser = function(output)
+    return parse_pandoc(output)
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
