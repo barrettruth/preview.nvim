@@ -98,7 +98,9 @@ function M.compile(bufnr, name, provider, ctx)
         env = provider.env,
       },
       vim.schedule_wrap(function(result)
-        active[bufnr] = nil
+        if active[bufnr] and active[bufnr].obj == obj then
+          active[bufnr] = nil
+        end
         if not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
@@ -187,7 +189,9 @@ function M.compile(bufnr, name, provider, ctx)
       env = provider.env,
     },
     vim.schedule_wrap(function(result)
-      active[bufnr] = nil
+      if active[bufnr] and active[bufnr].obj == obj then
+        active[bufnr] = nil
+      end
       if not vim.api.nvim_buf_is_valid(bufnr) then
         return
       end
