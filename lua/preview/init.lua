@@ -39,6 +39,7 @@
 ---@field stop fun(bufnr?: integer)
 ---@field clean fun(bufnr?: integer)
 ---@field toggle fun(bufnr?: integer)
+---@field open fun(bufnr?: integer)
 ---@field status fun(bufnr?: integer): preview.Status
 ---@field statusline fun(bufnr?: integer): string
 ---@field get_config fun(): preview.Config
@@ -165,6 +166,14 @@ function M.toggle(bufnr)
   end
   local provider = config.providers[name]
   compiler.toggle(bufnr, name, provider, M.build_context)
+end
+
+---@param bufnr? integer
+function M.open(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not compiler.open(bufnr) then
+    vim.notify('[preview.nvim] no output file available for this buffer', vim.log.levels.WARN)
+  end
 end
 
 ---@class preview.Status

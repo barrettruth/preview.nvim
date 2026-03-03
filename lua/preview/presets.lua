@@ -10,7 +10,7 @@ M.typst = {
   output = function(ctx)
     return (ctx.file:gsub('%.typ$', '.pdf'))
   end,
-  open = { 'xdg-open' },
+  open = true,
 }
 
 ---@type preview.ProviderConfig
@@ -26,7 +26,7 @@ M.latex = {
   clean = function(ctx)
     return { 'latexmk', '-c', ctx.file }
   end,
-  open = { 'xdg-open' },
+  open = true,
 }
 
 ---@type preview.ProviderConfig
@@ -43,7 +43,7 @@ M.markdown = {
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
   end,
-  open = { 'xdg-open' },
+  open = true,
 }
 
 ---@type preview.ProviderConfig
@@ -70,7 +70,7 @@ M.github = {
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
   end,
-  open = { 'xdg-open' },
+  open = true,
 }
 
 return M

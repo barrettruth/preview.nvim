@@ -34,7 +34,7 @@ describe('presets', function()
     end)
 
     it('has open enabled', function()
-      assert.are.same({ 'xdg-open' }, presets.typst.open)
+      assert.is_true(presets.typst.open)
     end)
   end)
 
@@ -73,7 +73,7 @@ describe('presets', function()
     end)
 
     it('has open enabled', function()
-      assert.are.same({ 'xdg-open' }, presets.latex.open)
+      assert.is_true(presets.latex.open)
     end)
   end)
 
@@ -115,7 +115,7 @@ describe('presets', function()
     end)
 
     it('has open enabled', function()
-      assert.are.same({ 'xdg-open' }, presets.markdown.open)
+      assert.is_true(presets.markdown.open)
     end)
   end)
 
@@ -177,7 +177,7 @@ describe('presets', function()
     end)
 
     it('has open enabled', function()
-      assert.are.same({ 'xdg-open' }, presets.github.open)
+      assert.is_true(presets.github.open)
     end)
   end)
 end)
