@@ -15,6 +15,10 @@ local opened = {}
 ---@type table<integer, string>
 local last_output = {}
 
+local debounce_timers = {}
+
+local DEBOUNCE_MS = 500
+
 ---@param val string[]|fun(ctx: preview.Context): string[]
 ---@param ctx preview.Context
 ---@return string[]
@@ -179,8 +183,19 @@ function M.toggle(bufnr, name, provider, ctx_builder)
   local au_id = vim.api.nvim_create_autocmd('BufWritePost', {
     buffer = bufnr,
     callback = function()
-      local ctx = ctx_builder(bufnr)
-      M.compile(bufnr, name, provider, ctx)
+      if debounce_timers[bufnr] then
+        debounce_timers[bufnr]:stop()
+      else
+        debounce_timers[bufnr] = vim.uv.new_timer()
+      end
+      debounce_timers[bufnr]:start(
+        DEBOUNCE_MS,
+        0,
+        vim.schedule_wrap(function()
+          local ctx = ctx_builder(bufnr)
+          M.compile(bufnr, name, provider, ctx)
+        end)
+      )
     end,
   })
 
@@ -206,6 +221,11 @@ function M.unwatch(bufnr)
     return
   end
   vim.api.nvim_del_autocmd(au_id)
+  if debounce_timers[bufnr] then
+    debounce_timers[bufnr]:stop()
+    debounce_timers[bufnr]:close()
+    debounce_timers[bufnr] = nil
+  end
   watching[bufnr] = nil
   log.dbg('unwatched buffer %d', bufnr)
 end
@@ -275,6 +295,7 @@ M._test = {
   watching = watching,
   opened = opened,
   last_output = last_output,
+  debounce_timers = debounce_timers,
 }
 
 return M
