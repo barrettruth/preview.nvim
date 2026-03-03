@@ -1,8 +1,8 @@
 local M = {}
 
 local handlers = {
-  compile = function()
-    require('preview').compile()
+  build = function()
+    require('preview').build()
   end,
   stop = function()
     require('preview').stop()
@@ -10,8 +10,8 @@ local handlers = {
   clean = function()
     require('preview').clean()
   end,
-  toggle = function()
-    require('preview').toggle()
+  watch = function()
+    require('preview').watch()
   end,
   open = function()
     require('preview').open()
@@ -33,7 +33,7 @@ local handlers = {
 
 ---@param args string
 local function dispatch(args)
-  local subcmd = args ~= '' and args or 'compile'
+  local subcmd = args ~= '' and args or 'build'
   local handler = handlers[subcmd]
   if handler then
     handler()
@@ -58,7 +58,7 @@ function M.setup()
     complete = function(lead)
       return complete(lead)
     end,
-    desc = 'Compile, stop, clean, toggle, open, or check status of document preview',
+    desc = 'Build, stop, clean, watch, open, or check status of document preview',
   })
 end
 
