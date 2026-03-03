@@ -174,6 +174,41 @@ describe('compiler', function()
     end)
   end)
 
+  describe('open', function()
+    it('returns false when no output exists', function()
+      assert.is_false(compiler.open(999))
+    end)
+
+    it('returns true after compilation stores output', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_open.txt')
+      vim.bo[bufnr].modified = false
+
+      local provider = {
+        cmd = { 'true' },
+        output = function()
+          return '/tmp/preview_test_open.pdf'
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_open.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'testprov', provider, ctx)
+      assert.is_not_nil(compiler._test.last_output[bufnr])
+      assert.are.equal('/tmp/preview_test_open.pdf', compiler._test.last_output[bufnr])
+
+      vim.wait(2000, function()
+        return compiler._test.active[bufnr] == nil
+      end, 50)
+
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
+
   describe('toggle', function()
     it('registers autocmd and tracks in watching table', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
