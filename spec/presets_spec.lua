@@ -139,14 +139,29 @@ describe('presets', function()
       local args = presets.github.args(md_ctx)
       assert.is_table(args)
       assert.are.same({
+        '-f',
+        'gfm',
         '/tmp/document.md',
         '-s',
         '--embed-resources',
         '--css',
-        'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/github.css',
+        'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
         '-o',
         '/tmp/document.html',
       }, args)
+    end)
+
+    it('args include -f and gfm flags', function()
+      local args = presets.github.args(md_ctx)
+      local idx = nil
+      for i, v in ipairs(args) do
+        if v == '-f' then
+          idx = i
+          break
+        end
+      end
+      assert.is_not_nil(idx)
+      assert.are.equal('gfm', args[idx + 1])
     end)
 
     it('returns html output path', function()

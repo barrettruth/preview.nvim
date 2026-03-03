@@ -68,15 +68,17 @@ function M.setup(opts)
     if k == 'debug' then
       vim.validate('preview.setup opts.debug', v, { 'boolean', 'string' })
       debug = v
-    elseif type(k) == 'number' then
-      vim.validate('preview.setup preset name', v, 'string')
-      local preset = presets[v]
+    elseif type(k) ~= 'number' then
+      local preset = presets[k]
       if preset then
-        providers[preset.ft] = preset
+        if v == true then
+          providers[preset.ft] = preset
+        elseif type(v) == 'table' then
+          providers[preset.ft] = vim.tbl_deep_extend('force', preset, v)
+        end
+      elseif type(v) == 'table' then
+        providers[k] = v
       end
-    else
-      vim.validate('preview.setup provider config', v, 'table')
-      providers[k] = v
     end
   end
 

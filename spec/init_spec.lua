@@ -22,7 +22,7 @@ describe('preview', function()
       assert.are.same({}, config.providers)
     end)
 
-    it('accepts full provider config via hash entry', function()
+    it('merges override table with matching preset', function()
       helpers.reset_config({
         typst = {
           cmd = { 'typst', 'compile' },
@@ -33,8 +33,8 @@ describe('preview', function()
       assert.is_not_nil(config.providers.typst)
     end)
 
-    it('resolves array preset names to provider configs', function()
-      helpers.reset_config({ 'typst', 'markdown' })
+    it('resolves preset = true to provider config', function()
+      helpers.reset_config({ typst = true, markdown = true })
       local config = require('preview').get_config()
       local presets = require('preview.presets')
       assert.are.same(presets.typst, config.providers.typst)
@@ -42,14 +42,14 @@ describe('preview', function()
     end)
 
     it('resolves latex preset under tex filetype', function()
-      helpers.reset_config({ 'latex' })
+      helpers.reset_config({ latex = true })
       local config = require('preview').get_config()
       local presets = require('preview.presets')
       assert.are.same(presets.latex, config.providers.tex)
     end)
 
     it('resolves github preset under markdown filetype', function()
-      helpers.reset_config({ 'github' })
+      helpers.reset_config({ github = true })
       local config = require('preview').get_config()
       local presets = require('preview.presets')
       assert.are.same(presets.github, config.providers.markdown)
@@ -59,7 +59,7 @@ describe('preview', function()
   describe('resolve_provider', function()
     before_each(function()
       helpers.reset_config({
-        typst = { cmd = { 'typst', 'compile' } },
+        typst = true,
       })
       preview = require('preview')
     end)

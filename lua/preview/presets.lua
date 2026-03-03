@@ -53,11 +53,13 @@ M.github = {
   args = function(ctx)
     local output = ctx.file:gsub('%.md$', '.html')
     return {
+      '-f',
+      'gfm',
       ctx.file,
       '-s',
       '--embed-resources',
       '--css',
-      'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/github.css',
+      'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
       '-o',
       output,
     }
