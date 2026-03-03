@@ -71,5 +71,3 @@ require('preview').setup({
   typst = { open = { 'sioyek', '--new-instance' } },
 })
 ```
-
-See `:h preview.nvim` for more information.

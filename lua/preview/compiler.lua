@@ -188,11 +188,6 @@ function M.toggle(bufnr, name, provider, ctx_builder)
     end,
   })
 
-  vim.api.nvim_exec_autocmds('User', {
-    pattern = 'PreviewWatchStarted',
-    data = { bufnr = bufnr, provider = name },
-  })
-
   M.compile(bufnr, name, provider, ctx_builder(bufnr))
 end
 
@@ -205,11 +200,6 @@ function M.unwatch(bufnr)
   vim.api.nvim_del_autocmd(au_id)
   watching[bufnr] = nil
   log.dbg('unwatched buffer %d', bufnr)
-
-  vim.api.nvim_exec_autocmds('User', {
-    pattern = 'PreviewWatchStopped',
-    data = { bufnr = bufnr },
-  })
 end
 
 ---@param bufnr integer
