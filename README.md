@@ -63,8 +63,8 @@ require('preview').setup({
 **Q: How do I automatically open the output file?**
 
 Set `open = true` on your provider (all built-in presets have this enabled) to
-open the output with `vim.ui.open()` after the first successful compilation.
-For a specific application, pass a command table:
+open the output with `vim.ui.open()` after the first successful compilation. For
+a specific application, pass a command table:
 
 ```lua
 require('preview').setup({
