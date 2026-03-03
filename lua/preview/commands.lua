@@ -27,9 +27,9 @@ local function dispatch(args)
     if s.watching then
       table.insert(parts, 'watching')
     end
-    vim.notify('[preview.nvim] ' .. table.concat(parts, ', '), vim.log.levels.INFO)
+    vim.notify('[preview.nvim]: ' .. table.concat(parts, ', '), vim.log.levels.INFO)
   else
-    vim.notify('[preview.nvim] unknown subcommand: ' .. subcmd, vim.log.levels.ERROR)
+    vim.notify('[preview.nvim]: unknown subcommand: ' .. subcmd, vim.log.levels.ERROR)
   end
 end
 

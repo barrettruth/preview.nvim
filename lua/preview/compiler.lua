@@ -178,6 +178,7 @@ end
 function M.toggle(bufnr, name, provider, ctx_builder)
   if watching[bufnr] then
     M.unwatch(bufnr)
+    vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
     return
   end
 
@@ -202,6 +203,7 @@ function M.toggle(bufnr, name, provider, ctx_builder)
 
   watching[bufnr] = au_id
   log.dbg('watching buffer %d with provider "%s"', bufnr, name)
+  vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = bufnr,
