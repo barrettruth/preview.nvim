@@ -21,10 +21,10 @@ describe('presets', function()
       assert.are.same({ 'typst', 'compile' }, presets.typst.cmd)
     end)
 
-    it('returns args with file path', function()
+    it('returns args with diagnostic format and file path', function()
       local args = presets.typst.args(ctx)
       assert.is_table(args)
-      assert.are.same({ '/tmp/document.typ' }, args)
+      assert.are.same({ '--diagnostic-format', 'short', '/tmp/document.typ' }, args)
     end)
 
     it('returns pdf output path', function()
@@ -35,6 +35,30 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.typst.open)
+    end)
+
+    it('parses errors from stderr', function()
+      local stderr = table.concat({
+        'main.typ:5:23: error: unexpected token',
+        'main.typ:12:1: warning: unused variable',
+      }, '\n')
+      local diagnostics = presets.typst.error_parser(stderr, ctx)
+      assert.is_table(diagnostics)
+      assert.are.equal(2, #diagnostics)
+      assert.are.equal(4, diagnostics[1].lnum)
+      assert.are.equal(22, diagnostics[1].col)
+      assert.are.equal('unexpected token', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+      assert.are.equal('main.typ', diagnostics[1].source)
+      assert.are.equal(11, diagnostics[2].lnum)
+      assert.are.equal(0, diagnostics[2].col)
+      assert.are.equal('unused variable', diagnostics[2].message)
+      assert.are.equal(vim.diagnostic.severity.WARN, diagnostics[2].severity)
+    end)
+
+    it('returns empty table for clean stderr', function()
+      local diagnostics = presets.typst.error_parser('', ctx)
+      assert.are.same({}, diagnostics)
     end)
   end)
 
@@ -57,7 +81,12 @@ describe('presets', function()
     it('returns args with pdf flag and file path', function()
       local args = presets.latex.args(tex_ctx)
       assert.is_table(args)
-      assert.are.same({ '-pdf', '-interaction=nonstopmode', '/tmp/document.tex' }, args)
+      assert.are.same({
+        '-pdf',
+        '-interaction=nonstopmode',
+        '-pdflatex=pdflatex -file-line-error -interaction=nonstopmode %O %S',
+        '/tmp/document.tex',
+      }, args)
     end)
 
     it('returns pdf output path', function()
@@ -74,6 +103,44 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.latex.open)
+    end)
+
+    it('parses file-line-error format from stderr', function()
+      local stderr = table.concat({
+        './document.tex:10: Undefined control sequence.',
+        'l.10 \\badcommand',
+        'Collected error summary (may duplicate other messages):',
+        "  pdflatex: Command for 'pdflatex' gave return code 256",
+      }, '\n')
+      local diagnostics = presets.latex.error_parser(stderr, tex_ctx)
+      assert.is_table(diagnostics)
+      assert.is_true(#diagnostics > 0)
+      assert.are.equal(9, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('Undefined control sequence.', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('parses collected error summary', function()
+      local stderr = table.concat({
+        'Latexmk: Errors, so I did not complete making targets',
+        'Collected error summary (may duplicate other messages):',
+        "  pdflatex: Command for 'pdflatex' gave return code 256",
+      }, '\n')
+      local diagnostics = presets.latex.error_parser(stderr, tex_ctx)
+      assert.is_table(diagnostics)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(0, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal(
+        "pdflatex: Command for 'pdflatex' gave return code 256",
+        diagnostics[1].message
+      )
+    end)
+
+    it('returns empty table for clean stderr', function()
+      local diagnostics = presets.latex.error_parser('', tex_ctx)
+      assert.are.same({}, diagnostics)
     end)
   end)
 
@@ -116,6 +183,43 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.markdown.open)
+    end)
+
+    it('parses pandoc parse errors from stderr', function()
+      local stderr = 'Error at "source" (line 75, column 1): unexpected end of input'
+      local diagnostics = presets.markdown.error_parser(stderr, md_ctx)
+      assert.is_table(diagnostics)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(74, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('unexpected end of input', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('parses YAML parse exceptions from stderr', function()
+      local stderr =
+        'YAML parse exception at line 3, column 2, while scanning a block scalar: did not find expected comment or line break'
+      local diagnostics = presets.markdown.error_parser(stderr, md_ctx)
+      assert.is_table(diagnostics)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(2, diagnostics[1].lnum)
+      assert.are.equal(1, diagnostics[1].col)
+      assert.is_string(diagnostics[1].message)
+    end)
+
+    it('parses generic pandoc errors from stderr', function()
+      local stderr = 'pandoc: Could not find data file templates/default.html5'
+      local diagnostics = presets.markdown.error_parser(stderr, md_ctx)
+      assert.is_table(diagnostics)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(0, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('Could not find data file templates/default.html5', diagnostics[1].message)
+    end)
+
+    it('returns empty table for clean stderr', function()
+      local diagnostics = presets.markdown.error_parser('', md_ctx)
+      assert.are.same({}, diagnostics)
     end)
   end)
 
@@ -178,6 +282,22 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.github.open)
+    end)
+
+    it('parses pandoc parse errors from stderr', function()
+      local stderr = 'Error at "document.md" (line 12, column 5): unexpected "}" expecting letter'
+      local diagnostics = presets.github.error_parser(stderr, md_ctx)
+      assert.is_table(diagnostics)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(11, diagnostics[1].lnum)
+      assert.are.equal(4, diagnostics[1].col)
+      assert.are.equal('unexpected "}" expecting letter', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean stderr', function()
+      local diagnostics = presets.github.error_parser('', md_ctx)
+      assert.are.same({}, diagnostics)
     end)
   end)
 end)
