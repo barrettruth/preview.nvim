@@ -85,6 +85,20 @@ function M.setup(opts)
     end
   end
 
+  for ft, provider in pairs(providers) do
+    local prefix = 'providers.' .. ft
+    vim.validate(prefix .. '.cmd', provider.cmd, 'table')
+    vim.validate(prefix .. '.cmd[1]', provider.cmd[1], 'string')
+    vim.validate(prefix .. '.args', provider.args, { 'table', 'function' }, true)
+    vim.validate(prefix .. '.cwd', provider.cwd, { 'string', 'function' }, true)
+    vim.validate(prefix .. '.output', provider.output, { 'string', 'function' }, true)
+    vim.validate(prefix .. '.error_parser', provider.error_parser, 'function', true)
+    vim.validate(prefix .. '.errors', provider.errors, function(x)
+      return x == nil or x == false or x == 'diagnostic' or x == 'quickfix'
+    end, 'false, "diagnostic", or "quickfix"')
+    vim.validate(prefix .. '.open', provider.open, { 'boolean', 'table' }, true)
+  end
+
   config = vim.tbl_deep_extend('force', default_config, {
     debug = debug,
     providers = providers,
