@@ -41,6 +41,7 @@
 ---@field toggle fun(bufnr?: integer)
 ---@field open fun(bufnr?: integer)
 ---@field status fun(bufnr?: integer): preview.Status
+---@field statusline fun(bufnr?: integer): string
 ---@field get_config fun(): preview.Config
 local M = {}
 
@@ -186,6 +187,19 @@ end
 function M.status(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   return compiler.status(bufnr)
+end
+
+---@param bufnr? integer
+---@return string
+function M.statusline(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local s = compiler.status(bufnr)
+  if s.compiling then
+    return 'compiling'
+  elseif s.watching then
+    return 'watching'
+  end
+  return ''
 end
 
 M._test = {
