@@ -86,9 +86,18 @@ function M.compile(bufnr, name, provider, ctx)
         return
       end
 
+      local errors_mode = provider.errors
+      if errors_mode == nil then
+        errors_mode = 'diagnostic'
+      end
+
       if result.code == 0 then
         log.dbg('compilation succeeded for buffer %d', bufnr)
-        diagnostic.clear(bufnr)
+        if errors_mode == 'diagnostic' then
+          diagnostic.clear(bufnr)
+        elseif errors_mode == 'quickfix' then
+          vim.fn.setqflist({}, 'r')
+        end
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileSuccess',
           data = { bufnr = bufnr, provider = name, output = output_file },
@@ -105,9 +114,27 @@ function M.compile(bufnr, name, provider, ctx)
         end
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
-        if provider.error_parser then
+        if provider.error_parser and errors_mode then
           local output = (result.stdout or '') .. (result.stderr or '')
-          diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
+          if errors_mode == 'diagnostic' then
+            diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
+          elseif errors_mode == 'quickfix' then
+            local ok, diagnostics = pcall(provider.error_parser, output, ctx)
+            if ok and diagnostics and #diagnostics > 0 then
+              local items = {}
+              for _, d in ipairs(diagnostics) do
+                table.insert(items, {
+                  bufnr = bufnr,
+                  lnum = d.lnum + 1,
+                  col = d.col + 1,
+                  text = d.message,
+                  type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
+                })
+              end
+              vim.fn.setqflist(items, 'r')
+              vim.cmd('copen')
+            end
+          end
         end
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',

@@ -6,6 +6,7 @@
 ---@field env? table<string, string>
 ---@field output? string|fun(ctx: preview.Context): string
 ---@field error_parser? fun(output: string, ctx: preview.Context): preview.Diagnostic[]
+---@field errors? false|'diagnostic'|'quickfix'
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
 
