@@ -8,16 +8,14 @@ asynchronously with error diagnostics.
 ## Features
 
 - Async compilation via `vim.system()`
+- Built-in presets for Typst, LaTeX, Markdown, and GitHub-flavored Markdown
 - Compiler errors as native `vim.diagnostic`
 - User events for extensibility (`PreviewCompileStarted`,
   `PreviewCompileSuccess`, `PreviewCompileFailed`)
-- Built-in presets for Typst, LaTeX, Markdown, and GitHub-flavored Markdown
-- `:checkhealth` integration
-- Zero dependencies beyond Neovim 0.11.0+
 
 ## Requirements
 
-- Neovim 0.11.0+
+- Neovim 0.11+
 
 ## Installation
 
