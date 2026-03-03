@@ -12,6 +12,9 @@ local watching = {}
 ---@type table<integer, true>
 local opened = {}
 
+---@type table<integer, string>
+local last_output = {}
+
 ---@param val string[]|fun(ctx: preview.Context): string[]
 ---@param ctx preview.Context
 ---@return string[]
@@ -59,6 +62,10 @@ function M.compile(bufnr, name, provider, ctx)
   local output_file = ''
   if provider.output then
     output_file = eval_string(provider.output, ctx)
+  end
+
+  if output_file ~= '' then
+    last_output[bufnr] = output_file
   end
 
   log.dbg('compiling buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
@@ -117,6 +124,7 @@ function M.compile(bufnr, name, provider, ctx)
     once = true,
     callback = function()
       M.stop(bufnr)
+      last_output[bufnr] = nil
     end,
   })
 
@@ -236,6 +244,18 @@ function M.clean(bufnr, name, provider, ctx)
 end
 
 ---@param bufnr integer
+---@return boolean
+function M.open(bufnr)
+  local output = last_output[bufnr]
+  if not output then
+    log.dbg('no last output file for buffer %d', bufnr)
+    return false
+  end
+  vim.ui.open(output)
+  return true
+end
+
+---@param bufnr integer
 ---@return preview.Status
 function M.status(bufnr)
   local proc = active[bufnr]
@@ -254,6 +274,7 @@ M._test = {
   active = active,
   watching = watching,
   opened = opened,
+  last_output = last_output,
 }
 
 return M
