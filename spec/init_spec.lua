@@ -9,13 +9,7 @@ describe('preview', function()
   end)
 
   describe('config', function()
-    it('accepts nil config', function()
-      assert.has_no.errors(function()
-        preview.get_config()
-      end)
-    end)
-
-    it('applies default values', function()
+    it('returns defaults before setup is called', function()
       local config = preview.get_config()
       assert.is_false(config.debug)
       assert.are.same({}, config.providers)
@@ -28,26 +22,44 @@ describe('preview', function()
       assert.are.same({}, config.providers)
     end)
 
-    it('accepts full provider config', function()
+    it('accepts full provider config via hash entry', function()
       helpers.reset_config({
-        providers = {
-          typst = {
-            cmd = { 'typst', 'compile' },
-            args = { '%s' },
-          },
+        typst = {
+          cmd = { 'typst', 'compile' },
+          args = { '%s' },
         },
       })
       local config = require('preview').get_config()
       assert.is_not_nil(config.providers.typst)
+    end)
+
+    it('resolves array preset names to provider configs', function()
+      helpers.reset_config({ 'typst', 'markdown' })
+      local config = require('preview').get_config()
+      local presets = require('preview.presets')
+      assert.are.same(presets.typst, config.providers.typst)
+      assert.are.same(presets.markdown, config.providers.markdown)
+    end)
+
+    it('resolves latex preset under tex filetype', function()
+      helpers.reset_config({ 'latex' })
+      local config = require('preview').get_config()
+      local presets = require('preview.presets')
+      assert.are.same(presets.latex, config.providers.tex)
+    end)
+
+    it('resolves github preset under markdown filetype', function()
+      helpers.reset_config({ 'github' })
+      local config = require('preview').get_config()
+      local presets = require('preview.presets')
+      assert.are.same(presets.github, config.providers.markdown)
     end)
   end)
 
   describe('resolve_provider', function()
     before_each(function()
       helpers.reset_config({
-        providers = {
-          typst = { cmd = { 'typst', 'compile' } },
-        },
+        typst = { cmd = { 'typst', 'compile' } },
       })
       preview = require('preview')
     end)

@@ -20,8 +20,11 @@ function M.delete_buffer(bufnr)
 end
 
 function M.reset_config(opts)
-  vim.g.preview = opts
-  require('preview')._test.reset()
+  local preview = require('preview')
+  preview._test.reset()
+  if opts then
+    preview.setup(opts)
+  end
 end
 
 return M

@@ -25,6 +25,14 @@ function M.check()
     else
       vim.health.error('filetype "' .. ft .. '": ' .. bin .. ' not found')
     end
+    if type(provider.open) == 'table' then
+      local opener = provider.open[1]
+      if vim.fn.executable(opener) == 1 then
+        vim.health.ok('filetype "' .. ft .. '": opener ' .. opener .. ' found')
+      else
+        vim.health.error('filetype "' .. ft .. '": opener ' .. opener .. ' not found')
+      end
+    end
   end
 end
 

@@ -37,17 +37,20 @@ With lazy.nvim:
 ==============================================================================
 CONFIGURATION                                      *preview.nvim-configuration*
 
-Configure via the `vim.g.preview` global table before the plugin loads.
+Configure via `require('preview').setup()`.
 
-                                                            *preview.Config*
-Fields:~
+                                                            *preview.setup()*
+setup({opts?})
+
+  `opts` is a mixed table. Array entries are preset names (see
+  |preview.nvim-presets|). Hash entries with table values are custom
+  provider configs keyed by filetype.
+
+  Fields:~
 
   `debug`            boolean|string   Enable debug logging. A string value
                                     is treated as a log file path.
                                     Default: `false`
-
-  `providers`        table            Provider configurations keyed by
-                                    filetype. Default: `{}`
 
                                                     *preview.ProviderConfig*
 Provider fields:~
@@ -74,6 +77,12 @@ Provider fields:~
                                        If a function, receives a
                                        |preview.Context|.
 
+  `open`             boolean|string[]   Open the output file after the first
+                                       successful compilation. `true` uses
+                                       |vim.ui.open()|. A string[] is run as
+                                       a command with the output path appended.
+                                       Presets default to `{ 'xdg-open' }`.
+
                                                         *preview.Context*
 Context fields:~
 
@@ -82,38 +91,36 @@ Context fields:~
   `root`    string     Project root (git root or file directory).
   `ft`      string     Filetype.
 
-Example:~
+Example using preset names:~
 >lua
-    vim.g.preview = {
-      providers = {
-        typst = {
-          cmd = { 'typst', 'compile' },
-          args = function(ctx)
-            return { ctx.file }
-          end,
-          output = function(ctx)
-            return ctx.file:gsub('%.typ$', '.pdf')
-          end,
-          error_parser = function(stderr, ctx)
-            local diagnostics = {}
-            for line, col, msg in stderr:gmatch('error:.-(%d+):(%d+):%s*(.-)%\n') do
-              table.insert(diagnostics, {
-                lnum = tonumber(line) - 1,
-                col = tonumber(col) - 1,
-                message = msg,
-                severity = vim.diagnostic.severity.ERROR,
-              })
-            end
-            return diagnostics
-          end,
-        },
-        tex = {
-          cmd = { 'latexmk' },
-          args = { '-pdf', '-interaction=nonstopmode' },
-          clean = { 'latexmk', '-c' },
-        },
+    require('preview').setup({ 'typst', 'latex', 'markdown' })
+<
+
+Example with a custom provider:~
+>lua
+    require('preview').setup({
+      typst = {
+        cmd = { 'typst', 'compile' },
+        args = function(ctx)
+          return { ctx.file }
+        end,
+        output = function(ctx)
+          return ctx.file:gsub('%.typ$', '.pdf')
+        end,
+        error_parser = function(stderr, ctx)
+          local diagnostics = {}
+          for line, col, msg in stderr:gmatch('error:.-(%d+):(%d+):%s*(.-)%\n') do
+            table.insert(diagnostics, {
+              lnum = tonumber(line) - 1,
+              col = tonumber(col) - 1,
+              message = msg,
+              severity = vim.diagnostic.severity.ERROR,
+            })
+          end
+          return diagnostics
+        end,
       },
-    }
+    })
 <
 
 ==============================================================================
@@ -122,32 +129,24 @@ PRESETS                                                *preview.nvim-presets*
 preview.nvim ships with pre-built provider configurations for common tools.
 Import them from `preview.presets`:
 
-  `presets.typst`      typst compile → PDF
-  `presets.latex`      latexmk -pdf → PDF (with clean support)
-  `presets.markdown`   pandoc → PDF
+  `presets.typst`              typst compile → PDF
+  `presets.latex`              latexmk -pdf → PDF (with clean support)
+  `presets.markdown`           pandoc → HTML (standalone, embedded)
+  `presets.github`             pandoc → HTML (GitHub-styled)
 
-Example:~
+Pass preset names as array entries to `setup()`:
 >lua
-    local presets = require('preview.presets')
-    vim.g.preview = {
-      providers = {
-        typst = presets.typst,
-        tex = presets.latex,
-        markdown = presets.markdown,
-      },
-    }
+    require('preview').setup({ 'typst', 'latex', 'markdown' })
 <
 
-Override individual fields with `vim.tbl_deep_extend`:
+Override individual fields using `vim.tbl_deep_extend`:
 >lua
     local presets = require('preview.presets')
-    vim.g.preview = {
-      providers = {
-        typst = vim.tbl_deep_extend('force', presets.typst, {
-          env = { TYPST_FONT_PATHS = '/usr/share/fonts' },
-        }),
-      },
-    }
+    require('preview').setup({
+      typst = vim.tbl_deep_extend('force', presets.typst, {
+        env = { TYPST_FONT_PATHS = '/usr/share/fonts' },
+      }),
+    })
 <
 
 ==============================================================================
@@ -160,7 +159,7 @@ COMMANDS                                              *preview.nvim-commands*
     `compile`    Compile the current buffer (default if omitted).
     `stop`       Kill active compilation for the current buffer.
     `clean`      Run the provider's clean command.
-    `watch`      Toggle auto-compile on save for the current buffer.
+    `toggle`     Toggle auto-compile on save for the current buffer.
     `status`     Echo compilation status (idle, compiling, watching).
 
 ==============================================================================
@@ -175,10 +174,10 @@ preview.stop({bufnr?})                                      *preview.stop()*
 preview.clean({bufnr?})                                    *preview.clean()*
     Run the provider's clean command for the buffer.
 
-preview.watch({bufnr?})                                    *preview.watch()*
+preview.toggle({bufnr?})                                  *preview.toggle()*
     Toggle watch mode for the buffer. When enabled, the buffer is
-    automatically compiled on each save (`BufWritePost`). Call again
-    to stop watching.
+    immediately compiled and automatically recompiled on each save
+    (`BufWritePost`). Call again to stop watching.
 
 preview.status({bufnr?})                                  *preview.status()*
     Returns a |preview.Status| table.
@@ -232,6 +231,7 @@ Run `:checkhealth preview` to verify:
 
 - Neovim version >= 0.11.0
 - Each configured provider's binary is executable
+- Each configured provider's opener binary (if any) is executable
 - Each configured provider's filetype mapping is valid
 
 ==============================================================================

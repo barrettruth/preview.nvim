@@ -1,10 +1,9 @@
 # preview.nvim
 
-Async document compilation for Neovim.
+**Async document compilation for Neovim**
 
-A framework for compiling documents (LaTeX, Typst, Markdown, etc.)
-asynchronously with error diagnostics. Ships with zero defaults — you configure
-your own providers.
+An extensible framework for compiling documents (LaTeX, Typst, Markdown, etc.)
+asynchronously with error diagnostics.
 
 ## Features
 
@@ -12,59 +11,68 @@ your own providers.
 - Compiler errors as native `vim.diagnostic`
 - User events for extensibility (`PreviewCompileStarted`,
   `PreviewCompileSuccess`, `PreviewCompileFailed`)
+- Built-in presets for Typst, LaTeX, Markdown, and GitHub-flavored Markdown
 - `:checkhealth` integration
 - Zero dependencies beyond Neovim 0.11.0+
 
 ## Requirements
 
-- Neovim >= 0.11.0
-- A compiler binary for each provider you configure
+- Neovim 0.11.0+
 
 ## Installation
 
-```lua
--- lazy.nvim
-{ 'barrettruth/preview.nvim' }
+Install with your package manager of choice or via
+[luarocks](https://luarocks.org/modules/barrettruth/preview.nvim):
+
 ```
-
-```vim
-" luarocks
-:Rocks install preview.nvim
-```
-
-## Configuration
-
-Use built-in presets for common tools:
-
-```lua
-local presets = require('preview.presets')
-vim.g.preview = {
-  providers = {
-    typst = presets.typst,
-    tex = presets.latex,
-    markdown = presets.markdown,
-  },
-}
-```
-
-Or define providers manually:
-
-```lua
-vim.g.preview = {
-  providers = {
-    typst = {
-      cmd = { 'typst', 'compile' },
-      args = function(ctx)
-        return { ctx.file }
-      end,
-      output = function(ctx)
-        return ctx.file:gsub('%.typ$', '.pdf')
-      end,
-    },
-  },
-}
+luarocks install preview.nvim
 ```
 
 ## Documentation
 
-See `:help preview.nvim` for full documentation.
+```vim
+:help preview.nvim
+```
+
+## FAQ
+
+**Q: How do I define a custom provider?**
+
+```lua
+require('preview').setup({
+  typst = {
+    cmd = { 'typst', 'compile' },
+    args = function(ctx)
+      return { ctx.file }
+    end,
+    output = function(ctx)
+      return ctx.file:gsub('%.typ$', '.pdf')
+    end,
+  },
+})
+```
+
+**Q: How do I override a preset?**
+
+```lua
+local presets = require('preview.presets')
+require('preview').setup({
+  typst = vim.tbl_deep_extend('force', presets.typst, {
+    env = { TYPST_FONT_PATHS = '/usr/share/fonts' },
+  }),
+})
+```
+
+**Q: How do I automatically open the output file?**
+
+Set `open = true` on your provider (all built-in presets have this enabled) to
+open the output with `vim.ui.open()` after the first successful compilation.
+For a specific application, pass a command table:
+
+```lua
+typst = vim.tbl_deep_extend('force', presets.typst, {
+  open = { 'sioyek', '--new-instance' },
+})
+```
+
+See `:h preview.nvim` for more information.

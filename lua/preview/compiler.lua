@@ -9,6 +9,9 @@ local active = {}
 ---@type table<integer, integer>
 local watching = {}
 
+---@type table<integer, true>
+local opened = {}
+
 ---@param val string[]|fun(ctx: preview.Context): string[]
 ---@param ctx preview.Context
 ---@return string[]
@@ -68,6 +71,9 @@ function M.compile(bufnr, name, provider, ctx)
     },
     vim.schedule_wrap(function(result)
       active[bufnr] = nil
+      if not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
 
       if result.code == 0 then
         log.dbg('compilation succeeded for buffer %d', bufnr)
@@ -76,6 +82,16 @@ function M.compile(bufnr, name, provider, ctx)
           pattern = 'PreviewCompileSuccess',
           data = { bufnr = bufnr, provider = name, output = output_file },
         })
+        if provider.open and not opened[bufnr] and output_file ~= '' then
+          if provider.open == true then
+            vim.ui.open(output_file)
+          elseif type(provider.open) == 'table' then
+            local open_cmd = vim.list_extend({}, provider.open)
+            table.insert(open_cmd, output_file)
+            vim.system(open_cmd)
+          end
+          opened[bufnr] = true
+        end
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
         if provider.error_parser then
@@ -146,7 +162,7 @@ end
 ---@param name string
 ---@param provider preview.ProviderConfig
 ---@param ctx_builder fun(bufnr: integer): preview.Context
-function M.watch(bufnr, name, provider, ctx_builder)
+function M.toggle(bufnr, name, provider, ctx_builder)
   if watching[bufnr] then
     M.unwatch(bufnr)
     return
@@ -168,6 +184,7 @@ function M.watch(bufnr, name, provider, ctx_builder)
     once = true,
     callback = function()
       M.unwatch(bufnr)
+      opened[bufnr] = nil
     end,
   })
 
@@ -175,6 +192,8 @@ function M.watch(bufnr, name, provider, ctx_builder)
     pattern = 'PreviewWatchStarted',
     data = { bufnr = bufnr, provider = name },
   })
+
+  M.compile(bufnr, name, provider, ctx_builder(bufnr))
 end
 
 ---@param bufnr integer
@@ -244,6 +263,7 @@ end
 M._test = {
   active = active,
   watching = watching,
+  opened = opened,
 }
 
 return M

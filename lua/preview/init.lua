@@ -1,4 +1,5 @@
 ---@class preview.ProviderConfig
+---@field ft? string
 ---@field cmd string[]
 ---@field args? string[]|fun(ctx: preview.Context): string[]
 ---@field cwd? string|fun(ctx: preview.Context): string
@@ -6,6 +7,7 @@
 ---@field output? string|fun(ctx: preview.Context): string
 ---@field error_parser? fun(stderr: string, ctx: preview.Context): preview.Diagnostic[]
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
+---@field open? boolean|string[]
 
 ---@class preview.Config
 ---@field debug boolean|string
@@ -32,10 +34,11 @@
 ---@field output_file string
 
 ---@class preview
+---@field setup fun(opts?: table)
 ---@field compile fun(bufnr?: integer)
 ---@field stop fun(bufnr?: integer)
 ---@field clean fun(bufnr?: integer)
----@field watch fun(bufnr?: integer)
+---@field toggle fun(bufnr?: integer)
 ---@field status fun(bufnr?: integer): preview.Status
 ---@field get_config fun(): preview.Config
 local M = {}
@@ -52,39 +55,48 @@ local default_config = {
 ---@type preview.Config
 local config = vim.deepcopy(default_config)
 
-local initialized = false
+---@param opts? table
+function M.setup(opts)
+  opts = opts or {}
+  vim.validate('preview.setup opts', opts, 'table')
 
-local function init()
-  if initialized then
-    return
+  local presets = require('preview.presets')
+  local providers = {}
+  local debug = false
+
+  for k, v in pairs(opts) do
+    if k == 'debug' then
+      vim.validate('preview.setup opts.debug', v, { 'boolean', 'string' })
+      debug = v
+    elseif type(k) == 'number' then
+      vim.validate('preview.setup preset name', v, 'string')
+      local preset = presets[v]
+      if preset then
+        providers[preset.ft] = preset
+      end
+    else
+      vim.validate('preview.setup provider config', v, 'table')
+      providers[k] = v
+    end
   end
-  initialized = true
 
-  local opts = vim.g.preview or {}
+  config = vim.tbl_deep_extend('force', default_config, {
+    debug = debug,
+    providers = providers,
+  })
 
-  vim.validate('preview config', opts, 'table')
-  if opts.debug ~= nil then
-    vim.validate('preview config.debug', opts.debug, { 'boolean', 'string' })
-  end
-  if opts.providers ~= nil then
-    vim.validate('preview config.providers', opts.providers, 'table')
-  end
-
-  config = vim.tbl_deep_extend('force', default_config, opts)
   log.set_enabled(config.debug)
   log.dbg('initialized with %d providers', vim.tbl_count(config.providers))
 end
 
 ---@return preview.Config
 function M.get_config()
-  init()
   return config
 end
 
 ---@param bufnr? integer
 ---@return string?
 function M.resolve_provider(bufnr)
-  init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local ft = vim.bo[bufnr].filetype
   if not config.providers[ft] then
@@ -97,7 +109,6 @@ end
 ---@param bufnr? integer
 ---@return preview.Context
 function M.build_context(bufnr)
-  init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local file = vim.api.nvim_buf_get_name(bufnr)
   local root = vim.fs.root(bufnr, { '.git' }) or vim.fn.fnamemodify(file, ':h')
@@ -111,42 +122,38 @@ end
 
 ---@param bufnr? integer
 function M.compile(bufnr)
-  init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
     vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
-  local provider = config.providers[name]
   local ctx = M.build_context(bufnr)
+  local provider = config.providers[name]
   compiler.compile(bufnr, name, provider, ctx)
 end
 
 ---@param bufnr? integer
 function M.stop(bufnr)
-  init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   compiler.stop(bufnr)
 end
 
 ---@param bufnr? integer
 function M.clean(bufnr)
-  init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
     vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
-  local provider = config.providers[name]
   local ctx = M.build_context(bufnr)
+  local provider = config.providers[name]
   compiler.clean(bufnr, name, provider, ctx)
 end
 
 ---@param bufnr? integer
-function M.watch(bufnr)
-  init()
+function M.toggle(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
@@ -154,7 +161,7 @@ function M.watch(bufnr)
     return
   end
   local provider = config.providers[name]
-  compiler.watch(bufnr, name, provider, M.build_context)
+  compiler.toggle(bufnr, name, provider, M.build_context)
 end
 
 ---@class preview.Status
@@ -166,7 +173,6 @@ end
 ---@param bufnr? integer
 ---@return preview.Status
 function M.status(bufnr)
-  init()
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   return compiler.status(bufnr)
 end
@@ -174,7 +180,6 @@ end
 M._test = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   reset = function()
-    initialized = false
     config = vim.deepcopy(default_config)
   end,
 }

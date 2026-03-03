@@ -174,7 +174,7 @@ describe('compiler', function()
     end)
   end)
 
-  describe('watch', function()
+  describe('toggle', function()
     it('registers autocmd and tracks in watching table', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch.txt')
@@ -184,7 +184,7 @@ describe('compiler', function()
         return { bufnr = b, file = '/tmp/preview_test_watch.txt', root = '/tmp', ft = 'text' }
       end
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       assert.is_not_nil(compiler._test.watching[bufnr])
 
       helpers.delete_buffer(bufnr)
@@ -208,7 +208,7 @@ describe('compiler', function()
         return { bufnr = b, file = '/tmp/preview_test_watch_event.txt', root = '/tmp', ft = 'text' }
       end
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       assert.is_true(fired)
 
       compiler.unwatch(bufnr)
@@ -224,10 +224,10 @@ describe('compiler', function()
         return { bufnr = b, file = '/tmp/preview_test_watch_toggle.txt', root = '/tmp', ft = 'text' }
       end
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       assert.is_not_nil(compiler._test.watching[bufnr])
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       assert.is_nil(compiler._test.watching[bufnr])
 
       helpers.delete_buffer(bufnr)
@@ -251,7 +251,7 @@ describe('compiler', function()
         return { bufnr = b, file = '/tmp/preview_test_watch_stop.txt', root = '/tmp', ft = 'text' }
       end
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       compiler.unwatch(bufnr)
       assert.is_true(stopped)
       assert.is_nil(compiler._test.watching[bufnr])
@@ -273,7 +273,7 @@ describe('compiler', function()
         }
       end
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       assert.is_not_nil(compiler._test.watching[bufnr])
 
       compiler.stop_all()
@@ -294,7 +294,7 @@ describe('compiler', function()
         return { bufnr = b, file = '/tmp/preview_test_watch_status.txt', root = '/tmp', ft = 'text' }
       end
 
-      compiler.watch(bufnr, 'echo', provider, ctx_builder)
+      compiler.toggle(bufnr, 'echo', provider, ctx_builder)
       s = compiler.status(bufnr)
       assert.is_true(s.watching)
 

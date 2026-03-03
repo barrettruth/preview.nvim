@@ -1,6 +1,6 @@
 local M = {}
 
-local subcommands = { 'compile', 'stop', 'clean', 'watch', 'status' }
+local subcommands = { 'compile', 'stop', 'clean', 'toggle', 'status' }
 
 ---@param args string
 local function dispatch(args)
@@ -12,8 +12,8 @@ local function dispatch(args)
     require('preview').stop()
   elseif subcmd == 'clean' then
     require('preview').clean()
-  elseif subcmd == 'watch' then
-    require('preview').watch()
+  elseif subcmd == 'toggle' then
+    require('preview').toggle()
   elseif subcmd == 'status' then
     local s = require('preview').status()
     local parts = {}
@@ -47,7 +47,7 @@ function M.setup()
     complete = function(lead)
       return complete(lead)
     end,
-    desc = 'Compile, stop, clean, watch, or check status of document preview',
+    desc = 'Compile, stop, clean, toggle, or check status of document preview',
   })
 end
 
