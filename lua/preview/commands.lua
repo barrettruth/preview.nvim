@@ -1,22 +1,22 @@
 local M = {}
 
-local subcommands = { 'compile', 'stop', 'clean', 'toggle', 'open', 'status' }
-
----@param args string
-local function dispatch(args)
-  local subcmd = args ~= '' and args or 'compile'
-
-  if subcmd == 'compile' then
+local handlers = {
+  compile = function()
     require('preview').compile()
-  elseif subcmd == 'stop' then
+  end,
+  stop = function()
     require('preview').stop()
-  elseif subcmd == 'clean' then
+  end,
+  clean = function()
     require('preview').clean()
-  elseif subcmd == 'toggle' then
+  end,
+  toggle = function()
     require('preview').toggle()
-  elseif subcmd == 'open' then
+  end,
+  open = function()
     require('preview').open()
-  elseif subcmd == 'status' then
+  end,
+  status = function()
     local s = require('preview').status()
     local parts = {}
     if s.compiling then
@@ -28,6 +28,15 @@ local function dispatch(args)
       table.insert(parts, 'watching')
     end
     vim.notify('[preview.nvim]: ' .. table.concat(parts, ', '), vim.log.levels.INFO)
+  end,
+}
+
+---@param args string
+local function dispatch(args)
+  local subcmd = args ~= '' and args or 'compile'
+  local handler = handlers[subcmd]
+  if handler then
+    handler()
   else
     vim.notify('[preview.nvim]: unknown subcommand: ' .. subcmd, vim.log.levels.ERROR)
   end
@@ -38,7 +47,7 @@ end
 local function complete(lead)
   return vim.tbl_filter(function(s)
     return s:find(lead, 1, true) == 1
-  end, subcommands)
+  end, vim.tbl_keys(handlers))
 end
 
 function M.setup()
