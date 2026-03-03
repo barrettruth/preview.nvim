@@ -37,6 +37,18 @@ describe('presets', function()
       assert.is_true(presets.typst.open)
     end)
 
+    it('has reload as a function', function()
+      assert.is_function(presets.typst.reload)
+    end)
+
+    it('reload returns typst watch command', function()
+      local result = presets.typst.reload(ctx)
+      assert.is_table(result)
+      assert.are.equal('typst', result[1])
+      assert.are.equal('watch', result[2])
+      assert.are.equal(ctx.file, result[3])
+    end)
+
     it('parses errors from stderr', function()
       local stderr = table.concat({
         'main.typ:5:23: error: unexpected token',
@@ -84,6 +96,7 @@ describe('presets', function()
       assert.are.same({
         '-pdf',
         '-interaction=nonstopmode',
+        '-synctex=1',
         '-pdflatex=pdflatex -file-line-error -interaction=nonstopmode %O %S',
         '/tmp/document.tex',
       }, args)
@@ -184,6 +197,10 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.markdown.open)
+    end)
+
+    it('has reload enabled for SSE', function()
+      assert.is_true(presets.markdown.reload)
     end)
 
     it('parses YAML metadata errors with multiline message', function()
@@ -288,6 +305,10 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.github.open)
+    end)
+
+    it('has reload enabled for SSE', function()
+      assert.is_true(presets.github.reload)
     end)
 
     it('parses YAML metadata errors with multiline message', function()

@@ -9,6 +9,7 @@
 ---@field errors? false|'diagnostic'|'quickfix'
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
+---@field reload? boolean|string[]|fun(ctx: preview.Context): string[]
 
 ---@class preview.Config
 ---@field debug boolean|string
@@ -34,13 +35,14 @@
 ---@field obj table
 ---@field provider string
 ---@field output_file string
+---@field is_reload? boolean
 
 ---@class preview
 ---@field setup fun(opts?: table)
----@field compile fun(bufnr?: integer)
+---@field build fun(bufnr?: integer)
 ---@field stop fun(bufnr?: integer)
 ---@field clean fun(bufnr?: integer)
----@field toggle fun(bufnr?: integer)
+---@field watch fun(bufnr?: integer)
 ---@field open fun(bufnr?: integer)
 ---@field status fun(bufnr?: integer): preview.Status
 ---@field statusline fun(bufnr?: integer): string
@@ -98,6 +100,7 @@ function M.setup(opts)
       return x == nil or x == false or x == 'diagnostic' or x == 'quickfix'
     end, 'false, "diagnostic", or "quickfix"')
     vim.validate(prefix .. '.open', provider.open, { 'boolean', 'table' }, true)
+    vim.validate(prefix .. '.reload', provider.reload, { 'boolean', 'table', 'function' }, true)
   end
 
   config = vim.tbl_deep_extend('force', default_config, {
@@ -141,7 +144,7 @@ function M.build_context(bufnr)
 end
 
 ---@param bufnr? integer
-function M.compile(bufnr)
+function M.build(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
@@ -173,7 +176,7 @@ function M.clean(bufnr)
 end
 
 ---@param bufnr? integer
-function M.toggle(bufnr)
+function M.watch(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then

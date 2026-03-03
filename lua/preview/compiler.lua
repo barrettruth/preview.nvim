@@ -39,6 +39,18 @@ local function eval_string(val, ctx)
   return val
 end
 
+---@param provider preview.ProviderConfig
+---@param ctx preview.Context
+---@return string[]?
+local function resolve_reload_cmd(provider, ctx)
+  if type(provider.reload) == 'function' then
+    return provider.reload(ctx)
+  elseif type(provider.reload) == 'table' then
+    return vim.list_extend({}, provider.reload)
+  end
+  return nil
+end
+
 ---@param bufnr integer
 ---@param name string
 ---@param provider preview.ProviderConfig
@@ -60,11 +72,6 @@ function M.compile(bufnr, name, provider, ctx)
 
   local resolved_ctx = vim.tbl_extend('force', ctx, { output = output_file })
 
-  local cmd = vim.list_extend({}, provider.cmd)
-  if provider.args then
-    vim.list_extend(cmd, eval_list(provider.args, resolved_ctx))
-  end
-
   local cwd = ctx.root
   if provider.cwd then
     cwd = eval_string(provider.cwd, resolved_ctx)
@@ -72,6 +79,103 @@ function M.compile(bufnr, name, provider, ctx)
 
   if output_file ~= '' then
     last_output[bufnr] = output_file
+  end
+
+  local reload_cmd = resolve_reload_cmd(provider, resolved_ctx)
+
+  if reload_cmd then
+    log.dbg(
+      'starting long-running process for buffer %d with provider "%s": %s',
+      bufnr,
+      name,
+      table.concat(reload_cmd, ' ')
+    )
+
+    local obj = vim.system(
+      reload_cmd,
+      {
+        cwd = cwd,
+        env = provider.env,
+      },
+      vim.schedule_wrap(function(result)
+        active[bufnr] = nil
+        if not vim.api.nvim_buf_is_valid(bufnr) then
+          return
+        end
+
+        if result.code ~= 0 then
+          log.dbg('long-running process failed for buffer %d (exit code %d)', bufnr, result.code)
+          local errors_mode = provider.errors
+          if errors_mode == nil then
+            errors_mode = 'diagnostic'
+          end
+          if provider.error_parser and errors_mode then
+            local output = (result.stdout or '') .. (result.stderr or '')
+            if errors_mode == 'diagnostic' then
+              diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
+            elseif errors_mode == 'quickfix' then
+              local ok, diagnostics = pcall(provider.error_parser, output, ctx)
+              if ok and diagnostics and #diagnostics > 0 then
+                local items = {}
+                for _, d in ipairs(diagnostics) do
+                  table.insert(items, {
+                    bufnr = bufnr,
+                    lnum = d.lnum + 1,
+                    col = d.col + 1,
+                    text = d.message,
+                    type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
+                  })
+                end
+                vim.fn.setqflist(items, 'r')
+                vim.cmd('copen')
+              end
+            end
+          end
+          vim.api.nvim_exec_autocmds('User', {
+            pattern = 'PreviewCompileFailed',
+            data = {
+              bufnr = bufnr,
+              provider = name,
+              code = result.code,
+              stderr = result.stderr or '',
+            },
+          })
+        end
+      end)
+    )
+
+    if provider.open and not opened[bufnr] and output_file ~= '' then
+      if provider.open == true then
+        vim.ui.open(output_file)
+      elseif type(provider.open) == 'table' then
+        local open_cmd = vim.list_extend({}, provider.open)
+        table.insert(open_cmd, output_file)
+        vim.system(open_cmd)
+      end
+      opened[bufnr] = true
+    end
+
+    active[bufnr] = { obj = obj, provider = name, output_file = output_file, is_reload = true }
+
+    vim.api.nvim_create_autocmd('BufWipeout', {
+      buffer = bufnr,
+      once = true,
+      callback = function()
+        M.stop(bufnr)
+        last_output[bufnr] = nil
+      end,
+    })
+
+    vim.api.nvim_exec_autocmds('User', {
+      pattern = 'PreviewCompileStarted',
+      data = { bufnr = bufnr, provider = name },
+    })
+    return
+  end
+
+  local cmd = vim.list_extend({}, provider.cmd)
+  if provider.args then
+    vim.list_extend(cmd, eval_list(provider.args, resolved_ctx))
   end
 
   log.dbg('compiling buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
@@ -104,6 +208,12 @@ function M.compile(bufnr, name, provider, ctx)
           pattern = 'PreviewCompileSuccess',
           data = { bufnr = bufnr, provider = name, output = output_file },
         })
+        if provider.reload == true and output_file:match('%.html$') then
+          local r = require('preview.reload')
+          r.start()
+          r.inject(output_file)
+          r.broadcast()
+        end
         if provider.open and not opened[bufnr] and output_file ~= '' then
           if provider.open == true then
             vim.ui.open(output_file)
@@ -198,6 +308,7 @@ function M.stop_all()
   for bufnr, _ in pairs(watching) do
     M.unwatch(bufnr)
   end
+  require('preview.reload').stop()
 end
 
 ---@param bufnr integer
@@ -205,6 +316,19 @@ end
 ---@param provider preview.ProviderConfig
 ---@param ctx_builder fun(bufnr: integer): preview.Context
 function M.toggle(bufnr, name, provider, ctx_builder)
+  local is_longrunning = type(provider.reload) == 'table' or type(provider.reload) == 'function'
+
+  if is_longrunning then
+    if active[bufnr] then
+      M.stop(bufnr)
+      vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
+    else
+      M.compile(bufnr, name, provider, ctx_builder(bufnr))
+      vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
+    end
+    return
+  end
+
   if watching[bufnr] then
     M.unwatch(bufnr)
     vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
@@ -313,8 +437,8 @@ function M.status(bufnr)
   local proc = active[bufnr]
   if proc then
     return {
-      compiling = true,
-      watching = watching[bufnr] ~= nil,
+      compiling = not proc.is_reload,
+      watching = watching[bufnr] ~= nil or proc.is_reload == true,
       provider = proc.provider,
       output_file = proc.output_file,
     }
