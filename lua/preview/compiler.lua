@@ -316,8 +316,7 @@ end
 ---@param provider preview.ProviderConfig
 ---@param ctx_builder fun(bufnr: integer): preview.Context
 function M.toggle(bufnr, name, provider, ctx_builder)
-  local is_longrunning = type(provider.reload) == 'table'
-    or type(provider.reload) == 'function'
+  local is_longrunning = type(provider.reload) == 'table' or type(provider.reload) == 'function'
 
   if is_longrunning then
     if active[bufnr] then

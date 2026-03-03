@@ -35,6 +35,7 @@
 ---@field obj table
 ---@field provider string
 ---@field output_file string
+---@field is_reload? boolean
 
 ---@class preview
 ---@field setup fun(opts?: table)
