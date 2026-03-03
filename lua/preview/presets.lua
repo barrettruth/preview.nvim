@@ -8,7 +8,7 @@ M.typst = {
     return { ctx.file }
   end,
   output = function(ctx)
-    return ctx.file:gsub('%.typ$', '.pdf')
+    return (ctx.file:gsub('%.typ$', '.pdf'))
   end,
   open = { 'xdg-open' },
 }
@@ -21,7 +21,7 @@ M.latex = {
     return { '-pdf', '-interaction=nonstopmode', ctx.file }
   end,
   output = function(ctx)
-    return ctx.file:gsub('%.tex$', '.pdf')
+    return (ctx.file:gsub('%.tex$', '.pdf'))
   end,
   clean = function(ctx)
     return { 'latexmk', '-c', ctx.file }
@@ -38,7 +38,7 @@ M.markdown = {
     return { ctx.file, '-s', '--embed-resources', '-o', output }
   end,
   output = function(ctx)
-    return ctx.file:gsub('%.md$', '.html')
+    return (ctx.file:gsub('%.md$', '.html'))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
@@ -53,17 +53,19 @@ M.github = {
   args = function(ctx)
     local output = ctx.file:gsub('%.md$', '.html')
     return {
+      '-f',
+      'gfm',
       ctx.file,
       '-s',
       '--embed-resources',
       '--css',
-      'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/github.css',
+      'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
       '-o',
       output,
     }
   end,
   output = function(ctx)
-    return ctx.file:gsub('%.md$', '.html')
+    return (ctx.file:gsub('%.md$', '.html'))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }

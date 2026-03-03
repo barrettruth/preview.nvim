@@ -55,23 +55,20 @@ require('preview').setup({
 **Q: How do I override a preset?**
 
 ```lua
-local presets = require('preview.presets')
 require('preview').setup({
-  typst = vim.tbl_deep_extend('force', presets.typst, {
-    env = { TYPST_FONT_PATHS = '/usr/share/fonts' },
-  }),
+  typst = { env = { TYPST_FONT_PATHS = '/usr/share/fonts' } },
 })
 ```
 
 **Q: How do I automatically open the output file?**
 
 Set `open = true` on your provider (all built-in presets have this enabled) to
-open the output with `vim.ui.open()` after the first successful compilation.
-For a specific application, pass a command table:
+open the output with `vim.ui.open()` after the first successful compilation. For
+a specific application, pass a command table:
 
 ```lua
-typst = vim.tbl_deep_extend('force', presets.typst, {
-  open = { 'sioyek', '--new-instance' },
+require('preview').setup({
+  typst = { open = { 'sioyek', '--new-instance' } },
 })
 ```
 

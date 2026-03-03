@@ -42,9 +42,18 @@ Configure via `require('preview').setup()`.
                                                             *preview.setup()*
 setup({opts?})
 
-  `opts` is a mixed table. Array entries are preset names (see
-  |preview.nvim-presets|). Hash entries with table values are custom
-  provider configs keyed by filetype.
+  `opts` is a table where keys are preset names or filetypes. For each
+  key `k` with value `v` (excluding `debug`):
+
+  - If `k` is a preset name and `v` is `true`, the preset is registered
+    as-is under its filetype.
+  - If `k` is a preset name and `v` is a table, it is deep-merged with
+    the preset and registered under the preset's filetype.
+  - If `k` is not a preset name and `v` is a table, it is registered
+    directly as a custom provider keyed by filetype `k`.
+  - If `v` is `false`, the entry is skipped (no-op).
+
+  See |preview.nvim-presets| for available preset names.
 
   Fields:~
 
@@ -91,33 +100,28 @@ Context fields:~
   `root`    string     Project root (git root or file directory).
   `ft`      string     Filetype.
 
-Example using preset names:~
+Example enabling presets:~
 >lua
-    require('preview').setup({ 'typst', 'latex', 'markdown' })
+    require('preview').setup({ typst = true, latex = true, github = true })
 <
 
-Example with a custom provider:~
+Example overriding a preset field:~
 >lua
     require('preview').setup({
-      typst = {
-        cmd = { 'typst', 'compile' },
+      typst = { open = { 'sioyek', '--new-instance' } },
+    })
+<
+
+Example with a fully custom provider (key is not a preset name):~
+>lua
+    require('preview').setup({
+      rst = {
+        cmd = { 'rst2html' },
         args = function(ctx)
           return { ctx.file }
         end,
         output = function(ctx)
-          return ctx.file:gsub('%.typ$', '.pdf')
-        end,
-        error_parser = function(stderr, ctx)
-          local diagnostics = {}
-          for line, col, msg in stderr:gmatch('error:.-(%d+):(%d+):%s*(.-)%\n') do
-            table.insert(diagnostics, {
-              lnum = tonumber(line) - 1,
-              col = tonumber(col) - 1,
-              message = msg,
-              severity = vim.diagnostic.severity.ERROR,
-            })
-          end
-          return diagnostics
+          return ctx.file:gsub('%.rst$', '.html')
         end,
       },
     })
@@ -132,20 +136,17 @@ Import them from `preview.presets`:
   `presets.typst`              typst compile → PDF
   `presets.latex`              latexmk -pdf → PDF (with clean support)
   `presets.markdown`           pandoc → HTML (standalone, embedded)
-  `presets.github`             pandoc → HTML (GitHub-styled)
+  `presets.github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
 
-Pass preset names as array entries to `setup()`:
+Enable presets with `preset_name = true`:
 >lua
-    require('preview').setup({ 'typst', 'latex', 'markdown' })
+    require('preview').setup({ typst = true, latex = true, github = true })
 <
 
-Override individual fields using `vim.tbl_deep_extend`:
+Override individual fields by passing a table instead of `true`:
 >lua
-    local presets = require('preview.presets')
     require('preview').setup({
-      typst = vim.tbl_deep_extend('force', presets.typst, {
-        env = { TYPST_FONT_PATHS = '/usr/share/fonts' },
-      }),
+      typst = { env = { TYPST_FONT_PATHS = '/usr/share/fonts' } },
     })
 <
 
