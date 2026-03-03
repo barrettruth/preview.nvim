@@ -10,8 +10,8 @@ your own providers.
 
 - Async compilation via `vim.system()`
 - Compiler errors as native `vim.diagnostic`
-- User events for extensibility (`PreviewCompileStarted`, `PreviewCompileSuccess`,
-  `PreviewCompileFailed`)
+- User events for extensibility (`PreviewCompileStarted`,
+  `PreviewCompileSuccess`, `PreviewCompileFailed`)
 - `:checkhealth` integration
 - Zero dependencies beyond Neovim 0.11.0+
 
