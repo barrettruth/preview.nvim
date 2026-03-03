@@ -107,6 +107,9 @@ M.typst = {
     return parse_typst(output)
   end,
   open = true,
+  reload = function(ctx)
+    return { 'typst', 'watch', ctx.file }
+  end,
 }
 
 ---@type preview.ProviderConfig
@@ -117,6 +120,7 @@ M.latex = {
     return {
       '-pdf',
       '-interaction=nonstopmode',
+      '-synctex=1',
       '-pdflatex=pdflatex -file-line-error -interaction=nonstopmode %O %S',
       ctx.file,
     }
@@ -150,6 +154,7 @@ M.markdown = {
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
   end,
   open = true,
+  reload = true,
 }
 
 ---@type preview.ProviderConfig
@@ -179,6 +184,7 @@ M.github = {
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
   end,
   open = true,
+  reload = true,
 }
 
 return M
