@@ -74,8 +74,15 @@ Provider fields:~
   `output`           string|function   Output file path. If a function,
                                       receives a |preview.Context|.
 
-  `error_parser`     function          Receives (stderr, |preview.Context|)
+  `error_parser`     function          Receives (output, |preview.Context|)
                                       and returns vim.Diagnostic[].
+
+  `errors`           false|'diagnostic'|'quickfix'
+                                      How parse errors are reported.
+                                      `false` suppresses error handling.
+                                      `'quickfix'` populates the quickfix
+                                      list and opens it. Default:
+                                      `'diagnostic'`.
 
   `clean`            string[]|function  Command to remove build artifacts.
                                        If a function, receives a
@@ -85,7 +92,6 @@ Provider fields:~
                                        successful compilation. `true` uses
                                        |vim.ui.open()|. A string[] is run as
                                        a command with the output path appended.
-                                       Presets default to `{ 'xdg-open' }`.
 
                                                         *preview.Context*
 Context fields:~
@@ -94,6 +100,8 @@ Context fields:~
   `file`    string     Absolute file path.
   `root`    string     Project root (git root or file directory).
   `ft`      string     Filetype.
+  `output`  string?    Resolved output file path (set after `output`
+                       is evaluated, available to `args` functions).
 
 Example enabling presets:~
 >lua
@@ -156,7 +164,8 @@ COMMANDS                                              *preview.nvim-commands*
     `stop`       Kill active compilation for the current buffer.
     `clean`      Run the provider's clean command.
     `toggle`     Toggle auto-compile on save for the current buffer.
-    `status`     Echo compilation status (idle, compiling, toggled).
+    `open`       Open the last compiled output without recompiling.
+    `status`     Echo compilation status (idle, compiling, watching).
 
 ==============================================================================
 API                                                        *preview.nvim-api*
@@ -175,8 +184,15 @@ preview.toggle({bufnr?})                                  *preview.toggle()*
     immediately compiled and automatically recompiled on each save
     (`BufWritePost`). Call again to stop.
 
+preview.open({bufnr?})                                      *preview.open()*
+    Open the last compiled output for the buffer without recompiling.
+
 preview.status({bufnr?})                                  *preview.status()*
     Returns a |preview.Status| table.
+
+preview.statusline({bufnr?})                          *preview.statusline()*
+    Returns a short status string for statusline integration:
+    `'compiling'`, `'watching'`, or `''` (idle).
 
                                                           *preview.Status*
 Status fields:~
