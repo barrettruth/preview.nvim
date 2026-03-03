@@ -19,6 +19,7 @@
 ---@field file string
 ---@field root string
 ---@field ft string
+---@field output? string
 
 ---@class preview.Diagnostic
 ---@field lnum integer
