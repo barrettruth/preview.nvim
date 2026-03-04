@@ -55,7 +55,9 @@ end
 ---@param name string
 ---@param provider preview.ProviderConfig
 ---@param ctx preview.Context
-function M.compile(bufnr, name, provider, ctx)
+function M.compile(bufnr, name, provider, ctx, opts)
+  opts = opts or {}
+
   if vim.bo[bufnr].modified then
     vim.cmd('silent! update')
   end
@@ -81,7 +83,10 @@ function M.compile(bufnr, name, provider, ctx)
     last_output[bufnr] = output_file
   end
 
-  local reload_cmd = resolve_reload_cmd(provider, resolved_ctx)
+  local reload_cmd
+  if not opts.oneshot then
+    reload_cmd = resolve_reload_cmd(provider, resolved_ctx)
+  end
 
   if reload_cmd then
     log.dbg(
@@ -403,7 +408,10 @@ end
 ---@param ctx preview.Context
 function M.clean(bufnr, name, provider, ctx)
   if not provider.clean then
-    vim.notify('[preview.nvim] provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
+    vim.notify(
+      '[preview.nvim]: provider "' .. name .. '" has no clean command',
+      vim.log.levels.WARN
+    )
     return
   end
 
@@ -427,10 +435,10 @@ function M.clean(bufnr, name, provider, ctx)
     vim.schedule_wrap(function(result)
       if result.code == 0 then
         log.dbg('clean succeeded for buffer %d', bufnr)
-        vim.notify('[preview.nvim] clean complete', vim.log.levels.INFO)
+        vim.notify('[preview.nvim]: clean complete', vim.log.levels.INFO)
       else
         log.dbg('clean failed for buffer %d (exit code %d)', bufnr, result.code)
-        vim.notify('[preview.nvim] clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+        vim.notify('[preview.nvim]: clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
       end
     end)
   )
@@ -438,13 +446,19 @@ end
 
 ---@param bufnr integer
 ---@return boolean
-function M.open(bufnr)
+function M.open(bufnr, open_config)
   local output = last_output[bufnr]
   if not output then
     log.dbg('no last output file for buffer %d', bufnr)
     return false
   end
-  vim.ui.open(output)
+  if type(open_config) == 'table' then
+    local open_cmd = vim.list_extend({}, open_config)
+    table.insert(open_cmd, output)
+    vim.system(open_cmd)
+  else
+    vim.ui.open(output)
+  end
   return true
 end
 
