@@ -150,7 +150,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
       {
         cwd = cwd,
         env = provider.env,
-        stderr = vim.schedule_wrap(function(err, data)
+        stderr = vim.schedule_wrap(function(_err, data)
           if not data or not vim.api.nvim_buf_is_valid(bufnr) then
             return
           end
@@ -177,7 +177,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
                   })
                 end
                 vim.fn.setqflist(items, 'r')
-                vim.cmd('copen')
+                local win = vim.fn.win_getid()
+                vim.cmd.cwindow()
+                vim.fn.win_gotoid(win)
               end
             end
           end
@@ -215,7 +217,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
                   })
                 end
                 vim.fn.setqflist(items, 'r')
-                vim.cmd('copen')
+                local win = vim.fn.win_getid()
+                vim.cmd.cwindow()
+                vim.fn.win_gotoid(win)
               end
             end
           end
@@ -270,6 +274,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
               diagnostic.clear(bufnr)
             elseif errors_mode == 'quickfix' then
               vim.fn.setqflist({}, 'r')
+              vim.cmd.cwindow()
             end
             do_open(bufnr, output_file, provider.open)
             opened[bufnr] = true
@@ -331,6 +336,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
           diagnostic.clear(bufnr)
         elseif errors_mode == 'quickfix' then
           vim.fn.setqflist({}, 'r')
+          vim.cmd.cwindow()
         end
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileSuccess',
@@ -372,7 +378,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
                 })
               end
               vim.fn.setqflist(items, 'r')
-              vim.cmd('copen')
+              local win = vim.fn.win_getid()
+              vim.cmd.cwindow()
+              vim.fn.win_gotoid(win)
             end
           end
         end
