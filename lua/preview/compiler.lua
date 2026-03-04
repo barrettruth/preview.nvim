@@ -170,7 +170,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
 
     active[bufnr] = { obj = obj, provider = name, output_file = output_file, is_reload = true }
 
-    vim.api.nvim_create_autocmd('BufWipeout', {
+    vim.api.nvim_create_autocmd('BufUnload', {
       buffer = bufnr,
       once = true,
       callback = function()
@@ -279,7 +279,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
 
   active[bufnr] = { obj = obj, provider = name, output_file = output_file }
 
-  vim.api.nvim_create_autocmd('BufWipeout', {
+  vim.api.nvim_create_autocmd('BufUnload', {
     buffer = bufnr,
     once = true,
     callback = function()
@@ -374,7 +374,7 @@ function M.toggle(bufnr, name, provider, ctx_builder)
   log.dbg('watching buffer %d with provider "%s"', bufnr, name)
   vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
 
-  vim.api.nvim_create_autocmd('BufWipeout', {
+  vim.api.nvim_create_autocmd('BufUnload', {
     buffer = bufnr,
     once = true,
     callback = function()
