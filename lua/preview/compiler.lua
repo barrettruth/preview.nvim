@@ -15,9 +15,48 @@ local opened = {}
 ---@type table<integer, string>
 local last_output = {}
 
+---@type table<integer, table>
+local viewer_procs = {}
+
+---@type table<integer, uv.uv_fs_event_t>
+local open_watchers = {}
+
 local debounce_timers = {}
 
 local DEBOUNCE_MS = 500
+
+---@param bufnr integer
+local function stop_open_watcher(bufnr)
+  local w = open_watchers[bufnr]
+  if w then
+    w:stop()
+    w:close()
+    open_watchers[bufnr] = nil
+  end
+end
+
+---@param bufnr integer
+local function close_viewer(bufnr)
+  local obj = viewer_procs[bufnr]
+  if obj then
+    local kill = obj.kill
+    kill(obj, 'sigterm')
+    viewer_procs[bufnr] = nil
+  end
+end
+
+---@param bufnr integer
+---@param output_file string
+---@param open_config boolean|string[]
+local function do_open(bufnr, output_file, open_config)
+  if open_config == true then
+    vim.ui.open(output_file)
+  elseif type(open_config) == 'table' then
+    local open_cmd = vim.list_extend({}, open_config)
+    table.insert(open_cmd, output_file)
+    viewer_procs[bufnr] = vim.system(open_cmd)
+  end
+end
 
 ---@param val string[]|fun(ctx: preview.Context): string[]
 ---@param ctx preview.Context
@@ -160,21 +199,40 @@ function M.compile(bufnr, name, provider, ctx, opts)
       end)
     )
 
-    if
-      provider.open
-      and not opts.oneshot
-      and not opened[bufnr]
-      and output_file ~= ''
-      and vim.uv.fs_stat(output_file)
-    then
-      if provider.open == true then
-        vim.ui.open(output_file)
-      elseif type(provider.open) == 'table' then
-        local open_cmd = vim.list_extend({}, provider.open)
-        table.insert(open_cmd, output_file)
-        vim.system(open_cmd)
+    if provider.open and not opts.oneshot and not opened[bufnr] and output_file ~= '' then
+      local pre_stat = vim.uv.fs_stat(output_file)
+      local pre_mtime = pre_stat and pre_stat.mtime.sec or 0
+      local out_dir = vim.fn.fnamemodify(output_file, ':h')
+      local out_name = vim.fn.fnamemodify(output_file, ':t')
+      stop_open_watcher(bufnr)
+      local watcher = vim.uv.new_fs_event()
+      if watcher then
+        open_watchers[bufnr] = watcher
+        watcher:start(
+          out_dir,
+          {},
+          vim.schedule_wrap(function(err, filename, _events)
+            if err or vim.fn.fnamemodify(filename or '', ':t') ~= out_name then
+              return
+            end
+            if opened[bufnr] then
+              stop_open_watcher(bufnr)
+              return
+            end
+            if not vim.api.nvim_buf_is_valid(bufnr) then
+              stop_open_watcher(bufnr)
+              return
+            end
+            local new_stat = vim.uv.fs_stat(output_file)
+            if not (new_stat and new_stat.mtime.sec > pre_mtime) then
+              return
+            end
+            stop_open_watcher(bufnr)
+            do_open(bufnr, output_file, provider.open)
+            opened[bufnr] = true
+          end)
+        )
       end
-      opened[bufnr] = true
     end
 
     active[bufnr] = { obj = obj, provider = name, output_file = output_file, is_reload = true }
@@ -184,6 +242,8 @@ function M.compile(bufnr, name, provider, ctx, opts)
       once = true,
       callback = function()
         M.stop(bufnr)
+        stop_open_watcher(bufnr)
+        close_viewer(bufnr)
         last_output[bufnr] = nil
       end,
     })
@@ -246,13 +306,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
           and output_file ~= ''
           and vim.uv.fs_stat(output_file)
         then
-          if provider.open == true then
-            vim.ui.open(output_file)
-          elseif type(provider.open) == 'table' then
-            local open_cmd = vim.list_extend({}, provider.open)
-            table.insert(open_cmd, output_file)
-            vim.system(open_cmd)
-          end
+          do_open(bufnr, output_file, provider.open)
           opened[bufnr] = true
         end
       else
@@ -299,6 +353,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
     once = true,
     callback = function()
       M.stop(bufnr)
+      close_viewer(bufnr)
       last_output[bufnr] = nil
     end,
   })
@@ -338,6 +393,12 @@ function M.stop_all()
   end
   for bufnr, _ in pairs(watching) do
     M.unwatch(bufnr)
+  end
+  for bufnr, _ in pairs(open_watchers) do
+    stop_open_watcher(bufnr)
+  end
+  for bufnr, _ in pairs(viewer_procs) do
+    close_viewer(bufnr)
   end
   require('preview.reload').stop()
 end
@@ -394,6 +455,8 @@ function M.toggle(bufnr, name, provider, ctx_builder)
     once = true,
     callback = function()
       M.unwatch(bufnr)
+      stop_open_watcher(bufnr)
+      close_viewer(bufnr)
       opened[bufnr] = nil
     end,
   })
@@ -471,13 +534,7 @@ function M.open(bufnr, open_config)
     log.dbg('output file no longer exists for buffer %d: %s', bufnr, output)
     return false
   end
-  if type(open_config) == 'table' then
-    local open_cmd = vim.list_extend({}, open_config)
-    table.insert(open_cmd, output)
-    vim.system(open_cmd)
-  else
-    vim.ui.open(output)
-  end
+  do_open(bufnr, output, open_config)
   return true
 end
 
@@ -502,6 +559,8 @@ M._test = {
   opened = opened,
   last_output = last_output,
   debounce_timers = debounce_timers,
+  viewer_procs = viewer_procs,
+  open_watchers = open_watchers,
 }
 
 return M
