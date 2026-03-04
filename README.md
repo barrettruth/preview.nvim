@@ -1,6 +1,6 @@
 # preview.nvim
 
-**Async document compilation for Neovim**
+**Universal document previewer for Neovim**
 
 An extensible framework for compiling documents (LaTeX, Typst, Markdown, etc.)
 asynchronously with error diagnostics.
