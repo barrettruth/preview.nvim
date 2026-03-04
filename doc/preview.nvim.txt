@@ -10,8 +10,9 @@ preview.nvim is an extensible framework for compiling documents asynchronously
 in Neovim. It provides a unified interface for any compilation workflow —
 LaTeX, Typst, Markdown, or anything else with a CLI compiler.
 
-The plugin ships with opt-in presets for common tools (Typst, LaTeX, Pandoc)
-and supports fully custom providers. See |preview.nvim-presets|.
+The plugin ships with opt-in presets for common tools (Typst, LaTeX, Pandoc,
+AsciiDoc, Quarto) and supports fully custom providers.
+See |preview.nvim-presets|.
 
 ==============================================================================
 REQUIREMENTS                                          *preview.nvim-requirements*
@@ -89,9 +90,10 @@ Provider fields:~
                                        |preview.Context|.
 
   `open`             boolean|string[]   Open the output file after the first
-                                       successful compilation. `true` uses
-                                       |vim.ui.open()|. A string[] is run as
-                                       a command with the output path appended.
+                                       successful compilation in toggle/watch
+                                       mode. `true` uses |vim.ui.open()|. A
+                                       string[] is run as a command with the
+                                       output path appended.
 
   `reload`           boolean|string[]|function
                                        Reload the output after recompilation.
