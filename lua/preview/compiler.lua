@@ -58,6 +58,14 @@ end
 function M.compile(bufnr, name, provider, ctx, opts)
   opts = opts or {}
 
+  if vim.fn.executable(provider.cmd[1]) ~= 1 then
+    vim.notify(
+      '[preview.nvim]: "' .. provider.cmd[1] .. '" is not executable (run :checkhealth preview)',
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
   if vim.bo[bufnr].modified then
     vim.cmd('silent! update')
   end
