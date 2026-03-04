@@ -133,7 +133,7 @@ M.typst = {
   end,
   open = true,
   reload = function(ctx)
-    return { 'typst', 'watch', ctx.file }
+    return { 'typst', 'watch', '--diagnostic-format', 'short', ctx.file }
   end,
 }
 
