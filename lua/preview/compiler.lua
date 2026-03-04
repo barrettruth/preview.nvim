@@ -402,10 +402,16 @@ function M.clean(bufnr, name, provider, ctx)
     return
   end
 
-  local cmd = eval_list(provider.clean, ctx)
-  local cwd = ctx.root
+  local output_file = ''
+  if provider.output then
+    output_file = eval_string(provider.output, ctx)
+  end
+  local resolved_ctx = vim.tbl_extend('force', ctx, { output = output_file })
+
+  local cmd = eval_list(provider.clean, resolved_ctx)
+  local cwd = resolved_ctx.root
   if provider.cwd then
-    cwd = eval_string(provider.cwd, ctx)
+    cwd = eval_string(provider.cwd, resolved_ctx)
   end
 
   log.dbg('cleaning buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
