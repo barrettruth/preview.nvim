@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>README</title>
+  <style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style type="text/css">
+
+body {
+font-family: Helvetica, arial, sans-serif;
+font-size: 14px;
+line-height: 1.6;
+padding-top: 10px;
+padding-bottom: 10px;
+background-color: white;
+padding: 30px;
+color: #333;
+}
+body > *:first-child {
+margin-top: 0 !important;
+}
+body > *:last-child {
+margin-bottom: 0 !important;
+}
+
+.octicon {
+display: inline-block;
+fill: currentColor;
+vertical-align: text-bottom;
+}
+.anchor {
+float: left;
+line-height: 1;
+margin-left: -20px;
+padding-right: 4px;
+}
+.anchor:focus {
+outline: none;
+}
+h1 .octicon-link,
+h2 .octicon-link,
+h3 .octicon-link,
+h4 .octicon-link,
+h5 .octicon-link,
+h6 .octicon-link {
+color: #1b1f23;
+vertical-align: middle;
+visibility: hidden;
+}
+h1:hover .anchor,
+h2:hover .anchor,
+h3:hover .anchor,
+h4:hover .anchor,
+h5:hover .anchor,
+h6:hover .anchor {
+text-decoration: none;
+}
+h1:hover .anchor .octicon-link,
+h2:hover .anchor .octicon-link,
+h3:hover .anchor .octicon-link,
+h4:hover .anchor .octicon-link,
+h5:hover .anchor .octicon-link,
+h6:hover .anchor .octicon-link {
+visibility: visible;
+}
+h1:hover .anchor .octicon-link:before,
+h2:hover .anchor .octicon-link:before,
+h3:hover .anchor .octicon-link:before,
+h4:hover .anchor .octicon-link:before,
+h5:hover .anchor .octicon-link:before,
+h6:hover .anchor .octicon-link:before {
+width: 16px;
+height: 16px;
+content: ' ';
+display: inline-block;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath fill-rule='evenodd' d='M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z'%3E%3C/path%3E%3C/svg%3E");
+}{
+-ms-text-size-adjust: 100%;
+-webkit-text-size-adjust: 100%;
+line-height: 1.5;
+color: #24292e;
+font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
+font-size: 16px;
+line-height: 1.5;
+word-wrap: break-word;
+}
+details {
+display: block;
+}
+summary {
+display: list-item;
+}
+a {
+background-color: initial;
+}
+a:active,
+a:hover {
+outline-width: 0;
+}
+strong {
+font-weight: inherit;
+font-weight: bolder;
+}
+h1 {
+font-size: 2em;
+margin: .67em 0;
+}
+img {
+border-style: none;
+}
+code,
+kbd,
+pre {
+font-family: monospace,monospace;
+font-size: 1em;
+}
+hr {
+box-sizing: initial;
+height: 0;
+overflow: visible;
+}
+input {
+font: inherit;
+margin: 0;
+}
+input {
+overflow: visible;
+}
+[type=checkbox] {
+box-sizing: border-box;
+padding: 0;
+}
+* {
+box-sizing: border-box;
+}
+input {
+font-family: inherit;
+font-size: inherit;
+line-height: inherit;
+}
+a {
+color: #0366d6;
+text-decoration: none;
+}
+a:hover {
+text-decoration: underline;
+}
+strong {
+font-weight: 600;
+}
+hr {
+height: 0;
+margin: 15px 0;
+overflow: hidden;
+background: transparent;
+border: 0;
+border-bottom: 1px solid #dfe2e5;
+}
+hr:after,
+hr:before {
+display: table;
+content: "";
+}
+hr:after {
+clear: both;
+}
+table {
+border-spacing: 0;
+border-collapse: collapse;
+}
+td,
+th {
+padding: 0;
+}
+details summary {
+cursor: pointer;
+}
+kbd {
+display: inline-block;
+padding: 3px 5px;
+font: 11px SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+line-height: 10px;
+color: #444d56;
+vertical-align: middle;
+background-color: #fafbfc;
+border: 1px solid #d1d5da;
+border-radius: 3px;
+box-shadow: inset 0 -1px 0 #d1d5da;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+margin-top: 0;
+margin-bottom: 0;
+}
+h1 {
+font-size: 32px;
+}
+h1,
+h2 {
+font-weight: 600;
+}
+h2 {
+font-size: 24px;
+}
+h3 {
+font-size: 20px;
+}
+h3,
+h4 {
+font-weight: 600;
+}
+h4 {
+font-size: 16px;
+}
+h5 {
+font-size: 14px;
+}
+h5,
+h6 {
+font-weight: 600;
+}
+h6 {
+font-size: 12px;
+}
+p {
+margin-top: 0;
+margin-bottom: 10px;
+}
+blockquote {
+margin: 0;
+}
+ol,
+ul {
+padding-left: 0;
+margin-top: 0;
+margin-bottom: 0;
+}
+ol ol,
+ul ol {
+list-style-type: lower-roman;
+}
+ol ol ol,
+ol ul ol,
+ul ol ol,
+ul ul ol {
+list-style-type: lower-alpha;
+}
+dd {
+margin-left: 0;
+}
+code,
+pre {
+font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+font-size: 12px;
+}
+pre {
+margin-top: 0;
+margin-bottom: 0;
+}
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+margin: 0;
+-webkit-appearance: none;
+appearance: none;
+}
+:checked+.radio-label {
+position: relative;
+z-index: 1;
+border-color: #0366d6;
+}
+.border {
+border: 1px solid #e1e4e8!important;
+}
+.border-0 {
+border: 0!important;
+}
+.border-bottom {
+border-bottom: 1px solid #e1e4e8!important;
+}
+.rounded-1 {
+border-radius: 3px!important;
+}
+.bg-white {
+background-color: #fff!important;
+}
+.bg-gray-light {
+background-color: #fafbfc!important;
+}
+.text-gray-light {
+color: #6a737d!important;
+}
+.mb-0 {
+margin-bottom: 0!important;
+}
+.my-2 {
+margin-top: 8px!important;
+margin-bottom: 8px!important;
+}
+.pl-0 {
+padding-left: 0!important;
+}
+.py-0 {
+padding-top: 0!important;
+padding-bottom: 0!important;
+}
+.pl-1 {
+padding-left: 4px!important;
+}
+.pl-2 {
+padding-left: 8px!important;
+}
+.py-2 {
+padding-top: 8px!important;
+padding-bottom: 8px!important;
+}
+.pl-3,
+.px-3 {
+padding-left: 16px!important;
+}
+.px-3 {
+padding-right: 16px!important;
+}
+.pl-4 {
+padding-left: 24px!important;
+}
+.pl-5 {
+padding-left: 32px!important;
+}
+.pl-6 {
+padding-left: 40px!important;
+}
+.f6 {
+font-size: 12px!important;
+}
+.lh-condensed {
+line-height: 1.25!important;
+}
+.text-bold {
+font-weight: 600!important;
+}
+.pl-c {
+color: #6a737d;
+}
+.pl-c1,
+.pl-s .pl-v {
+color: #005cc5;
+}
+.pl-e,
+.pl-en {
+color: #6f42c1;
+}
+.pl-s .pl-s1,
+.pl-smi {
+color: #24292e;
+}
+.pl-ent {
+color: #22863a;
+}
+.pl-k {
+color: #d73a49;
+}
+.pl-pds,
+.pl-s,
+.pl-s .pl-pse .pl-s1,
+.pl-sr,
+.pl-sr .pl-cce,
+.pl-sr .pl-sra,
+.pl-sr .pl-sre {
+color: #032f62;
+}
+.pl-smw,
+.pl-v {
+color: #e36209;
+}
+.pl-bu {
+color: #b31d28;
+}
+.pl-ii {
+color: #fafbfc;
+background-color: #b31d28;
+}
+.pl-c2 {
+color: #fafbfc;
+background-color: #d73a49;
+}
+.pl-c2:before {
+content: "^M";
+}
+.pl-sr .pl-cce {
+font-weight: 700;
+color: #22863a;
+}
+.pl-ml {
+color: #735c0f;
+}
+.pl-mh,
+.pl-mh .pl-en,
+.pl-ms {
+font-weight: 700;
+color: #005cc5;
+}
+.pl-mi {
+font-style: italic;
+color: #24292e;
+}
+.pl-mb {
+font-weight: 700;
+color: #24292e;
+}
+.pl-md {
+color: #b31d28;
+background-color: #ffeef0;
+}
+.pl-mi1 {
+color: #22863a;
+background-color: #f0fff4;
+}
+.pl-mc {
+color: #e36209;
+background-color: #ffebda;
+}
+.pl-mi2 {
+color: #f6f8fa;
+background-color: #005cc5;
+}
+.pl-mdr {
+font-weight: 700;
+color: #6f42c1;
+}
+.pl-ba {
+color: #586069;
+}
+.pl-sg {
+color: #959da5;
+}
+.pl-corl {
+text-decoration: underline;
+color: #032f62;
+}
+.mb-0 {
+margin-bottom: 0!important;
+}
+.my-2 {
+margin-bottom: 8px!important;
+}
+.my-2 {
+margin-top: 8px!important;
+}
+.pl-0 {
+padding-left: 0!important;
+}
+.py-0 {
+padding-top: 0!important;
+padding-bottom: 0!important;
+}
+.pl-1 {
+padding-left: 4px!important;
+}
+.pl-2 {
+padding-left: 8px!important;
+}
+.py-2 {
+padding-top: 8px!important;
+padding-bottom: 8px!important;
+}
+.pl-3 {
+padding-left: 16px!important;
+}
+.pl-4 {
+padding-left: 24px!important;
+}
+.pl-5 {
+padding-left: 32px!important;
+}
+.pl-6 {
+padding-left: 40px!important;
+}
+.pl-7 {
+padding-left: 48px!important;
+}
+.pl-8 {
+padding-left: 64px!important;
+}
+.pl-9 {
+padding-left: 80px!important;
+}
+.pl-10 {
+padding-left: 96px!important;
+}
+.pl-11 {
+padding-left: 112px!important;
+}
+.pl-12 {
+padding-left: 128px!important;
+}
+hr {
+border-bottom-color: #eee;
+}
+kbd {
+display: inline-block;
+padding: 3px 5px;
+font: 11px SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+line-height: 10px;
+color: #444d56;
+vertical-align: middle;
+background-color: #fafbfc;
+border: 1px solid #d1d5da;
+border-radius: 3px;
+box-shadow: inset 0 -1px 0 #d1d5da;
+}
+.markdown-body:after,
+.markdown-body:before {
+display: table;
+content: "";
+}
+.markdown-body:after {
+clear: both;
+}
+.markdown-body>:first-child {
+margin-top: 0!important;
+}
+.markdown-body>:last-child {
+margin-bottom: 0!important;
+}
+a:not([href]) {
+color: inherit;
+text-decoration: none;
+}
+blockquote,
+details,
+dl,
+ol,
+p,
+pre,
+table,
+ul {
+margin-top: 0;
+margin-bottom: 16px;
+}
+hr {
+height: .25em;
+padding: 0;
+margin: 24px 0;
+background-color: #e1e4e8;
+border: 0;
+}
+blockquote {
+padding: 0 1em;
+color: #6a737d;
+border-left: .25em solid #dfe2e5;
+}
+blockquote>:first-child {
+margin-top: 0;
+}
+blockquote>:last-child {
+margin-bottom: 0;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+margin-top: 24px;
+margin-bottom: 16px;
+font-weight: 600;
+line-height: 1.25;
+}
+h1 {
+font-size: 2em;
+}
+h1,
+h2 {
+padding-bottom: .3em;
+border-bottom: 1px solid #eaecef;
+}
+h2 {
+font-size: 1.5em;
+}
+h3 {
+font-size: 1.25em;
+}
+h4 {
+font-size: 1em;
+}
+h5 {
+font-size: .875em;
+}
+h6 {
+font-size: .85em;
+color: #6a737d;
+}
+ol,
+ul {
+padding-left: 2em;
+}
+ol ol,
+ol ul,
+ul ol,
+ul ul {
+margin-top: 0;
+margin-bottom: 0;
+}
+li {
+word-wrap: break-all;
+}
+li>p {
+margin-top: 16px;
+}
+li+li {
+margin-top: .25em;
+}
+dl {
+padding: 0;
+}
+dl dt {
+padding: 0;
+margin-top: 16px;
+font-size: 1em;
+font-style: italic;
+font-weight: 600;
+}
+dl dd {
+padding: 0 16px;
+margin-bottom: 16px;
+}
+table {
+display: block;
+width: 100%;
+overflow: auto;
+}
+table th {
+font-weight: 600;
+}
+table td,
+table th {
+padding: 6px 13px;
+border: 1px solid #dfe2e5;
+}
+table tr {
+background-color: #fff;
+border-top: 1px solid #c6cbd1;
+}
+table tr:nth-child(2n) {
+background-color: #f6f8fa;
+}
+img {
+max-width: 100%;
+box-sizing: initial;
+background-color: #fff;
+}
+img[align=right] {
+padding-left: 20px;
+}
+img[align=left] {
+padding-right: 20px;
+}
+code {
+padding: .2em .4em;
+margin: 0;
+font-size: 85%;
+background-color: rgba(27,31,35,.05);
+border-radius: 3px;
+}
+pre {
+word-wrap: normal;
+}
+pre>code {
+padding: 0;
+margin: 0;
+font-size: 100%;
+word-break: normal;
+white-space: pre;
+background: transparent;
+border: 0;
+}
+.highlight {
+margin-bottom: 16px;
+}
+.highlight pre {
+margin-bottom: 0;
+word-break: normal;
+}
+.highlight pre,
+pre {
+padding: 16px;
+overflow: auto;
+font-size: 85%;
+line-height: 1.45;
+background-color: #f6f8fa;
+border-radius: 3px;
+}
+pre code {
+display: inline;
+max-width: auto;
+padding: 0;
+margin: 0;
+overflow: visible;
+line-height: inherit;
+word-wrap: normal;
+background-color: initial;
+border: 0;
+}
+.commit-tease-sha {
+display: inline-block;
+font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+font-size: 90%;
+color: #444d56;
+}
+.full-commit .btn-outline:not(:disabled):hover {
+color: #005cc5;
+border-color: #005cc5;
+}
+.blob-wrapper {
+overflow-x: auto;
+overflow-y: hidden;
+}
+.blob-wrapper-embedded {
+max-height: 240px;
+overflow-y: auto;
+}
+.blob-num {
+width: 1%;
+min-width: 50px;
+padding-right: 10px;
+padding-left: 10px;
+font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+font-size: 12px;
+line-height: 20px;
+color: rgba(27,31,35,.3);
+text-align: right;
+white-space: nowrap;
+vertical-align: top;
+cursor: pointer;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+user-select: none;
+}
+.blob-num:hover {
+color: rgba(27,31,35,.6);
+}
+.blob-num:before {
+content: attr(data-line-number);
+}
+.blob-code {
+position: relative;
+padding-right: 10px;
+padding-left: 10px;
+line-height: 20px;
+vertical-align: top;
+}
+.blob-code-inner {
+overflow: visible;
+font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+font-size: 12px;
+color: #24292e;
+word-wrap: normal;
+white-space: pre;
+}
+.pl-token.active,
+.pl-token:hover {
+cursor: pointer;
+background: #ffea7f;
+}
+.tab-size[data-tab-size="1"] {
+-moz-tab-size: 1;
+tab-size: 1;
+}
+.tab-size[data-tab-size="2"] {
+-moz-tab-size: 2;
+tab-size: 2;
+}
+.tab-size[data-tab-size="3"] {
+-moz-tab-size: 3;
+tab-size: 3;
+}
+.tab-size[data-tab-size="4"] {
+-moz-tab-size: 4;
+tab-size: 4;
+}
+.tab-size[data-tab-size="5"] {
+-moz-tab-size: 5;
+tab-size: 5;
+}
+.tab-size[data-tab-size="6"] {
+-moz-tab-size: 6;
+tab-size: 6;
+}
+.tab-size[data-tab-size="7"] {
+-moz-tab-size: 7;
+tab-size: 7;
+}
+.tab-size[data-tab-size="8"] {
+-moz-tab-size: 8;
+tab-size: 8;
+}
+.tab-size[data-tab-size="9"] {
+-moz-tab-size: 9;
+tab-size: 9;
+}
+.tab-size[data-tab-size="10"] {
+-moz-tab-size: 10;
+tab-size: 10;
+}
+.tab-size[data-tab-size="11"] {
+-moz-tab-size: 11;
+tab-size: 11;
+}
+.tab-size[data-tab-size="12"] {
+-moz-tab-size: 12;
+tab-size: 12;
+}
+.task-list-item {
+list-style-type: none;
+}
+.task-list-item+.task-list-item {
+margin-top: 3px;
+}
+.task-list-item input {
+margin: 0 .2em .25em -1.6em;
+vertical-align: middle;
+}
+</style>
+</head>
+<body>
+<h1 id="previewnvim">preview.nvim</h1>
+<p><strong>Universal document previewer for Neovim</strong></p>
+<p>An extensible framework for compiling and previewing <em>any</em>
+documents (LaTeX, Typst, Markdown, etc.)—diagnostics included.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Async compilation via <code>vim.system()</code></li>
+<li>Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic),
+Markdown, GitHub-flavored Markdown, AsciiDoc, and Quarto</li>
+<li>Compiler errors as native <code>vim.diagnostic</code></li>
+<li>User events for extensibility (<code>PreviewCompileStarted</code>,
+<code>PreviewCompileSuccess</code>,
+<code>PreviewCompileFailed</code>)</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Neovim 0.11+</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<p>Install with your package manager of choice or via <a href="https://luarocks.org/modules/barrettruth/preview.nvim">luarocks</a>:</p>
+<pre><code>luarocks install preview.nvim</code></pre>
+<h2 id="documentation">Documentation</h2>
+<pre class="vim"><code>:help preview.nvim</code></pre>
+<h2 id="faq">FAQ</h2>
+<p><strong>Q: How do I define a custom provider?</strong></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode lua"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">&#39;preview&#39;</span><span class="op">).</span>setup<span class="op">({</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">rst</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">cmd</span> <span class="op">=</span> <span class="op">{</span> <span class="st">&#39;rst2html&#39;</span> <span class="op">},</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">args</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ctx</span><span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="op">{</span> <span class="va">ctx</span><span class="op">.</span><span class="va">file</span><span class="op">,</span> <span class="va">ctx</span><span class="op">.</span><span class="va">output</span> <span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">output</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ctx</span><span class="op">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="va">ctx</span><span class="op">.</span><span class="va">file</span><span class="op">:</span><span class="fu">gsub</span><span class="op">(</span><span class="st">&#39;%.rst$&#39;</span><span class="op">,</span> <span class="st">&#39;.html&#39;</span><span class="op">)</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">},</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div>
+<p><strong>Q: How do I override a preset?</strong></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode lua"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">&#39;preview&#39;</span><span class="op">).</span>setup<span class="op">({</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">typst</span> <span class="op">=</span> <span class="op">{</span> <span class="va">env</span> <span class="op">=</span> <span class="op">{</span> <span class="cn">TYPST_FONT_PATHS</span> <span class="op">=</span> <span class="st">&#39;/usr/share/fonts&#39;</span> <span class="op">}</span> <span class="op">},</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div>
+<p><strong>Q: How do I automatically open the output file?</strong></p>
+<p>Set <code>open = true</code> on your provider (all built-in presets
+have this enabled) to open the output with <code>vim.ui.open()</code>
+after the first successful compilation in toggle/watch mode. For a
+specific application, pass a command table:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode lua"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">&#39;preview&#39;</span><span class="op">).</span>setup<span class="op">({</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">typst</span> <span class="op">=</span> <span class="op">{</span> <span class="va">open</span> <span class="op">=</span> <span class="op">{</span> <span class="st">&#39;sioyek&#39;</span><span class="op">,</span> <span class="st">&#39;--new-instance&#39;</span> <span class="op">}</span> <span class="op">},</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div>
+<script>(function(){var es=new EventSource("http://localhost:37327/__live/events");es.addEventListener("reload",function(){location.reload();});})()</script>
+</body>
+</html>
