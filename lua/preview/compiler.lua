@@ -162,6 +162,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
 
     if
       provider.open
+      and not opts.oneshot
       and not opened[bufnr]
       and output_file ~= ''
       and vim.uv.fs_stat(output_file)
@@ -240,6 +241,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
         end
         if
           provider.open
+          and not opts.oneshot
           and not opened[bufnr]
           and output_file ~= ''
           and vim.uv.fs_stat(output_file)

@@ -128,6 +128,9 @@ M.typst = {
   error_parser = function(output)
     return parse_typst(output)
   end,
+  clean = function(ctx)
+    return { 'rm', '-f', (ctx.file:gsub('%.typ$', '.pdf')) }
+  end,
   open = true,
   reload = function(ctx)
     return { 'typst', 'watch', ctx.file }
@@ -172,6 +175,10 @@ M.pdflatex = {
   error_parser = function(output)
     return parse_latexmk(output)
   end,
+  clean = function(ctx)
+    local base = ctx.file:gsub('%.tex$', '')
+    return { 'rm', '-f', base .. '.pdf', base .. '.aux', base .. '.log', base .. '.synctex.gz' }
+  end,
   open = true,
 }
 
@@ -187,6 +194,9 @@ M.tectonic = {
   end,
   error_parser = function(output)
     return parse_latexmk(output)
+  end,
+  clean = function(ctx)
+    return { 'rm', '-f', (ctx.file:gsub('%.tex$', '.pdf')) }
   end,
   open = true,
 }
@@ -246,7 +256,7 @@ M.asciidoctor = {
   ft = 'asciidoc',
   cmd = { 'asciidoctor' },
   args = function(ctx)
-    return { ctx.file, '-o', ctx.output }
+    return { '--failure-level', 'ERROR', ctx.file, '-o', ctx.output }
   end,
   output = function(ctx)
     return (ctx.file:gsub('%.adoc$', '.html'))
