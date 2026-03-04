@@ -33,7 +33,7 @@ local handlers = {
 
 ---@param args string
 local function dispatch(args)
-  local subcmd = args ~= '' and args or 'build'
+  local subcmd = args ~= '' and args or 'toggle'
   local handler = handlers[subcmd]
   if handler then
     handler()
@@ -58,7 +58,7 @@ function M.setup()
     complete = function(lead)
       return complete(lead)
     end,
-    desc = 'Build, stop, clean, watch, open, or check status of document preview',
+    desc = 'Toggle, compile, clean, open, or check status of document preview',
   })
 end
 
