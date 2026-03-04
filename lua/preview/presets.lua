@@ -98,8 +98,7 @@ end
 local function parse_asciidoctor(output)
   local diagnostics = {}
   for line in output:gmatch('[^\r\n]+') do
-    local severity, _, lnum, msg =
-      line:match('^asciidoctor: (%u+): (.+): line (%d+): (.+)$')
+    local severity, _, lnum, msg = line:match('^asciidoctor: (%u+): (.+): line (%d+): (.+)$')
     if lnum then
       local sev = vim.diagnostic.severity.ERROR
       if severity == 'WARNING' then

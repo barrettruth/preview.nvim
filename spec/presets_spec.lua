@@ -477,10 +477,7 @@ describe('presets', function()
     end)
 
     it('returns clean command', function()
-      assert.are.same(
-        { 'rm', '-f', '/tmp/document.html' },
-        presets.asciidoctor.clean(adoc_ctx)
-      )
+      assert.are.same({ 'rm', '-f', '/tmp/document.html' }, presets.asciidoctor.clean(adoc_ctx))
     end)
 
     it('has open enabled', function()
@@ -498,16 +495,12 @@ describe('presets', function()
       assert.are.equal(1, #diagnostics)
       assert.are.equal(7, diagnostics[1].lnum)
       assert.are.equal(0, diagnostics[1].col)
-      assert.are.equal(
-        'invalid part, must have at least one section',
-        diagnostics[1].message
-      )
+      assert.are.equal('invalid part, must have at least one section', diagnostics[1].message)
       assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
     end)
 
     it('parses warning messages', function()
-      local output =
-        'asciidoctor: WARNING: document.adoc: line 52: section title out of sequence'
+      local output = 'asciidoctor: WARNING: document.adoc: line 52: section title out of sequence'
       local diagnostics = presets.asciidoctor.error_parser(output, adoc_ctx)
       assert.are.equal(1, #diagnostics)
       assert.are.equal(51, diagnostics[1].lnum)
