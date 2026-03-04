@@ -33,6 +33,10 @@ describe('presets', function()
       assert.are.equal('/tmp/document.pdf', output)
     end)
 
+    it('returns clean command', function()
+      assert.are.same({ 'rm', '-f', '/tmp/document.pdf' }, presets.typst.clean(ctx))
+    end)
+
     it('has open enabled', function()
       assert.is_true(presets.typst.open)
     end)
@@ -189,8 +193,16 @@ describe('presets', function()
       assert.is_true(presets.pdflatex.open)
     end)
 
-    it('has no clean command', function()
-      assert.is_nil(presets.pdflatex.clean)
+    it('returns clean command removing pdf and aux files', function()
+      local clean = presets.pdflatex.clean(tex_ctx)
+      assert.are.same({
+        'rm',
+        '-f',
+        '/tmp/document.pdf',
+        '/tmp/document.aux',
+        '/tmp/document.log',
+        '/tmp/document.synctex.gz',
+      }, clean)
     end)
 
     it('has no reload', function()
@@ -240,8 +252,8 @@ describe('presets', function()
       assert.is_true(presets.tectonic.open)
     end)
 
-    it('has no clean command', function()
-      assert.is_nil(presets.tectonic.clean)
+    it('returns clean command removing pdf', function()
+      assert.are.same({ 'rm', '-f', '/tmp/document.pdf' }, presets.tectonic.clean(tex_ctx))
     end)
 
     it('has no reload', function()
@@ -467,7 +479,7 @@ describe('presets', function()
 
     it('returns args with file and output', function()
       assert.are.same(
-        { '/tmp/document.adoc', '-o', '/tmp/document.html' },
+        { '--failure-level', 'ERROR', '/tmp/document.adoc', '-o', '/tmp/document.html' },
         presets.asciidoctor.args(adoc_ctx)
       )
     end)
