@@ -408,7 +408,10 @@ end
 ---@param ctx preview.Context
 function M.clean(bufnr, name, provider, ctx)
   if not provider.clean then
-    vim.notify('[preview.nvim]: provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
+    vim.notify(
+      '[preview.nvim]: provider "' .. name .. '" has no clean command',
+      vim.log.levels.WARN
+    )
     return
   end
 
