@@ -57,6 +57,12 @@ function M.setup()
     end,
     desc = 'Toggle, compile, clean, open, or check status of document preview',
   })
+
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    callback = function()
+      require('preview.compiler').stop_all()
+    end,
+  })
 end
 
 return M

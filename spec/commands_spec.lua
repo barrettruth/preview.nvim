@@ -11,6 +11,19 @@ describe('commands', function()
       local cmds = vim.api.nvim_get_commands({})
       assert.is_not_nil(cmds.Preview)
     end)
+
+    it('registers VimLeavePre autocmd', function()
+      require('preview.commands').setup()
+      local aus = vim.api.nvim_get_autocmds({ event = 'VimLeavePre' })
+      local found = false
+      for _, au in ipairs(aus) do
+        if au.callback then
+          found = true
+          break
+        end
+      end
+      assert.is_true(found)
+    end)
   end)
 
   describe('dispatch', function()
