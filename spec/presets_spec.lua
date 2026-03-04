@@ -157,6 +157,112 @@ describe('presets', function()
     end)
   end)
 
+  describe('pdflatex', function()
+    local tex_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.tex',
+      root = '/tmp',
+      ft = 'tex',
+    }
+
+    it('has ft', function()
+      assert.are.equal('tex', presets.pdflatex.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'pdflatex' }, presets.pdflatex.cmd)
+    end)
+
+    it('returns args with flags and file path', function()
+      local args = presets.pdflatex.args(tex_ctx)
+      assert.are.same(
+        { '-interaction=nonstopmode', '-file-line-error', '-synctex=1', '/tmp/document.tex' },
+        args
+      )
+    end)
+
+    it('returns pdf output path', function()
+      assert.are.equal('/tmp/document.pdf', presets.pdflatex.output(tex_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.pdflatex.open)
+    end)
+
+    it('has no clean command', function()
+      assert.is_nil(presets.pdflatex.clean)
+    end)
+
+    it('has no reload', function()
+      assert.is_nil(presets.pdflatex.reload)
+    end)
+
+    it('parses file-line-error format', function()
+      local output = './document.tex:10: Undefined control sequence.'
+      local diagnostics = presets.pdflatex.error_parser(output, tex_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(9, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('Undefined control sequence.', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean output', function()
+      assert.are.same({}, presets.pdflatex.error_parser('', tex_ctx))
+    end)
+  end)
+
+  describe('tectonic', function()
+    local tex_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.tex',
+      root = '/tmp',
+      ft = 'tex',
+    }
+
+    it('has ft', function()
+      assert.are.equal('tex', presets.tectonic.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'tectonic' }, presets.tectonic.cmd)
+    end)
+
+    it('returns args with file path', function()
+      assert.are.same({ '/tmp/document.tex' }, presets.tectonic.args(tex_ctx))
+    end)
+
+    it('returns pdf output path', function()
+      assert.are.equal('/tmp/document.pdf', presets.tectonic.output(tex_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.tectonic.open)
+    end)
+
+    it('has no clean command', function()
+      assert.is_nil(presets.tectonic.clean)
+    end)
+
+    it('has no reload', function()
+      assert.is_nil(presets.tectonic.reload)
+    end)
+
+    it('parses file-line-error format', function()
+      local output = './document.tex:5: Missing $ inserted.'
+      local diagnostics = presets.tectonic.error_parser(output, tex_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(4, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('Missing $ inserted.', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean output', function()
+      assert.are.same({}, presets.tectonic.error_parser('', tex_ctx))
+    end)
+  end)
+
   describe('markdown', function()
     local md_ctx = {
       bufnr = 1,
@@ -339,6 +445,118 @@ describe('presets', function()
     it('returns empty table for clean output', function()
       local diagnostics = presets.github.error_parser('', md_ctx)
       assert.are.same({}, diagnostics)
+    end)
+  end)
+
+  describe('asciidoctor', function()
+    local adoc_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.adoc',
+      root = '/tmp',
+      ft = 'asciidoc',
+      output = '/tmp/document.html',
+    }
+
+    it('has ft', function()
+      assert.are.equal('asciidoc', presets.asciidoctor.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'asciidoctor' }, presets.asciidoctor.cmd)
+    end)
+
+    it('returns args with file and output', function()
+      assert.are.same(
+        { '/tmp/document.adoc', '-o', '/tmp/document.html' },
+        presets.asciidoctor.args(adoc_ctx)
+      )
+    end)
+
+    it('returns html output path', function()
+      assert.are.equal('/tmp/document.html', presets.asciidoctor.output(adoc_ctx))
+    end)
+
+    it('returns clean command', function()
+      assert.are.same({ 'rm', '-f', '/tmp/document.html' }, presets.asciidoctor.clean(adoc_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.asciidoctor.open)
+    end)
+
+    it('has reload enabled for SSE', function()
+      assert.is_true(presets.asciidoctor.reload)
+    end)
+
+    it('parses error messages', function()
+      local output =
+        'asciidoctor: ERROR: document.adoc: line 8: invalid part, must have at least one section'
+      local diagnostics = presets.asciidoctor.error_parser(output, adoc_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(7, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('invalid part, must have at least one section', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('parses warning messages', function()
+      local output = 'asciidoctor: WARNING: document.adoc: line 52: section title out of sequence'
+      local diagnostics = presets.asciidoctor.error_parser(output, adoc_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(51, diagnostics[1].lnum)
+      assert.are.equal(vim.diagnostic.severity.WARN, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean output', function()
+      assert.are.same({}, presets.asciidoctor.error_parser('', adoc_ctx))
+    end)
+  end)
+
+  describe('quarto', function()
+    local qmd_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.qmd',
+      root = '/tmp',
+      ft = 'quarto',
+      output = '/tmp/document.html',
+    }
+
+    it('has ft', function()
+      assert.are.equal('quarto', presets.quarto.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'quarto' }, presets.quarto.cmd)
+    end)
+
+    it('returns args with render subcommand and html format', function()
+      assert.are.same(
+        { 'render', '/tmp/document.qmd', '--to', 'html', '--embed-resources' },
+        presets.quarto.args(qmd_ctx)
+      )
+    end)
+
+    it('returns html output path', function()
+      assert.are.equal('/tmp/document.html', presets.quarto.output(qmd_ctx))
+    end)
+
+    it('returns clean command removing html and _files directory', function()
+      assert.are.same(
+        { 'rm', '-rf', '/tmp/document.html', '/tmp/document_files' },
+        presets.quarto.clean(qmd_ctx)
+      )
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.quarto.open)
+    end)
+
+    it('has reload enabled for SSE', function()
+      assert.is_true(presets.quarto.reload)
+    end)
+
+    it('has no error_parser', function()
+      assert.is_nil(presets.quarto.error_parser)
     end)
   end)
 end)

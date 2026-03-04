@@ -157,8 +157,12 @@ Import them from `preview.presets`:
 
   `presets.typst`              typst compile → PDF
   `presets.latex`              latexmk -pdf → PDF (with clean support)
+  `presets.pdflatex`           pdflatex → PDF (single pass, no latexmk)
+  `presets.tectonic`           tectonic → PDF (Rust-based LaTeX engine)
   `presets.markdown`           pandoc → HTML (standalone, embedded)
   `presets.github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
+  `presets.asciidoctor`        asciidoctor → HTML (AsciiDoc with SSE reload)
+  `presets.quarto`             quarto render → HTML (scientific publishing)
 
 Enable presets with `preset_name = true`:
 >lua
