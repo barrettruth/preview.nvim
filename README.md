@@ -8,7 +8,7 @@ asynchronously with error diagnostics.
 ## Features
 
 - Async compilation via `vim.system()`
-- Built-in presets for Typst, LaTeX, Markdown, and GitHub-flavored Markdown
+- Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic), Markdown, GitHub-flavored Markdown, AsciiDoc, and Quarto
 - Compiler errors as native `vim.diagnostic`
 - User events for extensibility (`PreviewCompileStarted`,
   `PreviewCompileSuccess`, `PreviewCompileFailed`)
@@ -38,13 +38,13 @@ luarocks install preview.nvim
 
 ```lua
 require('preview').setup({
-  typst = {
-    cmd = { 'typst', 'compile' },
+  rst = {
+    cmd = { 'rst2html' },
     args = function(ctx)
-      return { ctx.file }
+      return { ctx.file, ctx.output }
     end,
     output = function(ctx)
-      return ctx.file:gsub('%.typ$', '.pdf')
+      return ctx.file:gsub('%.rst$', '.html')
     end,
   },
 })
@@ -61,8 +61,8 @@ require('preview').setup({
 **Q: How do I automatically open the output file?**
 
 Set `open = true` on your provider (all built-in presets have this enabled) to
-open the output with `vim.ui.open()` after the first successful compilation. For
-a specific application, pass a command table:
+open the output with `vim.ui.open()` after the first successful compilation in
+toggle/watch mode. For a specific application, pass a command table:
 
 ```lua
 require('preview').setup({
