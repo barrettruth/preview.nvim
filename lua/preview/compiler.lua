@@ -230,7 +230,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
           r.inject(output_file)
           r.broadcast()
         end
-        if provider.open and not opened[bufnr] and output_file ~= '' then
+        if provider.open and not opened[bufnr] and output_file ~= '' and vim.uv.fs_stat(output_file) then
           if provider.open == true then
             vim.ui.open(output_file)
           elseif type(provider.open) == 'table' then
@@ -450,6 +450,10 @@ function M.open(bufnr, open_config)
   local output = last_output[bufnr]
   if not output then
     log.dbg('no last output file for buffer %d', bufnr)
+    return false
+  end
+  if not vim.uv.fs_stat(output) then
+    log.dbg('output file no longer exists for buffer %d: %s', bufnr, output)
     return false
   end
   if type(open_config) == 'table' then
