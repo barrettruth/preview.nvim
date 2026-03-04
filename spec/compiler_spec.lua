@@ -99,6 +99,35 @@ describe('compiler', function()
       helpers.delete_buffer(bufnr)
     end)
 
+    it('notifies and returns when binary is not executable', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_nobin.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg)
+        if msg:find('not executable') then
+          notified = true
+        end
+      end
+
+      local provider = { cmd = { 'totally_nonexistent_binary_xyz_preview' } }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_nobin.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'nobin', provider, ctx)
+      vim.notify = orig
+
+      assert.is_true(notified)
+      assert.is_nil(compiler._test.active[bufnr])
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('fires PreviewCompileFailed on non-zero exit', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail.txt')

@@ -108,4 +108,62 @@ describe('preview', function()
       helpers.delete_buffer(bufnr)
     end)
   end)
+
+  describe('unnamed buffer guard', function()
+    before_each(function()
+      helpers.reset_config({ typst = true })
+      preview = require('preview')
+    end)
+
+    local function capture_notify(fn)
+      local msg = nil
+      local orig = vim.notify
+      vim.notify = function(m)
+        msg = m
+      end
+      fn()
+      vim.notify = orig
+      return msg
+    end
+
+    it('compile warns on unnamed buffer', function()
+      local bufnr = helpers.create_buffer({}, 'typst')
+      local msg = capture_notify(function()
+        preview.compile(bufnr)
+      end)
+      assert.is_not_nil(msg)
+      assert.is_truthy(msg:find('no file name'))
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('toggle warns on unnamed buffer', function()
+      local bufnr = helpers.create_buffer({}, 'typst')
+      local msg = capture_notify(function()
+        preview.toggle(bufnr)
+      end)
+      assert.is_not_nil(msg)
+      assert.is_truthy(msg:find('no file name'))
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('clean warns on unnamed buffer', function()
+      local bufnr = helpers.create_buffer({}, 'typst')
+      local msg = capture_notify(function()
+        preview.clean(bufnr)
+      end)
+      assert.is_not_nil(msg)
+      assert.is_truthy(msg:find('no file name'))
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('open warns on unnamed buffer', function()
+      local bufnr = helpers.create_buffer({}, 'typst')
+      local msg = capture_notify(function()
+        preview.open(bufnr)
+      end)
+      assert.is_not_nil(msg)
+      assert.is_truthy(msg:find('no file name'))
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
 end)

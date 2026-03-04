@@ -58,6 +58,14 @@ end
 function M.compile(bufnr, name, provider, ctx, opts)
   opts = opts or {}
 
+  if vim.fn.executable(provider.cmd[1]) ~= 1 then
+    vim.notify(
+      '[preview.nvim]: "' .. provider.cmd[1] .. '" is not executable (run :checkhealth preview)',
+      vim.log.levels.ERROR
+    )
+    return
+  end
+
   if vim.bo[bufnr].modified then
     vim.cmd('silent! update')
   end
@@ -170,7 +178,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
 
     active[bufnr] = { obj = obj, provider = name, output_file = output_file, is_reload = true }
 
-    vim.api.nvim_create_autocmd('BufWipeout', {
+    vim.api.nvim_create_autocmd('BufUnload', {
       buffer = bufnr,
       once = true,
       callback = function()
@@ -230,7 +238,12 @@ function M.compile(bufnr, name, provider, ctx, opts)
           r.inject(output_file)
           r.broadcast()
         end
-        if provider.open and not opened[bufnr] and output_file ~= '' then
+        if
+          provider.open
+          and not opened[bufnr]
+          and output_file ~= ''
+          and vim.uv.fs_stat(output_file)
+        then
           if provider.open == true then
             vim.ui.open(output_file)
           elseif type(provider.open) == 'table' then
@@ -279,7 +292,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
 
   active[bufnr] = { obj = obj, provider = name, output_file = output_file }
 
-  vim.api.nvim_create_autocmd('BufWipeout', {
+  vim.api.nvim_create_autocmd('BufUnload', {
     buffer = bufnr,
     once = true,
     callback = function()
@@ -374,7 +387,7 @@ function M.toggle(bufnr, name, provider, ctx_builder)
   log.dbg('watching buffer %d with provider "%s"', bufnr, name)
   vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
 
-  vim.api.nvim_create_autocmd('BufWipeout', {
+  vim.api.nvim_create_autocmd('BufUnload', {
     buffer = bufnr,
     once = true,
     callback = function()
@@ -450,6 +463,10 @@ function M.open(bufnr, open_config)
   local output = last_output[bufnr]
   if not output then
     log.dbg('no last output file for buffer %d', bufnr)
+    return false
+  end
+  if not vim.uv.fs_stat(output) then
+    log.dbg('output file no longer exists for buffer %d: %s', bufnr, output)
     return false
   end
   if type(open_config) == 'table' then
