@@ -162,6 +162,7 @@ Import them from `preview.presets`:
   `presets.markdown`           pandoc → HTML (standalone, embedded)
   `presets.github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
   `presets.asciidoctor`        asciidoctor → HTML (AsciiDoc with SSE reload)
+  `presets.quarto`             quarto render → HTML (scientific publishing)
 
 Enable presets with `preset_name = true`:
 >lua

@@ -518,4 +518,52 @@ describe('presets', function()
       assert.are.same({}, presets.asciidoctor.error_parser('', adoc_ctx))
     end)
   end)
+
+  describe('quarto', function()
+    local qmd_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.qmd',
+      root = '/tmp',
+      ft = 'quarto',
+      output = '/tmp/document.html',
+    }
+
+    it('has ft', function()
+      assert.are.equal('quarto', presets.quarto.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'quarto' }, presets.quarto.cmd)
+    end)
+
+    it('returns args with render subcommand and html format', function()
+      assert.are.same(
+        { 'render', '/tmp/document.qmd', '--to', 'html', '--embed-resources' },
+        presets.quarto.args(qmd_ctx)
+      )
+    end)
+
+    it('returns html output path', function()
+      assert.are.equal('/tmp/document.html', presets.quarto.output(qmd_ctx))
+    end)
+
+    it('returns clean command removing html and _files directory', function()
+      assert.are.same(
+        { 'rm', '-rf', '/tmp/document.html', '/tmp/document_files' },
+        presets.quarto.clean(qmd_ctx)
+      )
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.quarto.open)
+    end)
+
+    it('has reload enabled for SSE', function()
+      assert.is_true(presets.quarto.reload)
+    end)
+
+    it('has no error_parser', function()
+      assert.is_nil(presets.quarto.error_parser)
+    end)
+  end)
 end)

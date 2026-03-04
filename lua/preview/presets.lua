@@ -262,4 +262,22 @@ M.asciidoctor = {
   reload = true,
 }
 
+---@type preview.ProviderConfig
+M.quarto = {
+  ft = 'quarto',
+  cmd = { 'quarto' },
+  args = function(ctx)
+    return { 'render', ctx.file, '--to', 'html', '--embed-resources' }
+  end,
+  output = function(ctx)
+    return (ctx.file:gsub('%.qmd$', '.html'))
+  end,
+  clean = function(ctx)
+    local base = ctx.file:gsub('%.qmd$', '')
+    return { 'rm', '-rf', base .. '.html', base .. '_files' }
+  end,
+  open = true,
+  reload = true,
+}
+
 return M
