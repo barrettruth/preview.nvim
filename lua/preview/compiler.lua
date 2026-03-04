@@ -443,13 +443,19 @@ end
 
 ---@param bufnr integer
 ---@return boolean
-function M.open(bufnr)
+function M.open(bufnr, open_config)
   local output = last_output[bufnr]
   if not output then
     log.dbg('no last output file for buffer %d', bufnr)
     return false
   end
-  vim.ui.open(output)
+  if type(open_config) == 'table' then
+    local open_cmd = vim.list_extend({}, open_config)
+    table.insert(open_cmd, output)
+    vim.system(open_cmd)
+  else
+    vim.ui.open(output)
+  end
   return true
 end
 

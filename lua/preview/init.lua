@@ -190,7 +190,9 @@ end
 ---@param bufnr? integer
 function M.open(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if not compiler.open(bufnr) then
+  local name = M.resolve_provider(bufnr)
+  local open_config = name and config.providers[name] and config.providers[name].open
+  if not compiler.open(bufnr, open_config) then
     vim.notify('[preview.nvim] no output file available for this buffer', vim.log.levels.WARN)
   end
 end
