@@ -177,7 +177,8 @@ function M.compile(bufnr, name, provider, ctx, opts)
                   })
                 end
                 vim.fn.setqflist(items, 'r')
-                vim.cmd('copen')
+                vim.cmd.copen()
+                vim.cmd.wincmd('p')
               end
             end
           end
@@ -215,7 +216,8 @@ function M.compile(bufnr, name, provider, ctx, opts)
                   })
                 end
                 vim.fn.setqflist(items, 'r')
-                vim.cmd('copen')
+                vim.cmd.copen()
+                vim.cmd.wincmd('p')
               end
             end
           end
@@ -372,7 +374,8 @@ function M.compile(bufnr, name, provider, ctx, opts)
                 })
               end
               vim.fn.setqflist(items, 'r')
-              vim.cmd('copen')
+              vim.cmd.copen()
+              vim.cmd.wincmd('p')
             end
           end
         end
