@@ -91,14 +91,17 @@ function M.compile(bufnr, name, provider, ctx)
       table.concat(reload_cmd, ' ')
     )
 
-    local obj = vim.system(
+    local obj
+    obj = vim.system(
       reload_cmd,
       {
         cwd = cwd,
         env = provider.env,
       },
       vim.schedule_wrap(function(result)
-        active[bufnr] = nil
+        if active[bufnr] and active[bufnr].obj == obj then
+          active[bufnr] = nil
+        end
         if not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
@@ -180,14 +183,17 @@ function M.compile(bufnr, name, provider, ctx)
 
   log.dbg('compiling buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
 
-  local obj = vim.system(
+  local obj
+  obj = vim.system(
     cmd,
     {
       cwd = cwd,
       env = provider.env,
     },
     vim.schedule_wrap(function(result)
-      active[bufnr] = nil
+      if active[bufnr] and active[bufnr].obj == obj then
+        active[bufnr] = nil
+      end
       if not vim.api.nvim_buf_is_valid(bufnr) then
         return
       end
