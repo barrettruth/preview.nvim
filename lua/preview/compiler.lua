@@ -408,7 +408,7 @@ end
 ---@param ctx preview.Context
 function M.clean(bufnr, name, provider, ctx)
   if not provider.clean then
-    vim.notify('[preview.nvim] provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
+    vim.notify('[preview.nvim]: provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
     return
   end
 
@@ -432,10 +432,10 @@ function M.clean(bufnr, name, provider, ctx)
     vim.schedule_wrap(function(result)
       if result.code == 0 then
         log.dbg('clean succeeded for buffer %d', bufnr)
-        vim.notify('[preview.nvim] clean complete', vim.log.levels.INFO)
+        vim.notify('[preview.nvim]: clean complete', vim.log.levels.INFO)
       else
         log.dbg('clean failed for buffer %d (exit code %d)', bufnr, result.code)
-        vim.notify('[preview.nvim] clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+        vim.notify('[preview.nvim]: clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
       end
     end)
   )

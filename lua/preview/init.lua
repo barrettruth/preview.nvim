@@ -148,7 +148,7 @@ function M.build(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
-    vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
+    vim.notify('[preview.nvim]: no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
   local ctx = M.build_context(bufnr)
@@ -167,7 +167,7 @@ function M.clean(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
-    vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
+    vim.notify('[preview.nvim]: no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
   local ctx = M.build_context(bufnr)
@@ -180,7 +180,7 @@ function M.watch(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
-    vim.notify('[preview.nvim] no provider configured for this filetype', vim.log.levels.WARN)
+    vim.notify('[preview.nvim]: no provider configured for this filetype', vim.log.levels.WARN)
     return
   end
   local provider = config.providers[name]
@@ -193,7 +193,7 @@ function M.open(bufnr)
   local name = M.resolve_provider(bufnr)
   local open_config = name and config.providers[name] and config.providers[name].open
   if not compiler.open(bufnr, open_config) then
-    vim.notify('[preview.nvim] no output file available for this buffer', vim.log.levels.WARN)
+    vim.notify('[preview.nvim]: no output file available for this buffer', vim.log.levels.WARN)
   end
 end
 
