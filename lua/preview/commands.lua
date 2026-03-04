@@ -1,8 +1,8 @@
 local M = {}
 
 local handlers = {
-  build = function()
-    require('preview').build()
+  compile = function()
+    require('preview').compile()
   end,
   stop = function()
     require('preview').stop()
@@ -10,8 +10,8 @@ local handlers = {
   clean = function()
     require('preview').clean()
   end,
-  watch = function()
-    require('preview').watch()
+  toggle = function()
+    require('preview').toggle()
   end,
   open = function()
     require('preview').open()

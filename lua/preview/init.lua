@@ -39,10 +39,10 @@
 
 ---@class preview
 ---@field setup fun(opts?: table)
----@field build fun(bufnr?: integer)
+---@field compile fun(bufnr?: integer)
 ---@field stop fun(bufnr?: integer)
 ---@field clean fun(bufnr?: integer)
----@field watch fun(bufnr?: integer)
+---@field toggle fun(bufnr?: integer)
 ---@field open fun(bufnr?: integer)
 ---@field status fun(bufnr?: integer): preview.Status
 ---@field statusline fun(bufnr?: integer): string
@@ -144,7 +144,7 @@ function M.build_context(bufnr)
 end
 
 ---@param bufnr? integer
-function M.build(bufnr)
+function M.compile(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
@@ -176,7 +176,7 @@ function M.clean(bufnr)
 end
 
 ---@param bufnr? integer
-function M.watch(bufnr)
+function M.toggle(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local name = M.resolve_provider(bufnr)
   if not name then
