@@ -177,8 +177,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
                   })
                 end
                 vim.fn.setqflist(items, 'r')
-                vim.cmd.copen()
-                vim.cmd.wincmd('p')
+                local win = vim.fn.win_getid()
+                vim.cmd.cwindow()
+                vim.fn.win_gotoid(win)
               end
             end
           end
@@ -216,8 +217,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
                   })
                 end
                 vim.fn.setqflist(items, 'r')
-                vim.cmd.copen()
-                vim.cmd.wincmd('p')
+                local win = vim.fn.win_getid()
+                vim.cmd.cwindow()
+                vim.fn.win_gotoid(win)
               end
             end
           end
@@ -272,6 +274,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
               diagnostic.clear(bufnr)
             elseif errors_mode == 'quickfix' then
               vim.fn.setqflist({}, 'r')
+              vim.cmd.cwindow()
             end
             do_open(bufnr, output_file, provider.open)
             opened[bufnr] = true
@@ -333,6 +336,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
           diagnostic.clear(bufnr)
         elseif errors_mode == 'quickfix' then
           vim.fn.setqflist({}, 'r')
+          vim.cmd.cwindow()
         end
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileSuccess',
@@ -374,8 +378,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
                 })
               end
               vim.fn.setqflist(items, 'r')
-              vim.cmd.copen()
-              vim.cmd.wincmd('p')
+              local win = vim.fn.win_getid()
+              vim.cmd.cwindow()
+              vim.fn.win_gotoid(win)
             end
           end
         end
