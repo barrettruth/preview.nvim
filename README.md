@@ -2,8 +2,8 @@
 
 **Universal document previewer for Neovim**
 
-An extensible framework for compiling documents (LaTeX, Typst, Markdown, etc.)
-asynchronously with error diagnostics.
+An extensible framework for compiling and previewing documents (LaTeX, Typst,
+Markdown, etc.) asynchronously with error diagnostics.
 
 ## Features
 
