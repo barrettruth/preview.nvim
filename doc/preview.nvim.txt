@@ -10,8 +10,8 @@ preview.nvim is an extensible framework for compiling documents asynchronously
 in Neovim. It provides a unified interface for any compilation workflow —
 LaTeX, Typst, Markdown, or anything else with a CLI compiler.
 
-The plugin ships with zero provider defaults. Users must explicitly configure
-their compiler commands. preview.nvim is purely an orchestration framework.
+The plugin ships with opt-in presets for common tools (Typst, LaTeX, Pandoc)
+and supports fully custom providers. See |preview.nvim-presets|.
 
 ==============================================================================
 REQUIREMENTS                                          *preview.nvim-requirements*
@@ -93,6 +93,14 @@ Provider fields:~
                                        |vim.ui.open()|. A string[] is run as
                                        a command with the output path appended.
 
+  `reload`           boolean|string[]|function
+                                       Reload the output after recompilation.
+                                       `true` uses a built-in SSE server for
+                                       HTML files. A string[] is run as a
+                                       command. If a function, receives a
+                                       |preview.Context| and returns a
+                                       string[].
+
                                                         *preview.Context*
 Context fields:~
 
@@ -112,6 +120,17 @@ Example overriding a preset field:~
 >lua
     require('preview').setup({
       typst = { open = { 'sioyek', '--new-instance' } },
+    })
+<
+
+Example overriding the output path (e.g. latexmk `$out_dir`):~
+>lua
+    require('preview').setup({
+      latex = {
+        output = function(ctx)
+          return 'build/' .. vim.fn.fnamemodify(ctx.file, ':t:r') .. '.pdf'
+        end,
+      },
     })
 <
 
@@ -160,29 +179,29 @@ COMMANDS                                              *preview.nvim-commands*
 
     Subcommands:~
 
-    `compile`    Compile the current buffer (default if omitted).
-    `stop`       Kill active compilation for the current buffer.
+    `toggle`     Toggle auto-compile on save (default if omitted).
+    `compile`    One-shot compile of the current buffer.
     `clean`      Run the provider's clean command.
-    `toggle`     Toggle auto-compile on save for the current buffer.
     `open`       Open the last compiled output without recompiling.
     `status`     Echo compilation status (idle, compiling, watching).
 
 ==============================================================================
 API                                                        *preview.nvim-api*
 
-preview.compile({bufnr?})                                *preview.compile()*
-    Compile the document in the given buffer (default: current).
-
-preview.stop({bufnr?})                                      *preview.stop()*
-    Kill the active compilation process for the buffer.
-
-preview.clean({bufnr?})                                    *preview.clean()*
-    Run the provider's clean command for the buffer.
-
 preview.toggle({bufnr?})                                  *preview.toggle()*
     Toggle auto-compile for the buffer. When enabled, the buffer is
     immediately compiled and automatically recompiled on each save
     (`BufWritePost`). Call again to stop.
+
+preview.compile({bufnr?})                                *preview.compile()*
+    One-shot compile the document in the given buffer (default: current).
+
+preview.stop({bufnr?})                                      *preview.stop()*
+    Kill the active compilation process for the buffer. Programmatic
+    escape hatch — not exposed as a subcommand.
+
+preview.clean({bufnr?})                                    *preview.clean()*
+    Run the provider's clean command for the buffer.
 
 preview.open({bufnr?})                                      *preview.open()*
     Open the last compiled output for the buffer without recompiling.
