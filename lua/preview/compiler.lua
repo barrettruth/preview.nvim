@@ -55,7 +55,9 @@ end
 ---@param name string
 ---@param provider preview.ProviderConfig
 ---@param ctx preview.Context
-function M.compile(bufnr, name, provider, ctx)
+function M.compile(bufnr, name, provider, ctx, opts)
+  opts = opts or {}
+
   if vim.bo[bufnr].modified then
     vim.cmd('silent! update')
   end
@@ -81,7 +83,10 @@ function M.compile(bufnr, name, provider, ctx)
     last_output[bufnr] = output_file
   end
 
-  local reload_cmd = resolve_reload_cmd(provider, resolved_ctx)
+  local reload_cmd
+  if not opts.oneshot then
+    reload_cmd = resolve_reload_cmd(provider, resolved_ctx)
+  end
 
   if reload_cmd then
     log.dbg(

@@ -153,7 +153,7 @@ function M.build(bufnr)
   end
   local ctx = M.build_context(bufnr)
   local provider = config.providers[name]
-  compiler.compile(bufnr, name, provider, ctx)
+  compiler.compile(bufnr, name, provider, ctx, { oneshot = true })
 end
 
 ---@param bufnr? integer
