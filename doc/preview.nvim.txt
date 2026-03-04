@@ -93,7 +93,12 @@ Provider fields:~
                                        successful compilation in toggle/watch
                                        mode. `true` uses |vim.ui.open()|. A
                                        string[] is run as a command with the
-                                       output path appended.
+                                       output path appended. When a string[]
+                                       is used the viewer process is tracked
+                                       and sent SIGTERM when the buffer is
+                                       deleted. `true` and single-instance
+                                       apps (e.g. Chrome) do not support
+                                       auto-close.
 
   `reload`           boolean|string[]|function
                                        Reload the output after recompilation.
