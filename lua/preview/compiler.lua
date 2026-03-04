@@ -150,7 +150,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
       {
         cwd = cwd,
         env = provider.env,
-        stderr = vim.schedule_wrap(function(err, data)
+        stderr = vim.schedule_wrap(function(_err, data)
           if not data or not vim.api.nvim_buf_is_valid(bufnr) then
             return
           end
