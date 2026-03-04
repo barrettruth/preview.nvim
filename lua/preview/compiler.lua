@@ -147,7 +147,12 @@ function M.compile(bufnr, name, provider, ctx)
       end)
     )
 
-    if provider.open and not opened[bufnr] and output_file ~= '' and vim.uv.fs_stat(output_file) then
+    if
+      provider.open
+      and not opened[bufnr]
+      and output_file ~= ''
+      and vim.uv.fs_stat(output_file)
+    then
       if provider.open == true then
         vim.ui.open(output_file)
       elseif type(provider.open) == 'table' then
