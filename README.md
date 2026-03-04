@@ -8,7 +8,8 @@ asynchronously with error diagnostics.
 ## Features
 
 - Async compilation via `vim.system()`
-- Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic), Markdown, GitHub-flavored Markdown, AsciiDoc, and Quarto
+- Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic), Markdown,
+  GitHub-flavored Markdown, AsciiDoc, and Quarto
 - Compiler errors as native `vim.diagnostic`
 - User events for extensibility (`PreviewCompileStarted`,
   `PreviewCompileSuccess`, `PreviewCompileFailed`)
