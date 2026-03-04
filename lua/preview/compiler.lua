@@ -143,12 +143,45 @@ function M.compile(bufnr, name, provider, ctx, opts)
       table.concat(reload_cmd, ' ')
     )
 
+    local stderr_acc = {}
     local obj
     obj = vim.system(
       reload_cmd,
       {
         cwd = cwd,
         env = provider.env,
+        stderr = vim.schedule_wrap(function(err, data)
+          if not data or not vim.api.nvim_buf_is_valid(bufnr) then
+            return
+          end
+          stderr_acc[#stderr_acc + 1] = data
+          local errors_mode = provider.errors
+          if errors_mode == nil then
+            errors_mode = 'diagnostic'
+          end
+          if provider.error_parser and errors_mode then
+            local output = table.concat(stderr_acc)
+            if errors_mode == 'diagnostic' then
+              diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
+            elseif errors_mode == 'quickfix' then
+              local ok, diags = pcall(provider.error_parser, output, ctx)
+              if ok and diags and #diags > 0 then
+                local items = {}
+                for _, d in ipairs(diags) do
+                  table.insert(items, {
+                    bufnr = bufnr,
+                    lnum = d.lnum + 1,
+                    col = d.col + 1,
+                    text = d.message,
+                    type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
+                  })
+                end
+                vim.fn.setqflist(items, 'r')
+                vim.cmd('copen')
+              end
+            end
+          end
+        end),
       },
       vim.schedule_wrap(function(result)
         if active[bufnr] and active[bufnr].obj == obj then
@@ -228,6 +261,16 @@ function M.compile(bufnr, name, provider, ctx, opts)
               return
             end
             stop_open_watcher(bufnr)
+            stderr_acc = {}
+            local errors_mode = provider.errors
+            if errors_mode == nil then
+              errors_mode = 'diagnostic'
+            end
+            if errors_mode == 'diagnostic' then
+              diagnostic.clear(bufnr)
+            elseif errors_mode == 'quickfix' then
+              vim.fn.setqflist({}, 'r')
+            end
             do_open(bufnr, output_file, provider.open)
             opened[bufnr] = true
           end)
