@@ -208,26 +208,30 @@ function M.compile(bufnr, name, provider, ctx, opts)
       local watcher = vim.uv.new_fs_event()
       if watcher then
         open_watchers[bufnr] = watcher
-        watcher:start(out_dir, {}, vim.schedule_wrap(function(err, filename, _events)
-          if err or vim.fn.fnamemodify(filename or '', ':t') ~= out_name then
-            return
-          end
-          if opened[bufnr] then
+        watcher:start(
+          out_dir,
+          {},
+          vim.schedule_wrap(function(err, filename, _events)
+            if err or vim.fn.fnamemodify(filename or '', ':t') ~= out_name then
+              return
+            end
+            if opened[bufnr] then
+              stop_open_watcher(bufnr)
+              return
+            end
+            if not vim.api.nvim_buf_is_valid(bufnr) then
+              stop_open_watcher(bufnr)
+              return
+            end
+            local new_stat = vim.uv.fs_stat(output_file)
+            if not (new_stat and new_stat.mtime.sec > pre_mtime) then
+              return
+            end
             stop_open_watcher(bufnr)
-            return
-          end
-          if not vim.api.nvim_buf_is_valid(bufnr) then
-            stop_open_watcher(bufnr)
-            return
-          end
-          local new_stat = vim.uv.fs_stat(output_file)
-          if not (new_stat and new_stat.mtime.sec > pre_mtime) then
-            return
-          end
-          stop_open_watcher(bufnr)
-          do_open(bufnr, output_file, provider.open)
-          opened[bufnr] = true
-        end))
+            do_open(bufnr, output_file, provider.open)
+            opened[bufnr] = true
+          end)
+        )
       end
     end
 
