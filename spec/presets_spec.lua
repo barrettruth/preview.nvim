@@ -447,4 +447,75 @@ describe('presets', function()
       assert.are.same({}, diagnostics)
     end)
   end)
+
+  describe('asciidoctor', function()
+    local adoc_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.adoc',
+      root = '/tmp',
+      ft = 'asciidoc',
+      output = '/tmp/document.html',
+    }
+
+    it('has ft', function()
+      assert.are.equal('asciidoc', presets.asciidoctor.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'asciidoctor' }, presets.asciidoctor.cmd)
+    end)
+
+    it('returns args with file and output', function()
+      assert.are.same(
+        { '/tmp/document.adoc', '-o', '/tmp/document.html' },
+        presets.asciidoctor.args(adoc_ctx)
+      )
+    end)
+
+    it('returns html output path', function()
+      assert.are.equal('/tmp/document.html', presets.asciidoctor.output(adoc_ctx))
+    end)
+
+    it('returns clean command', function()
+      assert.are.same(
+        { 'rm', '-f', '/tmp/document.html' },
+        presets.asciidoctor.clean(adoc_ctx)
+      )
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.asciidoctor.open)
+    end)
+
+    it('has reload enabled for SSE', function()
+      assert.is_true(presets.asciidoctor.reload)
+    end)
+
+    it('parses error messages', function()
+      local output =
+        'asciidoctor: ERROR: document.adoc: line 8: invalid part, must have at least one section'
+      local diagnostics = presets.asciidoctor.error_parser(output, adoc_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(7, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal(
+        'invalid part, must have at least one section',
+        diagnostics[1].message
+      )
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('parses warning messages', function()
+      local output =
+        'asciidoctor: WARNING: document.adoc: line 52: section title out of sequence'
+      local diagnostics = presets.asciidoctor.error_parser(output, adoc_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(51, diagnostics[1].lnum)
+      assert.are.equal(vim.diagnostic.severity.WARN, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean output', function()
+      assert.are.same({}, presets.asciidoctor.error_parser('', adoc_ctx))
+    end)
+  end)
 end)

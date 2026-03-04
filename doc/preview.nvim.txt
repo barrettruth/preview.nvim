@@ -161,6 +161,7 @@ Import them from `preview.presets`:
   `presets.tectonic`           tectonic → PDF (Rust-based LaTeX engine)
   `presets.markdown`           pandoc → HTML (standalone, embedded)
   `presets.github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
+  `presets.asciidoctor`        asciidoctor → HTML (AsciiDoc with SSE reload)
 
 Enable presets with `preset_name = true`:
 >lua

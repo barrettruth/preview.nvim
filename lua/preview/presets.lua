@@ -93,6 +93,29 @@ local function parse_pandoc(output)
   return diagnostics
 end
 
+---@param output string
+---@return preview.Diagnostic[]
+local function parse_asciidoctor(output)
+  local diagnostics = {}
+  for line in output:gmatch('[^\r\n]+') do
+    local severity, _, lnum, msg =
+      line:match('^asciidoctor: (%u+): (.+): line (%d+): (.+)$')
+    if lnum then
+      local sev = vim.diagnostic.severity.ERROR
+      if severity == 'WARNING' then
+        sev = vim.diagnostic.severity.WARN
+      end
+      table.insert(diagnostics, {
+        lnum = tonumber(lnum) - 1,
+        col = 0,
+        message = msg,
+        severity = sev,
+      })
+    end
+  end
+  return diagnostics
+end
+
 ---@type preview.ProviderConfig
 M.typst = {
   ft = 'typst',
@@ -214,6 +237,26 @@ M.github = {
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
+  end,
+  open = true,
+  reload = true,
+}
+
+---@type preview.ProviderConfig
+M.asciidoctor = {
+  ft = 'asciidoc',
+  cmd = { 'asciidoctor' },
+  args = function(ctx)
+    return { ctx.file, '-o', ctx.output }
+  end,
+  output = function(ctx)
+    return (ctx.file:gsub('%.adoc$', '.html'))
+  end,
+  error_parser = function(output)
+    return parse_asciidoctor(output)
+  end,
+  clean = function(ctx)
+    return { 'rm', '-f', (ctx.file:gsub('%.adoc$', '.html')) }
   end,
   open = true,
   reload = true,
