@@ -138,6 +138,22 @@ M.latex = {
 }
 
 ---@type preview.ProviderConfig
+M.pdflatex = {
+  ft = 'tex',
+  cmd = { 'pdflatex' },
+  args = function(ctx)
+    return { '-interaction=nonstopmode', '-file-line-error', '-synctex=1', ctx.file }
+  end,
+  output = function(ctx)
+    return (ctx.file:gsub('%.tex$', '.pdf'))
+  end,
+  error_parser = function(output)
+    return parse_latexmk(output)
+  end,
+  open = true,
+}
+
+---@type preview.ProviderConfig
 M.markdown = {
   ft = 'markdown',
   cmd = { 'pandoc' },

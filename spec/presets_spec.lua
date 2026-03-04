@@ -157,6 +157,61 @@ describe('presets', function()
     end)
   end)
 
+  describe('pdflatex', function()
+    local tex_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.tex',
+      root = '/tmp',
+      ft = 'tex',
+    }
+
+    it('has ft', function()
+      assert.are.equal('tex', presets.pdflatex.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'pdflatex' }, presets.pdflatex.cmd)
+    end)
+
+    it('returns args with flags and file path', function()
+      local args = presets.pdflatex.args(tex_ctx)
+      assert.are.same(
+        { '-interaction=nonstopmode', '-file-line-error', '-synctex=1', '/tmp/document.tex' },
+        args
+      )
+    end)
+
+    it('returns pdf output path', function()
+      assert.are.equal('/tmp/document.pdf', presets.pdflatex.output(tex_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.pdflatex.open)
+    end)
+
+    it('has no clean command', function()
+      assert.is_nil(presets.pdflatex.clean)
+    end)
+
+    it('has no reload', function()
+      assert.is_nil(presets.pdflatex.reload)
+    end)
+
+    it('parses file-line-error format', function()
+      local output = './document.tex:10: Undefined control sequence.'
+      local diagnostics = presets.pdflatex.error_parser(output, tex_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(9, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('Undefined control sequence.', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean output', function()
+      assert.are.same({}, presets.pdflatex.error_parser('', tex_ctx))
+    end)
+  end)
+
   describe('markdown', function()
     local md_ctx = {
       bufnr = 1,

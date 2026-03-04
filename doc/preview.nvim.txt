@@ -157,6 +157,7 @@ Import them from `preview.presets`:
 
   `presets.typst`              typst compile → PDF
   `presets.latex`              latexmk -pdf → PDF (with clean support)
+  `presets.pdflatex`           pdflatex → PDF (single pass, no latexmk)
   `presets.markdown`           pandoc → HTML (standalone, embedded)
   `presets.github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
 
