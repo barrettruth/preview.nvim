@@ -212,6 +212,57 @@ describe('presets', function()
     end)
   end)
 
+  describe('tectonic', function()
+    local tex_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.tex',
+      root = '/tmp',
+      ft = 'tex',
+    }
+
+    it('has ft', function()
+      assert.are.equal('tex', presets.tectonic.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'tectonic' }, presets.tectonic.cmd)
+    end)
+
+    it('returns args with file path', function()
+      assert.are.same({ '/tmp/document.tex' }, presets.tectonic.args(tex_ctx))
+    end)
+
+    it('returns pdf output path', function()
+      assert.are.equal('/tmp/document.pdf', presets.tectonic.output(tex_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.tectonic.open)
+    end)
+
+    it('has no clean command', function()
+      assert.is_nil(presets.tectonic.clean)
+    end)
+
+    it('has no reload', function()
+      assert.is_nil(presets.tectonic.reload)
+    end)
+
+    it('parses file-line-error format', function()
+      local output = './document.tex:5: Missing $ inserted.'
+      local diagnostics = presets.tectonic.error_parser(output, tex_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(4, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal('Missing $ inserted.', diagnostics[1].message)
+      assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('returns empty table for clean output', function()
+      assert.are.same({}, presets.tectonic.error_parser('', tex_ctx))
+    end)
+  end)
+
   describe('markdown', function()
     local md_ctx = {
       bufnr = 1,
