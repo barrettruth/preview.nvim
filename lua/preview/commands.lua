@@ -4,9 +4,6 @@ local handlers = {
   compile = function()
     require('preview').compile()
   end,
-  stop = function()
-    require('preview').stop()
-  end,
   clean = function()
     require('preview').clean()
   end,

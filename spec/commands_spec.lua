@@ -21,13 +21,6 @@ describe('commands', function()
       end)
     end)
 
-    it('does not error on :Preview stop', function()
-      require('preview.commands').setup()
-      assert.has_no.errors(function()
-        vim.cmd('Preview stop')
-      end)
-    end)
-
     it('does not error on :Preview status', function()
       require('preview.commands').setup()
       assert.has_no.errors(function()
