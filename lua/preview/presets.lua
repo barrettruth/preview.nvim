@@ -115,6 +115,24 @@ local function parse_asciidoctor(output)
   return diagnostics
 end
 
+---@param output string
+---@return preview.Diagnostic[]
+local function parse_mermaid(output)
+  local lnum = output:match('Parse error on line (%d+)')
+  if not lnum then
+    return {}
+  end
+  local msg = output:match('(Expecting .+)') or 'parse error'
+  return {
+    {
+      lnum = tonumber(lnum) - 1,
+      col = 0,
+      message = msg,
+      severity = vim.diagnostic.severity.ERROR,
+    },
+  }
+end
+
 ---@type preview.ProviderConfig
 M.typst = {
   ft = 'typst',
@@ -313,19 +331,7 @@ M.mermaid = {
     return (ctx.file:gsub('%.mmd$', '.svg'))
   end,
   error_parser = function(output)
-    local diagnostics = {}
-    for line in output:gmatch('[^\r\n]+') do
-      local lnum = line:match('^%s*Parse error on line (%d+)')
-      if lnum then
-        table.insert(diagnostics, {
-          lnum = tonumber(lnum) - 1,
-          col = 0,
-          message = line,
-          severity = vim.diagnostic.severity.ERROR,
-        })
-      end
-    end
-    return diagnostics
+    return parse_mermaid(output)
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.mmd$', '.svg')) }
