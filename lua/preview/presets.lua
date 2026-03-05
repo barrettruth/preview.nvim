@@ -303,6 +303,37 @@ M.plantuml = {
 }
 
 ---@type preview.ProviderConfig
+M.mermaid = {
+  ft = 'mermaid',
+  cmd = { 'mmdc' },
+  args = function(ctx)
+    return { '-i', ctx.file, '-o', ctx.output }
+  end,
+  output = function(ctx)
+    return (ctx.file:gsub('%.mmd$', '.svg'))
+  end,
+  error_parser = function(output)
+    local diagnostics = {}
+    for line in output:gmatch('[^\r\n]+') do
+      local lnum = line:match('^%s*Parse error on line (%d+)')
+      if lnum then
+        table.insert(diagnostics, {
+          lnum = tonumber(lnum) - 1,
+          col = 0,
+          message = line,
+          severity = vim.diagnostic.severity.ERROR,
+        })
+      end
+    end
+    return diagnostics
+  end,
+  clean = function(ctx)
+    return { 'rm', '-f', (ctx.file:gsub('%.mmd$', '.svg')) }
+  end,
+  open = true,
+}
+
+---@type preview.ProviderConfig
 M.quarto = {
   ft = 'quarto',
   cmd = { 'quarto' },
