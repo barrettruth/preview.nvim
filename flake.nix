@@ -19,9 +19,9 @@
     {
       formatter = forEachSystem (pkgs: pkgs.nixfmt-tree);
 
-      devShells = forEachSystem (pkgs: {
-        default = pkgs.mkShell {
-          packages = [
+      devShells = forEachSystem (pkgs:
+        let
+          devTools = [
             (pkgs.luajit.withPackages (
               ps: with ps; [
                 busted
@@ -32,9 +32,24 @@
             pkgs.stylua
             pkgs.selene
             pkgs.lua-language-server
-            pkgs.plantuml
           ];
-        };
-      });
+        in
+        {
+          default = pkgs.mkShell {
+            packages = devTools;
+          };
+          presets = pkgs.mkShell {
+            packages = devTools ++ [
+              pkgs.typst
+              pkgs.texliveMedium
+              pkgs.tectonic
+              pkgs.pandoc
+              pkgs.asciidoctor
+              pkgs.quarto
+              pkgs.plantuml
+              pkgs.mermaid-cli
+            ];
+          };
+        });
     };
 }
