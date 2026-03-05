@@ -19,7 +19,8 @@
     {
       formatter = forEachSystem (pkgs: pkgs.nixfmt-tree);
 
-      devShells = forEachSystem (pkgs:
+      devShells = forEachSystem (
+        pkgs:
         let
           devTools = [
             (pkgs.luajit.withPackages (
@@ -50,6 +51,7 @@
               pkgs.mermaid-cli
             ];
           };
-        });
+        }
+      );
     };
 }
