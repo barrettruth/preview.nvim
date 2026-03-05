@@ -1,6 +1,6 @@
 # preview.nvim
 
-**Universal document previewer for Neovim**
+**Universal previewer for Neovim**
 
 An extensible framework for compiling and previewing _any_ documents (LaTeX,
 Typst, Markdown, etc.)&mdash;diagnostics included.
