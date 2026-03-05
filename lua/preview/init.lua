@@ -10,6 +10,7 @@
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
 ---@field reload? boolean|string[]|fun(ctx: preview.Context): string[]
+---@field detach? boolean
 
 ---@class preview.Config
 ---@field debug boolean|string
@@ -101,6 +102,7 @@ function M.setup(opts)
     end, 'false, "diagnostic", or "quickfix"')
     vim.validate(prefix .. '.open', provider.open, { 'boolean', 'table' }, true)
     vim.validate(prefix .. '.reload', provider.reload, { 'boolean', 'table', 'function' }, true)
+    vim.validate(prefix .. '.detach', provider.detach, 'boolean', true)
   end
 
   config = vim.tbl_deep_extend('force', default_config, {
@@ -245,5 +247,9 @@ M._test = {
     config = vim.deepcopy(default_config)
   end,
 }
+
+if vim.g.preview then
+  M.setup(vim.g.preview)
+end
 
 return M

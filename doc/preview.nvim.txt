@@ -23,12 +23,17 @@ REQUIREMENTS                                          *preview.nvim-requirements
 ==============================================================================
 SETUP                                                  *preview.nvim-setup*
 
-Load preview.nvim with your package manager. For example, with lazy.nvim: >lua
+With lazy.nvim, set |vim.g.preview| in `init` so configuration is applied
+before the plugin loads: >lua
     {
       'barrettruth/preview.nvim',
+      init = function()
+        vim.g.preview = { typst = true, latex = true }
+      end,
     }
 <
-Call |preview.setup()| to configure providers before use.
+Alternatively, call |preview.setup()| directly in a `config` function or
+anywhere the plugin is already loaded.
 
 ==============================================================================
 CONFIGURATION                                      *preview.nvim-configuration*
@@ -107,6 +112,12 @@ Provider fields:~
                                        command. If a function, receives a
                                        |preview.Context| and returns a
                                        string[].
+
+  `detach`           boolean           When `true`, the viewer process opened
+                                       via a string[] `open` command is not
+                                       sent SIGTERM when the buffer is deleted.
+                                       Has no effect when `open` is `true`.
+                                       Default: `false`.
 
                                                         *preview.Context*
 Context fields:~

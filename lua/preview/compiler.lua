@@ -291,7 +291,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
       callback = function()
         M.stop(bufnr)
         stop_open_watcher(bufnr)
-        close_viewer(bufnr)
+        if not provider.detach then
+          close_viewer(bufnr)
+        end
         last_output[bufnr] = nil
       end,
     })
@@ -404,7 +406,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
     once = true,
     callback = function()
       M.stop(bufnr)
-      close_viewer(bufnr)
+      if not provider.detach then
+        close_viewer(bufnr)
+      end
       last_output[bufnr] = nil
     end,
   })
@@ -507,7 +511,9 @@ function M.toggle(bufnr, name, provider, ctx_builder)
     callback = function()
       M.unwatch(bufnr)
       stop_open_watcher(bufnr)
-      close_viewer(bufnr)
+      if not provider.detach then
+        close_viewer(bufnr)
+      end
       opened[bufnr] = nil
     end,
   })

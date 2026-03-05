@@ -21,8 +21,18 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 
 ## Installation
 
-Install with your package manager of choice or via
-[luarocks](https://luarocks.org/modules/barrettruth/preview.nvim):
+With lazy.nvim:
+
+```lua
+{
+  'barrettruth/preview.nvim',
+  init = function()
+    vim.g.preview = { typst = true, latex = true }
+  end,
+}
+```
+
+Or via [luarocks](https://luarocks.org/modules/barrettruth/preview.nvim):
 
 ```
 luarocks install preview.nvim
