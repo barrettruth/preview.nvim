@@ -105,6 +105,12 @@ function M.setup(opts)
     vim.validate(prefix .. '.detach', provider.detach, 'boolean', true)
   end
 
+  if providers['plantuml'] then
+    vim.filetype.add({
+      extension = { puml = 'plantuml', pu = 'plantuml' },
+    })
+  end
+
   config = vim.tbl_deep_extend('force', default_config, {
     debug = debug,
     providers = providers,

@@ -32,6 +32,7 @@
             pkgs.stylua
             pkgs.selene
             pkgs.lua-language-server
+            pkgs.plantuml
           ];
         };
       });

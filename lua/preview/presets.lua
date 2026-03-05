@@ -272,6 +272,37 @@ M.asciidoctor = {
 }
 
 ---@type preview.ProviderConfig
+M.plantuml = {
+  ft = 'plantuml',
+  cmd = { 'plantuml' },
+  args = function(ctx)
+    return { '-tsvg', ctx.file }
+  end,
+  output = function(ctx)
+    return (ctx.file:gsub('%.puml$', '.svg'))
+  end,
+  error_parser = function(output)
+    local diagnostics = {}
+    for line in output:gmatch('[^\r\n]+') do
+      local lnum = line:match('^Error line (%d+) in file:')
+      if lnum then
+        table.insert(diagnostics, {
+          lnum = tonumber(lnum) - 1,
+          col = 0,
+          message = line,
+          severity = vim.diagnostic.severity.ERROR,
+        })
+      end
+    end
+    return diagnostics
+  end,
+  clean = function(ctx)
+    return { 'rm', '-f', (ctx.file:gsub('%.puml$', '.svg')) }
+  end,
+  open = true,
+}
+
+---@type preview.ProviderConfig
 M.quarto = {
   ft = 'quarto',
   cmd = { 'quarto' },
