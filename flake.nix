@@ -33,6 +33,7 @@
             pkgs.selene
             pkgs.lua-language-server
             pkgs.plantuml
+            pkgs.mermaid-cli
           ];
         };
       });
