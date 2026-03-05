@@ -49,7 +49,7 @@ luarocks install preview.nvim
 **Q: How do I define a custom provider?**
 
 ```lua
-require('preview').setup({
+vim.g.preview = {
   rst = {
     cmd = { 'rst2html' },
     args = function(ctx)
@@ -59,15 +59,15 @@ require('preview').setup({
       return ctx.file:gsub('%.rst$', '.html')
     end,
   },
-})
+}
 ```
 
 **Q: How do I override a preset?**
 
 ```lua
-require('preview').setup({
+vim.g.preview = {
   typst = { env = { TYPST_FONT_PATHS = '/usr/share/fonts' } },
-})
+}
 ```
 
 **Q: How do I automatically open the output file?**
@@ -77,7 +77,7 @@ open the output with `vim.ui.open()` after the first successful compilation in
 toggle/watch mode. For a specific application, pass a command table:
 
 ```lua
-require('preview').setup({
+vim.g.preview = {
   typst = { open = { 'sioyek', '--new-instance' } },
-})
+}
 ```

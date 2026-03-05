@@ -23,8 +23,7 @@ REQUIREMENTS                                          *preview.nvim-requirements
 ==============================================================================
 SETUP                                                  *preview.nvim-setup*
 
-With lazy.nvim, set |vim.g.preview| in `init` so configuration is applied
-before the plugin loads: >lua
+Set |vim.g.preview| before the plugin loads: >lua
     {
       'barrettruth/preview.nvim',
       init = function()
@@ -32,19 +31,12 @@ before the plugin loads: >lua
       end,
     }
 <
-Alternatively, call |preview.setup()| directly in a `config` function or
-anywhere the plugin is already loaded.
 
 ==============================================================================
 CONFIGURATION                                      *preview.nvim-configuration*
 
-Configure via `require('preview').setup()`.
-
-                                                            *preview.setup()*
-setup({opts?})
-
-  `opts` is a table where keys are preset names or filetypes. For each
-  key `k` with value `v` (excluding `debug`):
+Configure by setting |vim.g.preview| to a table where keys are preset names
+or filetypes. For each key `k` with value `v` (excluding `debug`):
 
   - If `k` is a preset name and `v` is `true`, the preset is registered
     as-is under its filetype.
@@ -131,30 +123,30 @@ Context fields:~
 
 Example enabling presets:~
 >lua
-    require('preview').setup({ typst = true, latex = true, github = true })
+    vim.g.preview = { typst = true, latex = true, github = true }
 <
 
 Example overriding a preset field:~
 >lua
-    require('preview').setup({
+    vim.g.preview = {
       typst = { open = { 'sioyek', '--new-instance' } },
-    })
+    }
 <
 
 Example overriding the output path (e.g. latexmk `$out_dir`):~
 >lua
-    require('preview').setup({
+    vim.g.preview = {
       latex = {
         output = function(ctx)
           return 'build/' .. vim.fn.fnamemodify(ctx.file, ':t:r') .. '.pdf'
         end,
       },
-    })
+    }
 <
 
 Example with a fully custom provider (key is not a preset name):~
 >lua
-    require('preview').setup({
+    vim.g.preview = {
       rst = {
         cmd = { 'rst2html' },
         args = function(ctx)
@@ -164,7 +156,7 @@ Example with a fully custom provider (key is not a preset name):~
           return ctx.file:gsub('%.rst$', '.html')
         end,
       },
-    })
+    }
 <
 
 ==============================================================================
@@ -184,14 +176,14 @@ Import them from `preview.presets`:
 
 Enable presets with `preset_name = true`:
 >lua
-    require('preview').setup({ typst = true, latex = true, github = true })
+    vim.g.preview = { typst = true, latex = true, github = true }
 <
 
 Override individual fields by passing a table instead of `true`:
 >lua
-    require('preview').setup({
+    vim.g.preview = {
       typst = { env = { TYPST_FONT_PATHS = '/usr/share/fonts' } },
-    })
+    }
 <
 
 ==============================================================================
