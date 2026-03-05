@@ -11,7 +11,7 @@ in Neovim. It provides a unified interface for any compilation workflow —
 LaTeX, Typst, Markdown, or anything else with a CLI compiler.
 
 The plugin ships with opt-in presets for common tools (Typst, LaTeX, Pandoc,
-AsciiDoc, Quarto) and supports fully custom providers.
+AsciiDoc, PlantUML, Mermaid, Quarto) and supports fully custom providers.
 See |preview-presets|.
 
 ==============================================================================
@@ -180,6 +180,8 @@ override individual fields by passing a table instead: >lua
   `markdown`           pandoc → HTML (standalone, embedded)
   `github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
   `asciidoctor`        asciidoctor → HTML (AsciiDoc with SSE reload)
+  `plantuml`           plantuml → SVG (UML diagrams, `.puml`)
+  `mermaid`            mmdc → SVG (Mermaid diagrams, `.mmd`)
   `quarto`             quarto render → HTML (scientific publishing)
 
 ==============================================================================
