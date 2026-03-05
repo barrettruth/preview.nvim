@@ -119,14 +119,18 @@ end
 ---@return preview.Diagnostic[]
 local function parse_mermaid(output)
   local lnum = output:match('Parse error on line (%d+)')
-  if not lnum then return {} end
+  if not lnum then
+    return {}
+  end
   local msg = output:match('(Expecting .+)') or 'parse error'
-  return { {
-    lnum = tonumber(lnum) - 1,
-    col = 0,
-    message = msg,
-    severity = vim.diagnostic.severity.ERROR,
-  } }
+  return {
+    {
+      lnum = tonumber(lnum) - 1,
+      col = 0,
+      message = msg,
+      severity = vim.diagnostic.severity.ERROR,
+    },
+  }
 end
 
 ---@type preview.ProviderConfig
