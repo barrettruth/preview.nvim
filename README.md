@@ -13,6 +13,7 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 - Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic), Markdown,
   GitHub-flavored Markdown, AsciiDoc, and Quarto
 - Compiler errors via `vim.diagnostic` or quickfix
+- Previewer auto-close on buffer deletion
 
 ## Requirements
 
