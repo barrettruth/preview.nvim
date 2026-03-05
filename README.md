@@ -11,7 +11,7 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 
 - Async compilation via `vim.system()`
 - Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic), Markdown,
-  GitHub-flavored Markdown, AsciiDoc, and Quarto
+  GitHub-flavored Markdown, AsciiDoc, PlantUML, Mermaid, and Quarto
 - Compiler errors via `vim.diagnostic` or quickfix
 - Previewer auto-close on buffer deletion
 
