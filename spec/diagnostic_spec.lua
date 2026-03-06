@@ -124,5 +124,47 @@ describe('diagnostic', function()
       assert.are.equal(0, #diags)
       helpers.delete_buffer(bufnr)
     end)
+
+    it('returns count of diagnostics set', function()
+      local bufnr = helpers.create_buffer({ 'line1', 'line2' })
+
+      local parser = function()
+        return {
+          { lnum = 0, col = 0, message = 'err1', severity = vim.diagnostic.severity.ERROR },
+          { lnum = 1, col = 0, message = 'err2', severity = vim.diagnostic.severity.WARN },
+        }
+      end
+
+      local ctx = { bufnr = bufnr, file = '/tmp/test.typ', root = '/tmp', ft = 'typst' }
+      local count = diagnostic.set(bufnr, 'typst', parser, 'errors', ctx)
+      assert.are.equal(2, count)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('returns 0 on parser failure', function()
+      local bufnr = helpers.create_buffer({ 'line1' })
+
+      local parser = function()
+        error('boom')
+      end
+
+      local ctx = { bufnr = bufnr, file = '/tmp/test.tex', root = '/tmp', ft = 'tex' }
+      local count = diagnostic.set(bufnr, 'latexmk', parser, 'error', ctx)
+      assert.are.equal(0, count)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('returns 0 on empty diagnostics', function()
+      local bufnr = helpers.create_buffer({ 'line1' })
+
+      local parser = function()
+        return {}
+      end
+
+      local ctx = { bufnr = bufnr, file = '/tmp/test.tex', root = '/tmp', ft = 'tex' }
+      local count = diagnostic.set(bufnr, 'latexmk', parser, 'error', ctx)
+      assert.are.equal(0, count)
+      helpers.delete_buffer(bufnr)
+    end)
   end)
 end)

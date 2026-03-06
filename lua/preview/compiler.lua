@@ -12,6 +12,8 @@ local log = require('preview.log')
 ---@field viewer? table
 ---@field viewer_open? boolean
 ---@field open_watcher? uv.uv_fs_event_t
+---@field output_watcher? uv.uv_fs_event_t
+---@field has_errors? boolean
 ---@field debounce? uv.uv_timer_t
 ---@field bwp_autocmd? integer
 ---@field unload_autocmd? integer
@@ -42,6 +44,17 @@ local function stop_open_watcher(bufnr)
 end
 
 ---@param bufnr integer
+local function stop_output_watcher(bufnr)
+  local s = state[bufnr]
+  if not (s and s.output_watcher) then
+    return
+  end
+  s.output_watcher:stop()
+  s.output_watcher:close()
+  s.output_watcher = nil
+end
+
+---@param bufnr integer
 local function close_viewer(bufnr)
   local s = state[bufnr]
   if not (s and s.viewer) then
@@ -56,16 +69,17 @@ end
 ---@param provider preview.ProviderConfig
 ---@param ctx preview.Context
 ---@param output string
+---@return integer
 local function handle_errors(bufnr, name, provider, ctx, output)
   local errors_mode = provider.errors
   if errors_mode == nil then
     errors_mode = 'diagnostic'
   end
   if not (provider.error_parser and errors_mode) then
-    return
+    return 0
   end
   if errors_mode == 'diagnostic' then
-    diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
+    return diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
   elseif errors_mode == 'quickfix' then
     local ok, diags = pcall(provider.error_parser, output, ctx)
     if ok and diags and #diags > 0 then
@@ -83,8 +97,10 @@ local function handle_errors(bufnr, name, provider, ctx, output)
       local win = vim.fn.win_getid()
       vim.cmd.cwindow()
       vim.fn.win_gotoid(win)
+      return #diags
     end
   end
+  return 0
 end
 
 ---@param bufnr integer
@@ -169,6 +185,7 @@ local function stop_watching(bufnr, s)
   s.watching = false
   M.stop(bufnr)
   stop_open_watcher(bufnr)
+  stop_output_watcher(bufnr)
   close_viewer(bufnr)
   s.viewer_open = nil
   if s.bwp_autocmd then
@@ -250,7 +267,11 @@ function M.compile(bufnr, name, provider, ctx, opts)
             return
           end
           stderr_acc[#stderr_acc + 1] = data
-          handle_errors(bufnr, name, provider, ctx, table.concat(stderr_acc))
+          local count = handle_errors(bufnr, name, provider, ctx, table.concat(stderr_acc))
+          if count > 0 and not s.has_errors then
+            s.has_errors = true
+            vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
+          end
         end),
       },
       vim.schedule_wrap(function(result)
@@ -326,9 +347,52 @@ function M.compile(bufnr, name, provider, ctx, opts)
       end
     end
 
+    if output_file ~= '' then
+      local out_dir = vim.fn.fnamemodify(output_file, ':h')
+      local out_name = vim.fn.fnamemodify(output_file, ':t')
+      stop_output_watcher(bufnr)
+      local ow = vim.uv.new_fs_event()
+      if ow then
+        s.output_watcher = ow
+        local last_mtime = 0
+        local stat = vim.uv.fs_stat(output_file)
+        if stat then
+          last_mtime = stat.mtime.sec
+        end
+        ow:start(
+          out_dir,
+          {},
+          vim.schedule_wrap(function(err, filename, _events)
+            if err or vim.fn.fnamemodify(filename or '', ':t') ~= out_name then
+              return
+            end
+            if not vim.api.nvim_buf_is_valid(bufnr) then
+              stop_output_watcher(bufnr)
+              return
+            end
+            local new_stat = vim.uv.fs_stat(output_file)
+            if not (new_stat and new_stat.mtime.sec > last_mtime) then
+              return
+            end
+            last_mtime = new_stat.mtime.sec
+            log.dbg('output updated for buffer %d', bufnr)
+            vim.notify('[preview.nvim]: compilation complete', vim.log.levels.INFO)
+            stderr_acc = {}
+            s.has_errors = false
+            clear_errors(bufnr, provider)
+            vim.api.nvim_exec_autocmds('User', {
+              pattern = 'PreviewCompileSuccess',
+              data = { bufnr = bufnr, provider = name, output = output_file },
+            })
+          end)
+        )
+      end
+    end
+
     s.process = obj
     s.provider = name
     s.is_reload = true
+    s.has_errors = false
 
     vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
     vim.api.nvim_exec_autocmds('User', {
@@ -420,6 +484,7 @@ function M.stop(bufnr)
   if not s then
     return
   end
+  stop_output_watcher(bufnr)
   local obj = s.process
   if not obj then
     return
@@ -485,6 +550,7 @@ function M.toggle(bufnr, name, provider, ctx_builder)
     callback = function()
       M.stop(bufnr)
       stop_open_watcher(bufnr)
+      stop_output_watcher(bufnr)
       if not provider.detach then
         close_viewer(bufnr)
       end

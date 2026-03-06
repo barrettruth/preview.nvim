@@ -279,6 +279,58 @@ describe('compiler', function()
     end)
   end)
 
+  describe('long-running notifications', function()
+    it('notifies failure on stderr diagnostics', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_longrun.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified_fail = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg:find('compilation failed') and level == vim.log.levels.ERROR then
+          notified_fail = true
+        end
+      end
+
+      local provider = {
+        cmd = { 'sh' },
+        reload = function()
+          return { 'sh', '-c', 'echo "error: bad input" >&2; sleep 60' }
+        end,
+        error_parser = function()
+          return {
+            { lnum = 0, col = 0, message = 'bad input', severity = vim.diagnostic.severity.ERROR },
+          }
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_longrun.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'testprov', provider, ctx)
+
+      vim.wait(3000, function()
+        return notified_fail
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified_fail)
+
+      local s = compiler._test.state[bufnr]
+      assert.is_true(s.has_errors)
+
+      compiler.stop(bufnr)
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
+
   describe('stop', function()
     it('does nothing when no process is active', function()
       assert.has_no.errors(function()
