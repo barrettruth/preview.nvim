@@ -49,6 +49,8 @@
               pkgs.quarto
               pkgs.plantuml
               pkgs.mermaid-cli
+              pkgs.zathura
+              pkgs.sioyek
             ];
           };
         }
