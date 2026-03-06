@@ -2,6 +2,7 @@
 ---@field ft? string
 ---@field cmd string[]
 ---@field args? string[]|fun(ctx: preview.Context): string[]
+---@field extra_args? string[]|fun(ctx: preview.Context): string[]
 ---@field cwd? string|fun(ctx: preview.Context): string
 ---@field env? table<string, string>
 ---@field output? string|fun(ctx: preview.Context): string
@@ -94,6 +95,7 @@ function M.setup(opts)
     vim.validate(prefix .. '.cmd', provider.cmd, 'table')
     vim.validate(prefix .. '.cmd[1]', provider.cmd[1], 'string')
     vim.validate(prefix .. '.args', provider.args, { 'table', 'function' }, true)
+    vim.validate(prefix .. '.extra_args', provider.extra_args, { 'table', 'function' }, true)
     vim.validate(prefix .. '.cwd', provider.cwd, { 'string', 'function' }, true)
     vim.validate(prefix .. '.output', provider.output, { 'string', 'function' }, true)
     vim.validate(prefix .. '.error_parser', provider.error_parser, 'function', true)
