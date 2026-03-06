@@ -294,11 +294,11 @@ describe('presets', function()
       assert.are.same({ 'pandoc' }, presets.markdown.cmd)
     end)
 
-    it('returns args with standalone and embed-resources flags', function()
+    it('returns args with standalone, embed-resources, and mathml flags', function()
       local args = presets.markdown.args(md_ctx)
       assert.is_table(args)
       assert.are.same(
-        { '/tmp/document.md', '-s', '--embed-resources', '-o', '/tmp/document.html' },
+        { '/tmp/document.md', '-s', '--embed-resources', '--mathml', '-o', '/tmp/document.html' },
         args
       )
     end)
@@ -382,7 +382,7 @@ describe('presets', function()
       assert.are.same({ 'pandoc' }, presets.github.cmd)
     end)
 
-    it('returns args with standalone, embed-resources, and css flags', function()
+    it('returns args with standalone, embed-resources, mathml, and css flags', function()
       local args = presets.github.args(md_ctx)
       assert.is_table(args)
       assert.are.same({
@@ -391,6 +391,7 @@ describe('presets', function()
         '/tmp/document.md',
         '-s',
         '--embed-resources',
+        '--mathml',
         '--css',
         'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
         '-o',
