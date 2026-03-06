@@ -412,11 +412,14 @@ end
 ---@param bufnr integer
 function M.stop(bufnr)
   local s = state[bufnr]
-  if not s or not s.process then
+  if not s then
+    return
+  end
+  local obj = s.process
+  if not obj then
     return
   end
   log.dbg('stopping process for buffer %d', bufnr)
-  local obj = s.process
   obj:kill('sigterm')
 
   local timer = vim.uv.new_timer()
