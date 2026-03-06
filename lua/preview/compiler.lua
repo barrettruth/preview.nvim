@@ -3,45 +3,102 @@ local M = {}
 local diagnostic = require('preview.diagnostic')
 local log = require('preview.log')
 
----@type table<integer, preview.Process>
-local active = {}
+---@class preview.BufState
+---@field watching boolean
+---@field process? table
+---@field is_reload? boolean
+---@field provider? string
+---@field output? string
+---@field viewer? table
+---@field viewer_open? boolean
+---@field open_watcher? uv.uv_fs_event_t
+---@field debounce? uv.uv_timer_t
+---@field bwp_autocmd? integer
+---@field unload_autocmd? integer
 
----@type table<integer, integer>
-local watching = {}
-
----@type table<integer, true>
-local opened = {}
-
----@type table<integer, string>
-local last_output = {}
-
----@type table<integer, table>
-local viewer_procs = {}
-
----@type table<integer, uv.uv_fs_event_t>
-local open_watchers = {}
-
-local debounce_timers = {}
+---@type table<integer, preview.BufState>
+local state = {}
 
 local DEBOUNCE_MS = 500
 
 ---@param bufnr integer
-local function stop_open_watcher(bufnr)
-  local w = open_watchers[bufnr]
-  if w then
-    w:stop()
-    w:close()
-    open_watchers[bufnr] = nil
+---@return preview.BufState
+local function get_state(bufnr)
+  if not state[bufnr] then
+    state[bufnr] = { watching = false }
   end
+  return state[bufnr]
+end
+
+---@param bufnr integer
+local function stop_open_watcher(bufnr)
+  local s = state[bufnr]
+  if not (s and s.open_watcher) then
+    return
+  end
+  s.open_watcher:stop()
+  s.open_watcher:close()
+  s.open_watcher = nil
 end
 
 ---@param bufnr integer
 local function close_viewer(bufnr)
-  local obj = viewer_procs[bufnr]
-  if obj then
-    local kill = obj.kill
-    kill(obj, 'sigterm')
-    viewer_procs[bufnr] = nil
+  local s = state[bufnr]
+  if not (s and s.viewer) then
+    return
+  end
+  s.viewer:kill('sigterm')
+  s.viewer = nil
+end
+
+---@param bufnr integer
+---@param name string
+---@param provider preview.ProviderConfig
+---@param ctx preview.Context
+---@param output string
+local function handle_errors(bufnr, name, provider, ctx, output)
+  local errors_mode = provider.errors
+  if errors_mode == nil then
+    errors_mode = 'diagnostic'
+  end
+  if not (provider.error_parser and errors_mode) then
+    return
+  end
+  if errors_mode == 'diagnostic' then
+    diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
+  elseif errors_mode == 'quickfix' then
+    local ok, diags = pcall(provider.error_parser, output, ctx)
+    if ok and diags and #diags > 0 then
+      local items = {}
+      for _, d in ipairs(diags) do
+        table.insert(items, {
+          bufnr = bufnr,
+          lnum = d.lnum + 1,
+          col = d.col + 1,
+          text = d.message,
+          type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
+        })
+      end
+      vim.fn.setqflist(items, 'r')
+      local win = vim.fn.win_getid()
+      vim.cmd.cwindow()
+      vim.fn.win_gotoid(win)
+    end
+  end
+end
+
+---@param bufnr integer
+---@param provider preview.ProviderConfig
+local function clear_errors(bufnr, provider)
+  local errors_mode = provider.errors
+  if errors_mode == nil then
+    errors_mode = 'diagnostic'
+  end
+  if errors_mode == 'diagnostic' then
+    diagnostic.clear(bufnr)
+  elseif errors_mode == 'quickfix' then
+    vim.fn.setqflist({}, 'r')
+    vim.cmd.cwindow()
   end
 end
 
@@ -54,7 +111,23 @@ local function do_open(bufnr, output_file, open_config)
   elseif type(open_config) == 'table' then
     local open_cmd = vim.list_extend({}, open_config)
     table.insert(open_cmd, output_file)
-    viewer_procs[bufnr] = vim.system(open_cmd)
+    log.dbg('opening viewer for buffer %d: %s', bufnr, table.concat(open_cmd, ' '))
+    local proc
+    proc = vim.system(
+      open_cmd,
+      {},
+      vim.schedule_wrap(function()
+        local s = state[bufnr]
+        if s and s.viewer == proc then
+          log.dbg('viewer exited for buffer %d, resetting viewer_open', bufnr)
+          s.viewer = nil
+          s.viewer_open = nil
+        else
+          log.dbg('viewer exited for buffer %d (stale proc, ignoring)', bufnr)
+        end
+      end)
+    )
+    get_state(bufnr).viewer = proc
   end
 end
 
@@ -91,9 +164,29 @@ local function resolve_reload_cmd(provider, ctx)
 end
 
 ---@param bufnr integer
+---@param s preview.BufState
+local function stop_watching(bufnr, s)
+  s.watching = false
+  M.stop(bufnr)
+  stop_open_watcher(bufnr)
+  close_viewer(bufnr)
+  s.viewer_open = nil
+  if s.bwp_autocmd then
+    vim.api.nvim_del_autocmd(s.bwp_autocmd)
+    s.bwp_autocmd = nil
+  end
+  if s.debounce then
+    s.debounce:stop()
+    s.debounce:close()
+    s.debounce = nil
+  end
+end
+
+---@param bufnr integer
 ---@param name string
 ---@param provider preview.ProviderConfig
 ---@param ctx preview.Context
+---@param opts? {oneshot?: boolean}
 function M.compile(bufnr, name, provider, ctx, opts)
   opts = opts or {}
 
@@ -109,7 +202,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
     vim.cmd('silent! update')
   end
 
-  if active[bufnr] then
+  local s = get_state(bufnr)
+
+  if s.process then
     log.dbg('killing existing process for buffer %d before recompile', bufnr)
     M.stop(bufnr)
   end
@@ -127,7 +222,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
   end
 
   if output_file ~= '' then
-    last_output[bufnr] = output_file
+    s.output = output_file
   end
 
   local reload_cmd
@@ -155,74 +250,20 @@ function M.compile(bufnr, name, provider, ctx, opts)
             return
           end
           stderr_acc[#stderr_acc + 1] = data
-          local errors_mode = provider.errors
-          if errors_mode == nil then
-            errors_mode = 'diagnostic'
-          end
-          if provider.error_parser and errors_mode then
-            local output = table.concat(stderr_acc)
-            if errors_mode == 'diagnostic' then
-              diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
-            elseif errors_mode == 'quickfix' then
-              local ok, diags = pcall(provider.error_parser, output, ctx)
-              if ok and diags and #diags > 0 then
-                local items = {}
-                for _, d in ipairs(diags) do
-                  table.insert(items, {
-                    bufnr = bufnr,
-                    lnum = d.lnum + 1,
-                    col = d.col + 1,
-                    text = d.message,
-                    type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
-                  })
-                end
-                vim.fn.setqflist(items, 'r')
-                local win = vim.fn.win_getid()
-                vim.cmd.cwindow()
-                vim.fn.win_gotoid(win)
-              end
-            end
-          end
+          handle_errors(bufnr, name, provider, ctx, table.concat(stderr_acc))
         end),
       },
       vim.schedule_wrap(function(result)
-        if active[bufnr] and active[bufnr].obj == obj then
-          active[bufnr] = nil
+        local cs = state[bufnr]
+        if cs and cs.process == obj then
+          cs.process = nil
         end
         if not vim.api.nvim_buf_is_valid(bufnr) then
           return
         end
-
         if result.code ~= 0 then
           log.dbg('long-running process failed for buffer %d (exit code %d)', bufnr, result.code)
-          local errors_mode = provider.errors
-          if errors_mode == nil then
-            errors_mode = 'diagnostic'
-          end
-          if provider.error_parser and errors_mode then
-            local output = (result.stdout or '') .. (result.stderr or '')
-            if errors_mode == 'diagnostic' then
-              diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
-            elseif errors_mode == 'quickfix' then
-              local ok, diagnostics = pcall(provider.error_parser, output, ctx)
-              if ok and diagnostics and #diagnostics > 0 then
-                local items = {}
-                for _, d in ipairs(diagnostics) do
-                  table.insert(items, {
-                    bufnr = bufnr,
-                    lnum = d.lnum + 1,
-                    col = d.col + 1,
-                    text = d.message,
-                    type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
-                  })
-                end
-                vim.fn.setqflist(items, 'r')
-                local win = vim.fn.win_getid()
-                vim.cmd.cwindow()
-                vim.fn.win_gotoid(win)
-              end
-            end
-          end
+          handle_errors(bufnr, name, provider, ctx, (result.stdout or '') .. (result.stderr or ''))
           vim.api.nvim_exec_autocmds('User', {
             pattern = 'PreviewCompileFailed',
             data = {
@@ -236,7 +277,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
       end)
     )
 
-    if provider.open and not opts.oneshot and not opened[bufnr] and output_file ~= '' then
+    if provider.open and not opts.oneshot and not s.viewer_open and output_file ~= '' then
       local pre_stat = vim.uv.fs_stat(output_file)
       local pre_mtime = pre_stat and pre_stat.mtime.sec or 0
       local out_dir = vim.fn.fnamemodify(output_file, ':h')
@@ -244,7 +285,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
       stop_open_watcher(bufnr)
       local watcher = vim.uv.new_fs_event()
       if watcher then
-        open_watchers[bufnr] = watcher
+        s.open_watcher = watcher
         watcher:start(
           out_dir,
           {},
@@ -252,8 +293,12 @@ function M.compile(bufnr, name, provider, ctx, opts)
             if err or vim.fn.fnamemodify(filename or '', ':t') ~= out_name then
               return
             end
-            if opened[bufnr] then
-              stop_open_watcher(bufnr)
+            local cs = state[bufnr]
+            if not cs then
+              return
+            end
+            if cs.viewer_open then
+              log.dbg('watcher fired for buffer %d but viewer already open', bufnr)
               return
             end
             if not vim.api.nvim_buf_is_valid(bufnr) then
@@ -262,41 +307,27 @@ function M.compile(bufnr, name, provider, ctx, opts)
             end
             local new_stat = vim.uv.fs_stat(output_file)
             if not (new_stat and new_stat.mtime.sec > pre_mtime) then
+              log.dbg(
+                'watcher fired for buffer %d but mtime not newer (%d <= %d)',
+                bufnr,
+                new_stat and new_stat.mtime.sec or 0,
+                pre_mtime
+              )
               return
             end
-            stop_open_watcher(bufnr)
+            log.dbg('watcher opening viewer for buffer %d', bufnr)
+            cs.viewer_open = true
             stderr_acc = {}
-            local errors_mode = provider.errors
-            if errors_mode == nil then
-              errors_mode = 'diagnostic'
-            end
-            if errors_mode == 'diagnostic' then
-              diagnostic.clear(bufnr)
-            elseif errors_mode == 'quickfix' then
-              vim.fn.setqflist({}, 'r')
-              vim.cmd.cwindow()
-            end
+            clear_errors(bufnr, provider)
             do_open(bufnr, output_file, provider.open)
-            opened[bufnr] = true
           end)
         )
       end
     end
 
-    active[bufnr] = { obj = obj, provider = name, output_file = output_file, is_reload = true }
-
-    vim.api.nvim_create_autocmd('BufUnload', {
-      buffer = bufnr,
-      once = true,
-      callback = function()
-        M.stop(bufnr)
-        stop_open_watcher(bufnr)
-        if not provider.detach then
-          close_viewer(bufnr)
-        end
-        last_output[bufnr] = nil
-      end,
-    })
+    s.process = obj
+    s.provider = name
+    s.is_reload = true
 
     vim.api.nvim_exec_autocmds('User', {
       pattern = 'PreviewCompileStarted',
@@ -318,31 +349,18 @@ function M.compile(bufnr, name, provider, ctx, opts)
   local obj
   obj = vim.system(
     cmd,
-    {
-      cwd = cwd,
-      env = provider.env,
-    },
+    { cwd = cwd, env = provider.env },
     vim.schedule_wrap(function(result)
-      if active[bufnr] and active[bufnr].obj == obj then
-        active[bufnr] = nil
+      local cs = state[bufnr]
+      if cs and cs.process == obj then
+        cs.process = nil
       end
       if not vim.api.nvim_buf_is_valid(bufnr) then
         return
       end
-
-      local errors_mode = provider.errors
-      if errors_mode == nil then
-        errors_mode = 'diagnostic'
-      end
-
       if result.code == 0 then
         log.dbg('compilation succeeded for buffer %d', bufnr)
-        if errors_mode == 'diagnostic' then
-          diagnostic.clear(bufnr)
-        elseif errors_mode == 'quickfix' then
-          vim.fn.setqflist({}, 'r')
-          vim.cmd.cwindow()
-        end
+        clear_errors(bufnr, provider)
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileSuccess',
           data = { bufnr = bufnr, provider = name, output = output_file },
@@ -353,42 +371,21 @@ function M.compile(bufnr, name, provider, ctx, opts)
           r.inject(output_file)
           r.broadcast()
         end
+        cs = state[bufnr]
         if
           provider.open
           and not opts.oneshot
-          and not opened[bufnr]
+          and cs
+          and not cs.viewer_open
           and output_file ~= ''
           and vim.uv.fs_stat(output_file)
         then
+          cs.viewer_open = true
           do_open(bufnr, output_file, provider.open)
-          opened[bufnr] = true
         end
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
-        if provider.error_parser and errors_mode then
-          local output = (result.stdout or '') .. (result.stderr or '')
-          if errors_mode == 'diagnostic' then
-            diagnostic.set(bufnr, name, provider.error_parser, output, ctx)
-          elseif errors_mode == 'quickfix' then
-            local ok, diagnostics = pcall(provider.error_parser, output, ctx)
-            if ok and diagnostics and #diagnostics > 0 then
-              local items = {}
-              for _, d in ipairs(diagnostics) do
-                table.insert(items, {
-                  bufnr = bufnr,
-                  lnum = d.lnum + 1,
-                  col = d.col + 1,
-                  text = d.message,
-                  type = d.severity == vim.diagnostic.severity.WARN and 'W' or 'E',
-                })
-              end
-              vim.fn.setqflist(items, 'r')
-              local win = vim.fn.win_getid()
-              vim.cmd.cwindow()
-              vim.fn.win_gotoid(win)
-            end
-          end
-        end
+        handle_errors(bufnr, name, provider, ctx, (result.stdout or '') .. (result.stderr or ''))
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',
           data = {
@@ -402,19 +399,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
     end)
   )
 
-  active[bufnr] = { obj = obj, provider = name, output_file = output_file }
-
-  vim.api.nvim_create_autocmd('BufUnload', {
-    buffer = bufnr,
-    once = true,
-    callback = function()
-      M.stop(bufnr)
-      if not provider.detach then
-        close_viewer(bufnr)
-      end
-      last_output[bufnr] = nil
-    end,
-  })
+  s.process = obj
+  s.provider = name
+  s.is_reload = false
 
   vim.api.nvim_exec_autocmds('User', {
     pattern = 'PreviewCompileStarted',
@@ -424,39 +411,37 @@ end
 
 ---@param bufnr integer
 function M.stop(bufnr)
-  local proc = active[bufnr]
-  if not proc then
+  local s = state[bufnr]
+  if not s then
+    return
+  end
+  local obj = s.process
+  if not obj then
     return
   end
   log.dbg('stopping process for buffer %d', bufnr)
-  ---@type fun(self: table, signal: string|integer)
-  local kill = proc.obj.kill
-  kill(proc.obj, 'sigterm')
+  obj:kill('sigterm')
 
   local timer = vim.uv.new_timer()
   if timer then
     timer:start(5000, 0, function()
       timer:close()
-      if active[bufnr] and active[bufnr].obj == proc.obj then
-        kill(proc.obj, 'sigkill')
-        active[bufnr] = nil
+      local cs = state[bufnr]
+      if cs and cs.process == obj then
+        obj:kill('sigkill')
+        cs.process = nil
       end
     end)
   end
 end
 
 function M.stop_all()
-  for bufnr, _ in pairs(active) do
-    M.stop(bufnr)
-  end
-  for bufnr, _ in pairs(watching) do
-    M.unwatch(bufnr)
-  end
-  for bufnr, _ in pairs(open_watchers) do
-    stop_open_watcher(bufnr)
-  end
-  for bufnr, _ in pairs(viewer_procs) do
-    close_viewer(bufnr)
+  for bufnr, s in pairs(state) do
+    stop_watching(bufnr, s)
+    if s.unload_autocmd then
+      vim.api.nvim_del_autocmd(s.unload_autocmd)
+    end
+    state[bufnr] = nil
   end
   require('preview.reload').stop()
 end
@@ -467,76 +452,77 @@ end
 ---@param ctx_builder fun(bufnr: integer): preview.Context
 function M.toggle(bufnr, name, provider, ctx_builder)
   local is_longrunning = type(provider.reload) == 'table' or type(provider.reload) == 'function'
+  local s = get_state(bufnr)
 
-  if is_longrunning then
-    if active[bufnr] then
-      M.stop(bufnr)
-      vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
+  if s.watching then
+    local output = s.output
+    if not s.viewer_open and provider.open and output and vim.uv.fs_stat(output) then
+      log.dbg('toggle reopen viewer for buffer %d', bufnr)
+      s.viewer_open = true
+      do_open(bufnr, output, provider.open)
     else
-      M.compile(bufnr, name, provider, ctx_builder(bufnr))
-      vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
+      log.dbg('toggle off for buffer %d', bufnr)
+      stop_watching(bufnr, s)
+      vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
     end
     return
   end
 
-  if watching[bufnr] then
-    M.unwatch(bufnr)
-    vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
-    return
+  log.dbg('toggle on for buffer %d', bufnr)
+  s.watching = true
+
+  if s.unload_autocmd then
+    vim.api.nvim_del_autocmd(s.unload_autocmd)
   end
-
-  local au_id = vim.api.nvim_create_autocmd('BufWritePost', {
-    buffer = bufnr,
-    callback = function()
-      if debounce_timers[bufnr] then
-        debounce_timers[bufnr]:stop()
-      else
-        debounce_timers[bufnr] = vim.uv.new_timer()
-      end
-      debounce_timers[bufnr]:start(
-        DEBOUNCE_MS,
-        0,
-        vim.schedule_wrap(function()
-          local ctx = ctx_builder(bufnr)
-          M.compile(bufnr, name, provider, ctx)
-        end)
-      )
-    end,
-  })
-
-  watching[bufnr] = au_id
-  log.dbg('watching buffer %d with provider "%s"', bufnr, name)
-  vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
-
-  vim.api.nvim_create_autocmd('BufUnload', {
+  s.unload_autocmd = vim.api.nvim_create_autocmd('BufUnload', {
     buffer = bufnr,
     once = true,
     callback = function()
-      M.unwatch(bufnr)
+      M.stop(bufnr)
       stop_open_watcher(bufnr)
       if not provider.detach then
         close_viewer(bufnr)
       end
-      opened[bufnr] = nil
+      state[bufnr] = nil
     end,
   })
 
+  if not is_longrunning then
+    s.bwp_autocmd = vim.api.nvim_create_autocmd('BufWritePost', {
+      buffer = bufnr,
+      callback = function()
+        local ds = state[bufnr]
+        if not ds then
+          return
+        end
+        if ds.debounce then
+          ds.debounce:stop()
+        else
+          ds.debounce = vim.uv.new_timer()
+        end
+        ds.debounce:start(
+          DEBOUNCE_MS,
+          0,
+          vim.schedule_wrap(function()
+            M.compile(bufnr, name, provider, ctx_builder(bufnr))
+          end)
+        )
+      end,
+    })
+    log.dbg('watching buffer %d with provider "%s"', bufnr, name)
+  end
+
+  vim.notify('[preview.nvim]: watching with "' .. name .. '"', vim.log.levels.INFO)
   M.compile(bufnr, name, provider, ctx_builder(bufnr))
 end
 
 ---@param bufnr integer
 function M.unwatch(bufnr)
-  local au_id = watching[bufnr]
-  if not au_id then
+  local s = state[bufnr]
+  if not s then
     return
   end
-  vim.api.nvim_del_autocmd(au_id)
-  if debounce_timers[bufnr] then
-    debounce_timers[bufnr]:stop()
-    debounce_timers[bufnr]:close()
-    debounce_timers[bufnr] = nil
-  end
-  watching[bufnr] = nil
+  stop_watching(bufnr, s)
   log.dbg('unwatched buffer %d', bufnr)
 end
 
@@ -585,7 +571,8 @@ end
 ---@param bufnr integer
 ---@return boolean
 function M.open(bufnr, open_config)
-  local output = last_output[bufnr]
+  local s = state[bufnr]
+  local output = s and s.output
   if not output then
     log.dbg('no last output file for buffer %d', bufnr)
     return false
@@ -601,26 +588,20 @@ end
 ---@param bufnr integer
 ---@return preview.Status
 function M.status(bufnr)
-  local proc = active[bufnr]
-  if proc then
-    return {
-      compiling = not proc.is_reload,
-      watching = watching[bufnr] ~= nil or proc.is_reload == true,
-      provider = proc.provider,
-      output_file = proc.output_file,
-    }
+  local s = state[bufnr]
+  if not s then
+    return { compiling = false, watching = false }
   end
-  return { compiling = false, watching = watching[bufnr] ~= nil }
+  return {
+    compiling = s.process ~= nil and not s.is_reload,
+    watching = s.watching,
+    provider = s.provider,
+    output_file = s.output,
+  }
 end
 
 M._test = {
-  active = active,
-  watching = watching,
-  opened = opened,
-  last_output = last_output,
-  debounce_timers = debounce_timers,
-  viewer_procs = viewer_procs,
-  open_watchers = open_watchers,
+  state = state,
 }
 
 return M
