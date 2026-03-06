@@ -412,7 +412,7 @@ end
 ---@param bufnr integer
 function M.stop(bufnr)
   local s = state[bufnr]
-  if not (s and s.process) then
+  if not s or not s.process then
     return
   end
   log.dbg('stopping process for buffer %d', bufnr)
