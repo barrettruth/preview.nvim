@@ -263,6 +263,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
         end
         if result.code ~= 0 then
           log.dbg('long-running process failed for buffer %d (exit code %d)', bufnr, result.code)
+          vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
           handle_errors(bufnr, name, provider, ctx, (result.stdout or '') .. (result.stderr or ''))
           vim.api.nvim_exec_autocmds('User', {
             pattern = 'PreviewCompileFailed',
@@ -329,9 +330,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
     s.provider = name
     s.is_reload = true
 
-    if not opts.silent then
-      vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
-    end
+    vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
     vim.api.nvim_exec_autocmds('User', {
       pattern = 'PreviewCompileStarted',
       data = { bufnr = bufnr, provider = name },
@@ -389,6 +388,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
         end
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
+        vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
         handle_errors(bufnr, name, provider, ctx, (result.stdout or '') .. (result.stderr or ''))
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',
@@ -407,9 +407,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
   s.provider = name
   s.is_reload = false
 
-  if not opts.silent then
-    vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
-  end
+  vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
   vim.api.nvim_exec_autocmds('User', {
     pattern = 'PreviewCompileStarted',
     data = { bufnr = bufnr, provider = name },
@@ -519,8 +517,7 @@ function M.toggle(bufnr, name, provider, ctx_builder)
     log.dbg('watching buffer %d with provider "%s"', bufnr, name)
   end
 
-  vim.notify('[preview.nvim]: compiling with "' .. name .. '"...', vim.log.levels.INFO)
-  M.compile(bufnr, name, provider, ctx_builder(bufnr), { silent = true })
+  M.compile(bufnr, name, provider, ctx_builder(bufnr))
 end
 
 ---@param bufnr integer
