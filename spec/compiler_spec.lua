@@ -55,6 +55,14 @@ describe('compiler', function()
         end,
       })
 
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg)
+        if msg:find('compiling') then
+          notified = true
+        end
+      end
+
       local provider = { cmd = { 'echo', 'ok' } }
       local ctx = {
         bufnr = bufnr,
@@ -64,7 +72,9 @@ describe('compiler', function()
       }
 
       compiler.compile(bufnr, 'echo', provider, ctx)
+      vim.notify = orig
       assert.is_true(fired)
+      assert.is_true(notified)
 
       vim.wait(2000, function()
         return process_done(bufnr)
