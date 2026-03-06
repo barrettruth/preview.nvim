@@ -183,8 +183,8 @@ override individual fields by passing a table instead: >lua
   `latex`              latexmk -pdf → PDF (with clean support)
   `pdflatex`           pdflatex → PDF (single pass, no latexmk)
   `tectonic`           tectonic → PDF (Rust-based LaTeX engine)
-  `markdown`           pandoc → HTML (standalone, embedded)
-  `github`             pandoc → HTML (GitHub-styled, `-f gfm` input)
+  `markdown`           pandoc → HTML (standalone, KaTeX math)
+  `github`             pandoc → HTML (GitHub-styled, `-f gfm`, KaTeX math)
   `asciidoctor`        asciidoctor → HTML (AsciiDoc with SSE reload)
   `plantuml`           plantuml → SVG (UML diagrams, `.puml`)
   `mermaid`            mmdc → SVG (Mermaid diagrams, `.mmd`)
@@ -193,34 +193,36 @@ override individual fields by passing a table instead: >lua
 Math rendering (pandoc presets): ~
                                                         *preview-math*
 
-The `markdown` and `github` presets use `--mathml` by default, which converts
-TeX math to native MathML markup rendered by the browser. This is the only
-math option compatible with `--embed-resources` (self-contained HTML).
+The `markdown` and `github` presets use `--katex` by default, which inserts a
+`<script>` tag that loads KaTeX from a CDN at view time. The browser fetches
+the assets once and caches them, so math renders instantly on subsequent loads.
+Requires internet on first view.
 
-`--mathjax` and `--katex` insert `<script>` tags that load JavaScript and
-fonts from a CDN at runtime. Pandoc's `--embed-resources` cannot inline these
-dynamic dependencies, so math fails to render in the output.
-
-To use KaTeX or MathJax instead, override `args` to drop `--embed-resources`
-(the output will require internet access). For example, to work with
-github-flavored markdown (gfm): >lua
+For offline use, swap in `--mathml` via `extra_args`. MathML is rendered
+natively by the browser with no external dependencies: >lua
 
     vim.g.preview = {
-      github = {
-        args = function(ctx)
-          return {
-            '-f',
-            'gfm',
-            ctx.file,
-            '-s',
-            '--katex',
-            '--css',
-            'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
-            '-o',
-            ctx.output,
-          }
-        end,
-      },
+      github = { extra_args = { '--mathml' } },
+    }
+<
+
+Note: pandoc's math flags (`--katex`, `--mathml`, `--mathjax`) are mutually
+exclusive — last flag wins. Adding `--mathml` via `extra_args` (which is
+appended after `args`) overrides `--katex`.
+
+Self-contained output with `--embed-resources`: >lua
+
+    vim.g.preview = {
+      github = { extra_args = { '--embed-resources' } },
+    }
+<
+
+This inlines all external resources into the HTML. With `--katex` this adds
+~15s of compile time per save (pandoc fetches KaTeX from the CDN during
+compilation). Pair with `--mathml` to avoid the penalty: >lua
+
+    vim.g.preview = {
+      github = { extra_args = { '--embed-resources', '--mathml' } },
     }
 <
 

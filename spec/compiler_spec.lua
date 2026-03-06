@@ -55,6 +55,14 @@ describe('compiler', function()
         end,
       })
 
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg)
+        if msg:find('compiling') then
+          notified = true
+        end
+      end
+
       local provider = { cmd = { 'echo', 'ok' } }
       local ctx = {
         bufnr = bufnr,
@@ -64,7 +72,9 @@ describe('compiler', function()
       }
 
       compiler.compile(bufnr, 'echo', provider, ctx)
+      vim.notify = orig
       assert.is_true(fired)
+      assert.is_true(notified)
 
       vim.wait(2000, function()
         return process_done(bufnr)
@@ -265,6 +275,58 @@ describe('compiler', function()
       end, 50)
 
       assert.are.equal(0, #vim.fn.getqflist())
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
+
+  describe('long-running notifications', function()
+    it('notifies failure on stderr diagnostics', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_longrun.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified_fail = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg:find('compilation failed') and level == vim.log.levels.ERROR then
+          notified_fail = true
+        end
+      end
+
+      local provider = {
+        cmd = { 'sh' },
+        reload = function()
+          return { 'sh', '-c', 'echo "error: bad input" >&2; sleep 60' }
+        end,
+        error_parser = function()
+          return {
+            { lnum = 0, col = 0, message = 'bad input', severity = vim.diagnostic.severity.ERROR },
+          }
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_longrun.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'testprov', provider, ctx)
+
+      vim.wait(3000, function()
+        return notified_fail
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified_fail)
+
+      local s = compiler._test.state[bufnr]
+      assert.is_true(s.has_errors)
+
+      compiler.stop(bufnr)
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
       helpers.delete_buffer(bufnr)
     end)
   end)
