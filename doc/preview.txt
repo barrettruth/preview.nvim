@@ -22,6 +22,7 @@ CONTENTS                                                   *preview-contents*
   3. Install ............................................... |preview-install|
   4. Configuration ........................................... |preview-config|
   5. Presets ............................................... |preview-presets|
+     - Math rendering ....................................... |preview-math|
   6. Commands ............................................. |preview-commands|
   7. Lua API ................................................... |preview-api|
   8. Events ............................................... |preview-events|
@@ -188,6 +189,33 @@ override individual fields by passing a table instead: >lua
   `plantuml`           plantuml → SVG (UML diagrams, `.puml`)
   `mermaid`            mmdc → SVG (Mermaid diagrams, `.mmd`)
   `quarto`             quarto render → HTML (scientific publishing)
+
+Math rendering (pandoc presets): ~
+                                                        *preview-math*
+
+The `markdown` and `github` presets use `--mathml` by default, which converts
+TeX math to native MathML markup rendered by the browser. This is the only
+math option compatible with `--embed-resources` (self-contained HTML).
+
+`--mathjax` and `--katex` insert `<script>` tags that load JavaScript and
+fonts from a CDN at runtime. Pandoc's `--embed-resources` cannot inline these
+dynamic dependencies, so math fails to render in the output.
+
+To use KaTeX or MathJax instead, override `args` to drop `--embed-resources`
+(the output will require internet access): >lua
+
+    vim.g.preview = {
+      github = {
+        args = function(ctx)
+          return {
+            '-f', 'gfm', ctx.file, '-s', '--katex',
+            '--css', 'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
+            '-o', ctx.output,
+          }
+        end,
+      },
+    }
+<
 
 ==============================================================================
 COMMANDS                                                  *preview-commands*
