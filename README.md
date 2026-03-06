@@ -81,3 +81,8 @@ vim.g.preview = {
   typst = { open = { 'sioyek', '--new-instance' } },
 }
 ```
+
+**Q: How do I set up SyncTeX (forward/inverse search)?**
+
+See `:help preview-synctex` for full recipes covering Zathura, Sioyek, and
+Okular.

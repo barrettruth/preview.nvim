@@ -26,6 +26,7 @@ CONTENTS                                                   *preview-contents*
   7. Lua API ................................................... |preview-api|
   8. Events ............................................... |preview-events|
   9. Health ............................................... |preview-health|
+  10. SyncTeX ............................................. |preview-synctex|
 
 ==============================================================================
 REQUIREMENTS                                           *preview-requirements*
@@ -271,6 +272,117 @@ Checks: ~
 - Neovim version >= 0.11.0
 - Each configured provider's binary is executable
 - Each configured provider's opener binary (if any) is executable
+
+==============================================================================
+SYNCTEX                                                    *preview-synctex*
+
+SyncTeX enables bidirectional navigation between LaTeX source and the
+compiled PDF. The `latex` preset compiles with `-synctex=1` by default.
+
+Forward search (editor -> viewer) requires caching the output path.
+Inverse search (viewer -> editor) requires a fixed Neovim server socket.
+
+The following configs leverage the below basic setup: ~
+
+>lua
+    vim.fn.serverstart('/tmp/nvim-preview.sock')
+
+    local synctex_pdf = {}
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'PreviewCompileSuccess',
+      callback = function(args)
+        synctex_pdf[args.data.bufnr] = args.data.output
+      end,
+    })
+<
+
+The recipes below bind `<leader>s` for forward search. To scroll the PDF
+automatically on cursor movement, call the forward search function from a
+|CursorMoved| or |CursorHold| autocmd instead.
+
+Viewer-specific recipes: ~
+
+                                                    *preview-synctex-zathura*
+Zathura ~
+
+Inverse search: Ctrl+click.
+
+>lua
+    vim.keymap.set('n', '<leader>s', function()
+      local pdf = synctex_pdf[vim.api.nvim_get_current_buf()]
+      if pdf then
+        vim.fn.jobstart({
+          'zathura', '--synctex-forward',
+          vim.fn.line('.') .. ':0:' .. vim.fn.expand('%:p'), pdf,
+        })
+      end
+    end)
+
+    vim.g.preview = {
+      latex = {
+        open = {
+          'zathura',
+          '--synctex-editor-command',
+          'nvim --server /tmp/nvim-preview.sock'
+            .. [[ --remote-expr "execute('b +%{line} %{input}')"]],
+        },
+      },
+    }
+<
+
+                                                     *preview-synctex-sioyek*
+Sioyek ~
+
+Inverse search: right-click with synctex mode active.
+
+Add to `~/.config/sioyek/prefs_user.config`: >
+    inverse_search_command nvim --server /tmp/nvim-preview.sock --remote-expr "execute('b +%2 %1')"
+<
+
+>lua
+    vim.keymap.set('n', '<leader>s', function()
+      local pdf = synctex_pdf[vim.api.nvim_get_current_buf()]
+      if pdf then
+        vim.fn.jobstart({
+          'sioyek',
+          '--instance-name', 'preview',
+          '--forward-search-file', vim.fn.expand('%:p'),
+          '--forward-search-line', tostring(vim.fn.line('.')),
+          pdf,
+        })
+      end
+    end)
+
+    vim.g.preview = {
+      latex = {
+        open = { 'sioyek', '--instance-name', 'preview' },
+      },
+    }
+<
+
+                                                     *preview-synctex-okular*
+Okular ~
+
+Inverse search: one-time GUI setup via
+Settings -> Editor -> Custom Text Editor: >
+    nvim --server /tmp/nvim-preview.sock --remote-expr "execute('b +%l %f')"
+<
+
+>lua
+    vim.keymap.set('n', '<leader>s', function()
+      local pdf = synctex_pdf[vim.api.nvim_get_current_buf()]
+      if pdf then
+        vim.fn.jobstart({
+          'okular', '--unique',
+          ('%s#src:%d:%s'):format(pdf, vim.fn.line('.'), vim.fn.expand('%:p')),
+        })
+      end
+    end)
+
+    vim.g.preview = {
+      latex = { open = { 'okular', '--unique' } },
+    }
+<
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:
