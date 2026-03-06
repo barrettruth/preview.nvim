@@ -367,8 +367,8 @@ Add to `~/.config/sioyek/prefs_user.config`: >
                                                      *preview-synctex-okular*
 Okular ~
 
-Inverse search: one-time GUI setup via
-Settings -> Editor -> Custom Text Editor: >
+Inverse search (Shift+click): one-time GUI setup via
+Settings -> Configure Okular -> Editor -> Custom Text Editor: >
     nvim --server /tmp/nvim-preview.sock --remote-expr "execute('b +%l %f')"
 <
 
