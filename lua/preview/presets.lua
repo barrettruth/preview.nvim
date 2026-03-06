@@ -224,7 +224,7 @@ M.markdown = {
   ft = 'markdown',
   cmd = { 'pandoc' },
   args = function(ctx)
-    return { ctx.file, '-s', '--embed-resources', '--mathml', '-o', ctx.output }
+    return { ctx.file, '-s', '--katex', '-o', ctx.output }
   end,
   output = function(ctx)
     return (ctx.file:gsub('%.md$', '.html'))
@@ -249,8 +249,7 @@ M.github = {
       'gfm',
       ctx.file,
       '-s',
-      '--embed-resources',
-      '--mathml',
+      '--katex',
       '--css',
       'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
       '-o',
