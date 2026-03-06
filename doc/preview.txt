@@ -202,15 +202,22 @@ fonts from a CDN at runtime. Pandoc's `--embed-resources` cannot inline these
 dynamic dependencies, so math fails to render in the output.
 
 To use KaTeX or MathJax instead, override `args` to drop `--embed-resources`
-(the output will require internet access): >lua
+(the output will require internet access). For example, to work with
+github-flavored markdown (gfm): >lua
 
     vim.g.preview = {
       github = {
         args = function(ctx)
           return {
-            '-f', 'gfm', ctx.file, '-s', '--katex',
-            '--css', 'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
-            '-o', ctx.output,
+            '-f',
+            'gfm',
+            ctx.file,
+            '-s',
+            '--katex',
+            '--css',
+            'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
+            '-o',
+            ctx.output,
           }
         end,
       },
