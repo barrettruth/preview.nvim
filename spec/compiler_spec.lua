@@ -8,8 +8,13 @@ describe('compiler', function()
     compiler = require('preview.compiler')
   end)
 
+  local function process_done(bufnr)
+    local s = compiler._test.state[bufnr]
+    return not s or s.process == nil
+  end
+
   describe('compile', function()
-    it('spawns a process and tracks it in active table', function()
+    it('spawns a process and tracks it in state', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test.txt')
       vim.bo[bufnr].modified = false
@@ -23,15 +28,16 @@ describe('compiler', function()
       }
 
       compiler.compile(bufnr, 'echo', provider, ctx)
-      local active = compiler._test.active
-      assert.is_not_nil(active[bufnr])
-      assert.are.equal('echo', active[bufnr].provider)
+      local s = compiler._test.state[bufnr]
+      assert.is_not_nil(s)
+      assert.is_not_nil(s.process)
+      assert.are.equal('echo', s.provider)
 
       vim.wait(2000, function()
-        return active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
-      assert.is_nil(active[bufnr])
+      assert.is_nil(compiler._test.state[bufnr].process)
       helpers.delete_buffer(bufnr)
     end)
 
@@ -61,7 +67,7 @@ describe('compiler', function()
       assert.is_true(fired)
 
       vim.wait(2000, function()
-        return compiler._test.active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
       helpers.delete_buffer(bufnr)
@@ -124,7 +130,7 @@ describe('compiler', function()
       vim.notify = orig
 
       assert.is_true(notified)
-      assert.is_nil(compiler._test.active[bufnr])
+      assert.is_true(process_done(bufnr))
       helpers.delete_buffer(bufnr)
     end)
 
@@ -186,7 +192,7 @@ describe('compiler', function()
       compiler.compile(bufnr, 'falsecmd', provider, ctx)
 
       vim.wait(2000, function()
-        return compiler._test.active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
       assert.is_false(parser_called)
@@ -218,7 +224,7 @@ describe('compiler', function()
       compiler.compile(bufnr, 'qfcmd', provider, ctx)
 
       vim.wait(2000, function()
-        return compiler._test.active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
       local qflist = vim.fn.getqflist()
@@ -255,7 +261,7 @@ describe('compiler', function()
       compiler.compile(bufnr, 'truecmd', provider, ctx)
 
       vim.wait(2000, function()
-        return compiler._test.active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
       assert.are.equal(0, #vim.fn.getqflist())
@@ -298,7 +304,7 @@ describe('compiler', function()
       compiler.stop(bufnr)
 
       vim.wait(2000, function()
-        return compiler._test.active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
       helpers.delete_buffer(bufnr)
@@ -329,11 +335,12 @@ describe('compiler', function()
       }
 
       compiler.compile(bufnr, 'testprov', provider, ctx)
-      assert.is_not_nil(compiler._test.last_output[bufnr])
-      assert.are.equal('/tmp/preview_test_open.pdf', compiler._test.last_output[bufnr])
+      local s = compiler._test.state[bufnr]
+      assert.is_not_nil(s)
+      assert.are.equal('/tmp/preview_test_open.pdf', s.output)
 
       vim.wait(2000, function()
-        return compiler._test.active[bufnr] == nil
+        return process_done(bufnr)
       end, 50)
 
       helpers.delete_buffer(bufnr)
@@ -341,7 +348,7 @@ describe('compiler', function()
   end)
 
   describe('toggle', function()
-    it('registers autocmd and tracks in watching table', function()
+    it('starts watching and sets watching flag', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_watch.txt')
 
@@ -351,7 +358,7 @@ describe('compiler', function()
       end
 
       compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      assert.is_not_nil(compiler._test.watching[bufnr])
+      assert.is_true(compiler.status(bufnr).watching)
 
       helpers.delete_buffer(bufnr)
     end)
@@ -366,10 +373,10 @@ describe('compiler', function()
       end
 
       compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      assert.is_not_nil(compiler._test.watching[bufnr])
+      assert.is_true(compiler.status(bufnr).watching)
 
       compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      assert.is_nil(compiler._test.watching[bufnr])
+      assert.is_false(compiler.status(bufnr).watching)
 
       helpers.delete_buffer(bufnr)
     end)
@@ -389,10 +396,10 @@ describe('compiler', function()
       end
 
       compiler.toggle(bufnr, 'echo', provider, ctx_builder)
-      assert.is_not_nil(compiler._test.watching[bufnr])
+      assert.is_true(compiler.status(bufnr).watching)
 
       compiler.stop_all()
-      assert.is_nil(compiler._test.watching[bufnr])
+      assert.is_false(compiler.status(bufnr).watching)
 
       helpers.delete_buffer(bufnr)
     end)
