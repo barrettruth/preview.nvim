@@ -297,10 +297,7 @@ describe('presets', function()
     it('returns args with standalone and katex flags', function()
       local args = presets.markdown.args(md_ctx)
       assert.is_table(args)
-      assert.are.same(
-        { '/tmp/document.md', '-s', '--katex', '-o', '/tmp/document.html' },
-        args
-      )
+      assert.are.same({ '/tmp/document.md', '-s', '--katex', '-o', '/tmp/document.html' }, args)
     end)
 
     it('returns html output path', function()
