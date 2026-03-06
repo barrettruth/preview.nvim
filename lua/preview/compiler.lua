@@ -309,6 +309,9 @@ function M.compile(bufnr, name, provider, ctx, opts)
   if provider.args then
     vim.list_extend(cmd, eval_list(provider.args, resolved_ctx))
   end
+  if provider.extra_args then
+    vim.list_extend(cmd, eval_list(provider.extra_args, resolved_ctx))
+  end
 
   log.dbg('compiling buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
 

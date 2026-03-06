@@ -69,6 +69,10 @@ Provider fields: ~
                                         receives a |preview.Context| and
                                         returns a string[].
 
+  {extra_args}       (string[]|function) Appended to {args} after evaluation.
+                                        Useful for adding flags to a preset
+                                        without replacing its defaults.
+
   {cwd}              (string|function)  Working directory. If a function,
                                         receives a |preview.Context|.
                                         Default: git root or file directory.
