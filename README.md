@@ -82,6 +82,22 @@ vim.g.preview = {
 }
 ```
 
+**Q: Markdown compilation drops `.html` files in my working directory. How do I
+send output to `/tmp` instead?**
+
+Override the `output` field. The `args` function references `ctx.output`, so the
+compiled file lands wherever `output` points:
+
+```lua
+vim.g.preview = {
+  github = {
+    output = function(ctx)
+      return '/tmp/' .. vim.fn.fnamemodify(ctx.file, ':t:r') .. '.html'
+    end,
+  },
+}
+```
+
 **Q: How do I set up SyncTeX (forward/inverse search)?**
 
 See `:help preview-synctex` for full recipes covering Zathura, Sioyek, and
