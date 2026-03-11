@@ -27,7 +27,8 @@ CONTENTS                                                   *preview-contents*
   7. Lua API ................................................... |preview-api|
   8. Events ............................................... |preview-events|
   9. Health ............................................... |preview-health|
-  10. SyncTeX ............................................. |preview-synctex|
+  10. FAQ ..................................................... |preview-faq|
+  11. SyncTeX ............................................. |preview-synctex|
 
 ==============================================================================
 REQUIREMENTS                                           *preview-requirements*
@@ -313,6 +314,24 @@ Checks: ~
 - Neovim version >= 0.11.0
 - Each configured provider's binary is executable
 - Each configured provider's opener binary (if any) is executable
+
+==============================================================================
+FAQ                                                            *preview-faq*
+
+Q: Markdown/GFM compilation drops `.html` files in my working directory.
+   How do I send output to `/tmp` instead?
+
+A: Override the `output` field. The `args` function references `ctx.output`,
+   so the compiled file lands wherever `output` points: >lua
+
+    vim.g.preview = {
+      github = {
+        output = function(ctx)
+          return '/tmp/' .. vim.fn.fnamemodify(ctx.file, ':t:r') .. '.html'
+        end,
+      },
+    }
+<
 
 ==============================================================================
 SYNCTEX                                                    *preview-synctex*
