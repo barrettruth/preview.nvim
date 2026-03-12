@@ -16,7 +16,7 @@ local log = require('preview.log')
 ---@field has_errors? boolean
 ---@field debounce? uv.uv_timer_t
 ---@field bwp_autocmd? integer
----@field unload_autocmd? integer
+---@field cleanup_autocmd? integer
 
 ---@type table<integer, preview.BufState>
 local state = {}
@@ -189,7 +189,7 @@ local function stop_watching(bufnr, s)
   close_viewer(bufnr)
   s.viewer_open = nil
   if s.bwp_autocmd then
-    vim.api.nvim_del_autocmd(s.bwp_autocmd)
+    pcall(vim.api.nvim_del_autocmd, s.bwp_autocmd)
     s.bwp_autocmd = nil
   end
   if s.debounce then
@@ -508,8 +508,8 @@ end
 function M.stop_all()
   for bufnr, s in pairs(state) do
     stop_watching(bufnr, s)
-    if s.unload_autocmd then
-      vim.api.nvim_del_autocmd(s.unload_autocmd)
+    if s.cleanup_autocmd then
+      pcall(vim.api.nvim_del_autocmd, s.cleanup_autocmd)
     end
     state[bufnr] = nil
   end
@@ -541,10 +541,10 @@ function M.toggle(bufnr, name, provider, ctx_builder)
   log.dbg('toggle on for buffer %d', bufnr)
   s.watching = true
 
-  if s.unload_autocmd then
-    vim.api.nvim_del_autocmd(s.unload_autocmd)
+  if s.cleanup_autocmd then
+    vim.api.nvim_del_autocmd(s.cleanup_autocmd)
   end
-  s.unload_autocmd = vim.api.nvim_create_autocmd('BufUnload', {
+  s.cleanup_autocmd = vim.api.nvim_create_autocmd('BufDelete', {
     buffer = bufnr,
     once = true,
     callback = function()
