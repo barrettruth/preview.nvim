@@ -139,27 +139,49 @@ function M.resolve_provider(bufnr)
   return ft
 end
 
+local ft_ext = {
+  markdown = 'md',
+  typst = 'typ',
+  tex = 'tex',
+  asciidoc = 'adoc',
+  plantuml = 'puml',
+  mermaid = 'mmd',
+  quarto = 'qmd',
+}
+
 ---@param bufnr? integer
 ---@return preview.Context
 function M.build_context(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local file = vim.api.nvim_buf_get_name(bufnr)
-  local root = vim.fs.root(bufnr, { '.git' }) or vim.fn.fnamemodify(file, ':h')
+  local ft = vim.bo[bufnr].filetype
+  local root
+
+  if file ~= '' and vim.uv.fs_stat(file) then
+    root = vim.fs.root(bufnr, { '.git' }) or vim.fn.fnamemodify(file, ':h')
+  else
+    local basename
+    if file ~= '' then
+      basename = string.format('%d-%s', bufnr, vim.fn.fnamemodify(file, ':t'))
+    else
+      local ext = ft_ext[ft] or ft
+      basename = string.format('preview-%d.%s', bufnr, ext)
+    end
+    file = '/tmp/' .. basename
+    root = '/tmp'
+  end
+
   return {
     bufnr = bufnr,
     file = file,
     root = root,
-    ft = vim.bo[bufnr].filetype,
+    ft = ft,
   }
 end
 
 ---@param bufnr? integer
 function M.compile(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if vim.api.nvim_buf_get_name(bufnr) == '' then
-    vim.notify('[preview.nvim]: buffer has no file name', vim.log.levels.WARN)
-    return
-  end
   local name = M.resolve_provider(bufnr)
   if not name then
     vim.notify('[preview.nvim]: no provider configured for this filetype', vim.log.levels.WARN)
@@ -179,10 +201,6 @@ end
 ---@param bufnr? integer
 function M.clean(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if vim.api.nvim_buf_get_name(bufnr) == '' then
-    vim.notify('[preview.nvim]: buffer has no file name', vim.log.levels.WARN)
-    return
-  end
   local name = M.resolve_provider(bufnr)
   if not name then
     vim.notify('[preview.nvim]: no provider configured for this filetype', vim.log.levels.WARN)
@@ -196,10 +214,6 @@ end
 ---@param bufnr? integer
 function M.toggle(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if vim.api.nvim_buf_get_name(bufnr) == '' then
-    vim.notify('[preview.nvim]: buffer has no file name', vim.log.levels.WARN)
-    return
-  end
   local name = M.resolve_provider(bufnr)
   if not name then
     vim.notify('[preview.nvim]: no provider configured for this filetype', vim.log.levels.WARN)
@@ -212,10 +226,6 @@ end
 ---@param bufnr? integer
 function M.open(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  if vim.api.nvim_buf_get_name(bufnr) == '' then
-    vim.notify('[preview.nvim]: buffer has no file name', vim.log.levels.WARN)
-    return
-  end
   local name = M.resolve_provider(bufnr)
   local open_config = name and config.providers[name] and config.providers[name].open
   if not compiler.open(bufnr, open_config) then

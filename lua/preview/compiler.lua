@@ -215,8 +215,14 @@ function M.compile(bufnr, name, provider, ctx, opts)
     return
   end
 
-  if vim.bo[bufnr].modified then
-    vim.cmd('silent! update')
+  local buf_file = vim.api.nvim_buf_get_name(bufnr)
+  if buf_file ~= '' and buf_file == ctx.file then
+    if vim.bo[bufnr].modified then
+      vim.cmd('silent! update')
+    end
+  else
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    vim.fn.writefile(lines, ctx.file)
   end
 
   local s = get_state(bufnr)
