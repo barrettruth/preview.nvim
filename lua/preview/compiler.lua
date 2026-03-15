@@ -135,9 +135,8 @@ local function do_open(bufnr, output_file, open_config)
       vim.schedule_wrap(function()
         local s = state[bufnr]
         if s and s.viewer == proc then
-          log.dbg('viewer exited for buffer %d, resetting viewer_open', bufnr)
+          log.dbg('viewer exited for buffer %d', bufnr)
           s.viewer = nil
-          s.viewer_open = nil
         else
           log.dbg('viewer exited for buffer %d (stale proc, ignoring)', bufnr)
         end
