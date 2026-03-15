@@ -196,6 +196,10 @@ local function stop_watching(bufnr, s)
     s.debounce:close()
     s.debounce = nil
   end
+  vim.api.nvim_exec_autocmds('User', {
+    pattern = 'PreviewWatchingStopped',
+    data = { bufnr = bufnr, provider = s.provider },
+  })
 end
 
 ---@param bufnr integer
