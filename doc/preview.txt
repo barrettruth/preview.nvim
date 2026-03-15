@@ -293,6 +293,9 @@ preview.nvim fires User autocmds with structured data:
 `PreviewCompileFailed`   Compilation failed (non-zero exit).
                         data: `{ bufnr, provider, code, stderr }`
 
+`PreviewWatchingStopped` Watching stopped (toggle off or buffer delete).
+                        data: `{ bufnr, provider }`
+
 Example: >lua
     vim.api.nvim_create_autocmd('User', {
       pattern = 'PreviewCompileSuccess',
@@ -352,6 +355,12 @@ The following configs leverage the below basic setup: ~
       pattern = 'PreviewCompileSuccess',
       callback = function(args)
         synctex_pdf[args.data.bufnr] = args.data.output
+      end,
+    })
+    vim.api.nvim_create_autocmd('User', {
+      pattern = 'PreviewWatchingStopped',
+      callback = function(args)
+        synctex_pdf[args.data.bufnr] = nil
       end,
     })
 <
