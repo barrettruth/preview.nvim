@@ -33,7 +33,6 @@
             ))
             pkgs.prettier
             pkgs.stylua
-            pkgs.neovim
             pkgs.selene
             pkgs.lua-language-server
             vimdoc-language-server.packages.${pkgs.system}.default
@@ -42,6 +41,11 @@
         {
           default = pkgs.mkShell {
             packages = devTools;
+          };
+          ci = pkgs.mkShell {
+            packages = devTools ++ [
+              pkgs.neovim
+            ];
           };
           presets = pkgs.mkShell {
             packages = devTools ++ [
