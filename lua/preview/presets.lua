@@ -244,17 +244,21 @@ M.github = {
   ft = 'markdown',
   cmd = { 'pandoc' },
   args = function(ctx)
-    return {
+    local template = vim.api.nvim_get_runtime_file('lua/preview/templates/gfm.html', false)[1]
+    local args = {
       '-f',
       'gfm',
       ctx.file,
       '-s',
       '--katex',
-      '--css',
-      'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
+      '--no-highlight',
       '-o',
       ctx.output,
     }
+    if template then
+      vim.list_extend(args, { '--template', template })
+    end
+    return args
   end,
   output = function(ctx)
     return (ctx.file:gsub('%.md$', '.html'))

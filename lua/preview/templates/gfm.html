@@ -1,0 +1,41 @@
+<!doctype html>
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  $if(lang)$
+  lang="$lang$"
+  xml:lang="$lang$"
+  $endif$
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css"
+      media="(prefers-color-scheme: dark)"
+    />
+    $if(math)$ $math$ $endif$ $for(header-includes)$ $header-includes$ $endfor$
+  </head>
+  <body class="markdown-body" style="padding: 30px">
+    $if(title)$
+    <h1>$title$</h1>
+    $endif$ $body$
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script>
+      hljs.highlightAll()
+    </script>
+  </body>
+</html>
