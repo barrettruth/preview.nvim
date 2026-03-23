@@ -379,7 +379,7 @@ describe('presets', function()
       assert.are.same({ 'pandoc' }, presets.github.cmd)
     end)
 
-    it('returns args with standalone, katex, and css flags', function()
+    it('returns args with standalone, katex, and no-highlight flags', function()
       local args = presets.github.args(md_ctx)
       assert.is_table(args)
       assert.are.same({
@@ -388,10 +388,11 @@ describe('presets', function()
         '/tmp/document.md',
         '-s',
         '--katex',
-        '--css',
-        'https://cdn.jsdelivr.net/gh/pixelbrackets/gfm-stylesheet@master/dist/gfm.css',
+        '--no-highlight',
         '-o',
         '/tmp/document.html',
+        '--template',
+        vim.api.nvim_get_runtime_file('lua/preview/templates/gfm.html', false)[1],
       }, args)
     end)
 
