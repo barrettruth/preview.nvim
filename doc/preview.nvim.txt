@@ -1,7 +1,6 @@
-*preview.txt*                    Async document compilation for Neovim
+*preview.nvim.txt*                    Async document compilation for Neovim
 
-Author:  Barrett Ruth <br.barrettruth@gmail.com>
-License: MIT
+Author:  Barrett Ruth <br.barrettruth@gmail.com> License: MIT
 
 ==============================================================================
 INTRODUCTION                                                    *preview.nvim*
@@ -11,11 +10,11 @@ in Neovim. It provides a unified interface for any compilation workflow —
 LaTeX, Typst, Markdown, or anything else with a CLI compiler.
 
 The plugin ships with opt-in presets for common tools (Typst, LaTeX, Pandoc,
-AsciiDoc, PlantUML, Mermaid, Quarto) and supports fully custom providers.
-See |preview-presets|.
+AsciiDoc, PlantUML, Mermaid, Quarto) and supports fully custom providers. See
+|preview-presets|.
 
 ==============================================================================
-CONTENTS                                                   *preview-contents*
+CONTENTS                                                    *preview-contents*
 
   1. Introduction ............................................. |preview.nvim|
   2. Requirements ..................................... |preview-requirements|
@@ -31,7 +30,7 @@ CONTENTS                                                   *preview-contents*
   11. SyncTeX ............................................. |preview-synctex|
 
 ==============================================================================
-REQUIREMENTS                                           *preview-requirements*
+REQUIREMENTS                                            *preview-requirements*
 
 - Neovim >= 0.11.0
 - A compiler binary for each configured provider (e.g. `typst`, `latexmk`)
@@ -47,10 +46,10 @@ No `setup()` call is needed. The plugin loads automatically when
 |vim.g.preview| is set. See |preview-config|.
 
 ==============================================================================
-CONFIGURATION                                                *preview-config*
+CONFIGURATION                *vim.g.preview* *preview.Config* *preview-config*
 
-Configure by setting |vim.g.preview| to a table where keys are preset names
-or filetypes. For each key `k` with value `v` (excluding `debug`):
+Configure by setting |vim.g.preview| to a table where keys are preset names or
+filetypes. For each key `k` with value `v` (excluding `debug`):
 
   - If `k` is a preset name and `v` is `true`, the preset is registered
     as-is under its filetype.
@@ -62,7 +61,7 @@ or filetypes. For each key `k` with value `v` (excluding `debug`):
 
 See |preview-presets| for available preset names.
 
-                                                    *preview.ProviderConfig*
+                                                      *preview.ProviderConfig*
 Provider fields: ~
 
   {cmd}              (string[])         Compiler command (required).
@@ -123,7 +122,7 @@ Provider fields: ~
                                         deleted. Has no effect when `open` is
                                         `true`. Default: `false`.
 
-                                                        *preview.Context*
+                                                             *preview.Context*
 Context fields: ~
 
   {bufnr}   (integer)   Buffer number.
@@ -173,10 +172,10 @@ Example with a fully custom provider (key is not a preset name): >lua
 <
 
 ==============================================================================
-PRESETS                                                    *preview-presets*
+PRESETS                                                      *preview-presets*
 
-Built-in provider configurations. Enable with `preset_name = true` or
-override individual fields by passing a table instead: >lua
+Built-in provider configurations. Enable with `preset_name = true` or override
+individual fields by passing a table instead: >lua
     vim.g.preview = { typst = true, latex = true, github = true }
 <
 
@@ -192,12 +191,12 @@ override individual fields by passing a table instead: >lua
   `quarto`             quarto render → HTML (scientific publishing)
 
 Math rendering (pandoc presets): ~
-                                                        *preview-math*
+                                                                *preview-math*
 
 The `markdown` and `github` presets use `--katex` by default, which inserts a
 `<script>` tag that loads KaTeX from a CDN at view time. The browser fetches
-the assets once and caches them, so math renders instantly on subsequent loads.
-Requires internet on first view.
+the assets once and caches them, so math renders instantly on subsequent
+loads. Requires internet on first view.
 
 For offline use, swap in `--mathml` via `extra_args`. MathML is rendered
 natively by the browser with no external dependencies: >lua
@@ -228,9 +227,9 @@ compilation). Pair with `--mathml` to avoid the penalty: >lua
 <
 
 ==============================================================================
-COMMANDS                                                  *preview-commands*
+COMMANDS                                                    *preview-commands*
 
-:Preview [subcommand]                                             *:Preview*
+:Preview [subcommand]                                               *:Preview*
 
     Subcommands: ~
 
@@ -241,37 +240,37 @@ COMMANDS                                                  *preview-commands*
     `status`     Echo compilation status (idle, compiling, watching).
 
 ==============================================================================
-LUA API                                                        *preview-api*
+LUA API                                                          *preview-api*
 
-preview.toggle({bufnr?})                                  *preview.toggle()*
+preview.toggle({bufnr?})                                    *preview.toggle()*
     Toggle auto-compile for the buffer. When enabled, the buffer is
     immediately compiled and automatically recompiled on each save
     (`BufWritePost`). Call again to stop.
 
-preview.compile({bufnr?})                                *preview.compile()*
+preview.compile({bufnr?})                                  *preview.compile()*
     One-shot compile the document in the given buffer (default: current).
 
-preview.stop({bufnr?})                                      *preview.stop()*
+preview.stop({bufnr?})                                        *preview.stop()*
     Kill the active compilation process for the buffer. Programmatic
     escape hatch — not exposed as a subcommand.
 
-preview.clean({bufnr?})                                    *preview.clean()*
+preview.clean({bufnr?})                                      *preview.clean()*
     Run the provider's clean command for the buffer.
 
-preview.open({bufnr?})                                      *preview.open()*
+preview.open({bufnr?})                                        *preview.open()*
     Open the last compiled output for the buffer without recompiling.
 
-preview.status({bufnr?})                                  *preview.status()*
+preview.status({bufnr?})                                    *preview.status()*
     Returns a |preview.Status| table.
 
-preview.statusline({bufnr?})                          *preview.statusline()*
+preview.statusline({bufnr?})                            *preview.statusline()*
     Returns a short status string for statusline integration:
     `'compiling'`, `'watching'`, or `''` (idle).
 
-preview.get_config()                                  *preview.get_config()*
+preview.get_config()                                    *preview.get_config()*
     Returns the resolved |preview.Config|.
 
-                                                          *preview.Status*
+                                                              *preview.Status*
 Status fields: ~
 
   {compiling}    (boolean)   Whether compilation is active.
@@ -280,7 +279,7 @@ Status fields: ~
   {output_file}  (string?)   Path to the output file.
 
 ==============================================================================
-EVENTS                                                      *preview-events*
+EVENTS                                                        *preview-events*
 
 preview.nvim fires User autocmds with structured data:
 
@@ -307,7 +306,7 @@ Example: >lua
 <
 
 ==============================================================================
-HEALTH                                                      *preview-health*
+HEALTH                                                        *preview-health*
 
 Run |:checkhealth| preview to verify your setup: >vim
     :checkhealth preview
@@ -319,7 +318,7 @@ Checks: ~
 - Each configured provider's opener binary (if any) is executable
 
 ==============================================================================
-FAQ                                                            *preview-faq*
+FAQ                                                              *preview-faq*
 
 Q: Markdown/GFM compilation drops `.html` files in my working directory.
    How do I send output to `/tmp` instead?
@@ -337,13 +336,13 @@ A: Override the `output` field. The `args` function references `ctx.output`,
 <
 
 ==============================================================================
-SYNCTEX                                                    *preview-synctex*
+SYNCTEX                                                      *preview-synctex*
 
-SyncTeX enables bidirectional navigation between LaTeX source and the
-compiled PDF. The `latex` preset compiles with `-synctex=1` by default.
+SyncTeX enables bidirectional navigation between LaTeX source and the compiled
+PDF. The `latex` preset compiles with `-synctex=1` by default.
 
-Forward search (editor -> viewer) requires caching the output path.
-Inverse search (viewer -> editor) requires a fixed Neovim server socket.
+Forward search (editor -> viewer) requires caching the output path. Inverse
+search (viewer -> editor) requires a fixed Neovim server socket.
 
 The following configs leverage the below basic setup: ~
 
@@ -371,7 +370,7 @@ automatically on cursor movement, call the forward search function from a
 
 Viewer-specific recipes: ~
 
-                                                    *preview-synctex-zathura*
+                                                     *preview-synctex-zathura*
 Zathura ~
 
 Inverse search: Ctrl+click.
@@ -399,7 +398,7 @@ Inverse search: Ctrl+click.
     }
 <
 
-                                                     *preview-synctex-sioyek*
+                                                      *preview-synctex-sioyek*
 Sioyek ~
 
 Inverse search: right-click with synctex mode active.
@@ -429,11 +428,11 @@ Add to `~/.config/sioyek/prefs_user.config`: >
     }
 <
 
-                                                     *preview-synctex-okular*
+                                                      *preview-synctex-okular*
 Okular ~
 
-Inverse search (Shift+click): one-time GUI setup via
-Settings -> Configure Okular -> Editor -> Custom Text Editor: >
+Inverse search (Shift+click): one-time GUI setup via Settings -> Configure
+Okular -> Editor -> Custom Text Editor: >
     nvim --server /tmp/nvim-preview.sock --remote-expr "execute('b +%l %f')"
 <
 
