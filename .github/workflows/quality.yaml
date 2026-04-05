@@ -9,7 +9,7 @@ on:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, netcup, general]
     outputs:
       lua: ${{ steps.changes.outputs.lua }}
       markdown: ${{ steps.changes.outputs.markdown }}
@@ -33,7 +33,7 @@ jobs:
 
   lua-format:
     name: Lua Format Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, netcup, general]
     needs: changes
     if: ${{ needs.changes.outputs.lua == 'true' }}
     steps:
@@ -43,7 +43,7 @@ jobs:
 
   lua-lint:
     name: Lua Lint Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, netcup, general]
     needs: changes
     if: ${{ needs.changes.outputs.lua == 'true' }}
     steps:
@@ -53,7 +53,7 @@ jobs:
 
   lua-typecheck:
     name: Lua Type Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, netcup, general]
     needs: changes
     if: ${{ needs.changes.outputs.lua == 'true' }}
     steps:
@@ -67,7 +67,7 @@ jobs:
 
   vimdoc-check:
     name: Vimdoc Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, netcup, general]
     needs: changes
     if: ${{ needs.changes.outputs.vimdoc == 'true' }}
     steps:
@@ -77,7 +77,7 @@ jobs:
 
   markdown-format:
     name: Markdown Format Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, netcup, general]
     needs: changes
     if: ${{ needs.changes.outputs.markdown == 'true' }}
     steps:
