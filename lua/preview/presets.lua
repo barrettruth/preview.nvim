@@ -133,6 +133,39 @@ local function parse_mermaid(output)
   }
 end
 
+---@param output string
+---@return preview.Diagnostic[]
+local function parse_quarto(output)
+  output = output:gsub('\27%[[0-9;]*m', '')
+  local diagnostics = parse_pandoc(output)
+  if #diagnostics > 0 then
+    return diagnostics
+  end
+  local msg, lnum, col = output:match('ERROR:%s*([^\r\n]-)%s*%((%d+):(%d+)%)')
+  if msg then
+    return {
+      {
+        lnum = tonumber(lnum) - 1,
+        col = tonumber(col) - 1,
+        message = msg,
+        severity = vim.diagnostic.severity.ERROR,
+      },
+    }
+  end
+  msg = output:match('ERROR:%s*([^\r\n]+)')
+  if msg then
+    return {
+      {
+        lnum = 0,
+        col = 0,
+        message = msg,
+        severity = vim.diagnostic.severity.ERROR,
+      },
+    }
+  end
+  return {}
+end
+
 ---@type preview.ProviderConfig
 M.typst = {
   ft = 'typst',
@@ -352,6 +385,9 @@ M.quarto = {
   end,
   output = function(ctx)
     return (ctx.file:gsub('%.qmd$', '.html'))
+  end,
+  error_parser = function(output)
+    return parse_quarto(output)
   end,
   clean = function(ctx)
     local base = ctx.file:gsub('%.qmd$', '')
