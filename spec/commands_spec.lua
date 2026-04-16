@@ -48,6 +48,13 @@ describe('commands', function()
       end)
     end)
 
+    it('does not error on :Preview output', function()
+      require('preview.commands').setup()
+      assert.has_no.errors(function()
+        vim.cmd('Preview output')
+      end)
+    end)
+
     it('does not error on :Preview toggle with no provider', function()
       require('preview.commands').setup()
       assert.has_no.errors(function()

@@ -175,6 +175,90 @@ describe('compiler', function()
       assert.is_true(failed)
       helpers.delete_buffer(bufnr)
     end)
+
+    it('notifies generically on compile failure', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_summary.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: compilation failed' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[cat >&2 <<'EOF'
+/tmp/preview_test_fail_summary.txt:6: Emergenc
+y stop.
+! LaTeX Error: File `enumitem.sty' not found.
+EOF
+exit 12]],
+        },
+        error_parser = function()
+          return {
+            { lnum = 5, col = 0, message = 'Emergenc', severity = vim.diagnostic.severity.ERROR },
+          }
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_summary.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('stores full process output on failure', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_result.txt')
+      vim.bo[bufnr].modified = false
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'stdout line'
+printf '%s\n' 'stderr line' >&2
+exit 12]],
+        },
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_result.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      local result = compiler.result(bufnr)
+      assert.are.equal(12, result.code)
+      assert.is_truthy(result.stdout:find('stdout line', 1, true))
+      assert.is_truthy(result.stderr:find('stderr line', 1, true))
+      assert.is_truthy(result.output:find('stdout line', 1, true))
+      assert.is_truthy(result.output:find('stderr line', 1, true))
+      helpers.delete_buffer(bufnr)
+    end)
   end)
 
   describe('errors mode', function()
@@ -288,7 +372,7 @@ describe('compiler', function()
       local notified_fail = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg:find('compilation failed') and level == vim.log.levels.ERROR then
+        if msg == '[preview.nvim]: compilation failed' and level == vim.log.levels.ERROR then
           notified_fail = true
         end
       end
@@ -322,6 +406,7 @@ describe('compiler', function()
 
       local s = compiler._test.state[bufnr]
       assert.is_true(s.has_errors)
+      assert.is_truthy(compiler.result(bufnr).output:find('bad input', 1, true))
 
       compiler.stop(bufnr)
       vim.wait(2000, function()
@@ -405,6 +490,48 @@ describe('compiler', function()
         return process_done(bufnr)
       end, 50)
 
+      helpers.delete_buffer(bufnr)
+    end)
+  end)
+
+  describe('output', function()
+    it('returns false when no compiler result exists', function()
+      assert.is_false(compiler.output(999))
+    end)
+
+    it('opens an output buffer with stored compiler output', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_output.txt')
+      vim.bo[bufnr].modified = false
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'stdout line'
+printf '%s\n' 'stderr line' >&2
+exit 12]],
+        },
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_output.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'testprov', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      assert.is_true(compiler.output(bufnr))
+      local output_bufnr = vim.api.nvim_get_current_buf()
+      local lines = vim.api.nvim_buf_get_lines(output_bufnr, 0, -1, false)
+      assert.is_truthy(table.concat(lines, '\n'):find('stdout line', 1, true))
+      assert.is_truthy(table.concat(lines, '\n'):find('stderr line', 1, true))
+      helpers.delete_buffer(output_bufnr)
       helpers.delete_buffer(bufnr)
     end)
   end)
