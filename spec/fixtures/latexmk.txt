@@ -1,0 +1,4 @@
+./document.tex:10: Undefined control sequence.
+l.10 \badcommand
+Collected error summary (may duplicate other messages):
+  pdflatex: Command for 'pdflatex' gave return code 256

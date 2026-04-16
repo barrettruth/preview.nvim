@@ -1,0 +1,2 @@
+main.typ:5:23: error: unexpected token
+main.typ:12:1: warning: unused variable

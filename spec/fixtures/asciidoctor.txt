@@ -1,0 +1,2 @@
+asciidoctor: ERROR: document.adoc: line 7: unmatched macro
+asciidoctor: WARNING: document.adoc: line 11: section title out of sequence

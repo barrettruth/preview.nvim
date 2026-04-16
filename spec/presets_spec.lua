@@ -1,3 +1,5 @@
+local helpers = require('spec.helpers')
+
 describe('presets', function()
   local presets
 
@@ -72,6 +74,13 @@ describe('presets', function()
       assert.are.equal(0, diagnostics[2].col)
       assert.are.equal('unused variable', diagnostics[2].message)
       assert.are.equal(vim.diagnostic.severity.WARN, diagnostics[2].severity)
+    end)
+
+    it('parses fixture output', function()
+      local diagnostics = presets.typst.error_parser(helpers.read_fixture('typst.txt'), ctx)
+      assert.are.equal(2, #diagnostics)
+      assert.are.equal('unexpected token', diagnostics[1].message)
+      assert.are.equal('unused variable', diagnostics[2].message)
     end)
 
     it('returns empty table for clean stderr', function()
@@ -157,6 +166,16 @@ describe('presets', function()
       )
     end)
 
+    it('parses fixture output', function()
+      local diagnostics = presets.latex.error_parser(helpers.read_fixture('latexmk.txt'), tex_ctx)
+      assert.are.equal(2, #diagnostics)
+      assert.are.equal('Undefined control sequence.', diagnostics[1].message)
+      assert.are.equal(
+        "pdflatex: Command for 'pdflatex' gave return code 256",
+        diagnostics[2].message
+      )
+    end)
+
     it('returns empty table for clean stderr', function()
       local diagnostics = presets.latex.error_parser('', tex_ctx)
       assert.are.same({}, diagnostics)
@@ -221,6 +240,13 @@ describe('presets', function()
       assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
     end)
 
+    it('parses fixture output', function()
+      local diagnostics =
+        presets.pdflatex.error_parser(helpers.read_fixture('pdflatex.txt'), tex_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal('Undefined control sequence.', diagnostics[1].message)
+    end)
+
     it('returns empty table for clean output', function()
       assert.are.same({}, presets.pdflatex.error_parser('', tex_ctx))
     end)
@@ -270,6 +296,13 @@ describe('presets', function()
       assert.are.equal(0, diagnostics[1].col)
       assert.are.equal('Missing $ inserted.', diagnostics[1].message)
       assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
+    end)
+
+    it('parses fixture output', function()
+      local diagnostics =
+        presets.tectonic.error_parser(helpers.read_fixture('tectonic.txt'), tex_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal('Missing $ inserted.', diagnostics[1].message)
     end)
 
     it('returns empty table for clean output', function()
@@ -354,6 +387,12 @@ describe('presets', function()
       assert.are.equal(0, diagnostics[1].lnum)
       assert.are.equal(0, diagnostics[1].col)
       assert.are.equal('Could not find data file templates/default.html5', diagnostics[1].message)
+    end)
+
+    it('parses fixture output', function()
+      local diagnostics = presets.markdown.error_parser(helpers.read_fixture('pandoc.txt'), md_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal('while parsing a flow sequence:', diagnostics[1].message)
     end)
 
     it('returns empty table for clean output', function()
@@ -454,6 +493,12 @@ describe('presets', function()
       assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
     end)
 
+    it('parses fixture output', function()
+      local diagnostics = presets.github.error_parser(helpers.read_fixture('pandoc.txt'), md_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal('while parsing a flow sequence:', diagnostics[1].message)
+    end)
+
     it('returns empty table for clean output', function()
       local diagnostics = presets.github.error_parser('', md_ctx)
       assert.are.same({}, diagnostics)
@@ -519,8 +564,102 @@ describe('presets', function()
       assert.are.equal(vim.diagnostic.severity.WARN, diagnostics[1].severity)
     end)
 
+    it('parses fixture output', function()
+      local diagnostics =
+        presets.asciidoctor.error_parser(helpers.read_fixture('asciidoctor.txt'), adoc_ctx)
+      assert.are.equal(2, #diagnostics)
+      assert.are.equal('unmatched macro', diagnostics[1].message)
+      assert.are.equal('section title out of sequence', diagnostics[2].message)
+    end)
+
     it('returns empty table for clean output', function()
       assert.are.same({}, presets.asciidoctor.error_parser('', adoc_ctx))
+    end)
+  end)
+
+  describe('plantuml', function()
+    local puml_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.puml',
+      root = '/tmp',
+      ft = 'plantuml',
+      output = '/tmp/document.svg',
+    }
+
+    it('has ft', function()
+      assert.are.equal('plantuml', presets.plantuml.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'plantuml' }, presets.plantuml.cmd)
+    end)
+
+    it('returns args with svg flag and file path', function()
+      assert.are.same({ '-tsvg', '/tmp/document.puml' }, presets.plantuml.args(puml_ctx))
+    end)
+
+    it('returns svg output path', function()
+      assert.are.equal('/tmp/document.svg', presets.plantuml.output(puml_ctx))
+    end)
+
+    it('returns clean command', function()
+      assert.are.same({ 'rm', '-f', '/tmp/document.svg' }, presets.plantuml.clean(puml_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.plantuml.open)
+    end)
+
+    it('parses fixture output', function()
+      local diagnostics =
+        presets.plantuml.error_parser(helpers.read_fixture('plantuml.txt'), puml_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(3, diagnostics[1].lnum)
+      assert.are.equal('Error line 4 in file: /tmp/document.puml', diagnostics[1].message)
+    end)
+  end)
+
+  describe('mermaid', function()
+    local mmd_ctx = {
+      bufnr = 1,
+      file = '/tmp/document.mmd',
+      root = '/tmp',
+      ft = 'mermaid',
+      output = '/tmp/document.svg',
+    }
+
+    it('has ft', function()
+      assert.are.equal('mermaid', presets.mermaid.ft)
+    end)
+
+    it('has cmd', function()
+      assert.are.same({ 'mmdc' }, presets.mermaid.cmd)
+    end)
+
+    it('returns args with input and output', function()
+      assert.are.same(
+        { '-i', '/tmp/document.mmd', '-o', '/tmp/document.svg' },
+        presets.mermaid.args(mmd_ctx)
+      )
+    end)
+
+    it('returns svg output path', function()
+      assert.are.equal('/tmp/document.svg', presets.mermaid.output(mmd_ctx))
+    end)
+
+    it('returns clean command', function()
+      assert.are.same({ 'rm', '-f', '/tmp/document.svg' }, presets.mermaid.clean(mmd_ctx))
+    end)
+
+    it('has open enabled', function()
+      assert.is_true(presets.mermaid.open)
+    end)
+
+    it('parses fixture output', function()
+      local diagnostics = presets.mermaid.error_parser(helpers.read_fixture('mermaid.txt'), mmd_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(2, diagnostics[1].lnum)
+      assert.is_truthy(diagnostics[1].message:find('Expecting', 1, true))
     end)
   end)
 
