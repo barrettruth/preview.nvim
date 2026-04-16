@@ -45,6 +45,20 @@ luarocks install preview.nvim
 :help preview.nvim
 ```
 
+## Development
+
+Use the full preset-testing shell for manual validation:
+
+```sh
+nix develop .#dev
+```
+
+The lightweight CI shell remains available for scripted checks:
+
+```sh
+nix develop .#ci
+```
+
 ## FAQ
 
 **Q: How do I define a custom provider?**

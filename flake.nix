@@ -37,30 +37,34 @@
             pkgs.lua-language-server
             vimdoc-language-server.packages.${pkgs.system}.default
           ];
+          devPackages = devTools ++ [
+            pkgs.neovim
+            pkgs.typst
+            pkgs.texliveMedium
+            pkgs.tectonic
+            pkgs.pandoc
+            pkgs.asciidoctor
+            pkgs.quarto
+            pkgs.plantuml
+            pkgs.mermaid-cli
+            pkgs.zathura
+            pkgs.sioyek
+          ];
+          devShell = pkgs.mkShell {
+            packages = devPackages;
+          };
         in
         {
           default = pkgs.mkShell {
             packages = devTools;
           };
+          dev = devShell;
           ci = pkgs.mkShell {
             packages = devTools ++ [
               pkgs.neovim
             ];
           };
-          presets = pkgs.mkShell {
-            packages = devTools ++ [
-              pkgs.typst
-              pkgs.texliveMedium
-              pkgs.tectonic
-              pkgs.pandoc
-              pkgs.asciidoctor
-              pkgs.quarto
-              pkgs.plantuml
-              pkgs.mermaid-cli
-              pkgs.zathura
-              pkgs.sioyek
-            ];
-          };
+          presets = devShell;
         }
       );
     };
