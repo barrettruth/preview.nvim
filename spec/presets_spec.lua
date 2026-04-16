@@ -706,8 +706,15 @@ describe('presets', function()
       assert.is_true(presets.quarto.reload)
     end)
 
-    it('has no error_parser', function()
-      assert.is_nil(presets.quarto.error_parser)
+    it('parses fixture output', function()
+      local diagnostics = presets.quarto.error_parser(helpers.read_fixture('quarto.txt'), qmd_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(2, diagnostics[1].lnum)
+      assert.are.equal(0, diagnostics[1].col)
+      assert.are.equal(
+        'YAMLException: missed comma between flow collection entries',
+        diagnostics[1].message
+      )
     end)
   end)
 end)

@@ -1,0 +1,9 @@
+[91mERROR: YAMLException: missed comma between flow collection entries (3:1)
+
+ 1 |
+ 2 | title: [oops
+ 3 | format: html
+-----^
+
+Stack trace:
+    at generateError2 (file:///nix/store/example/bin/quarto.js:1:1)[39m
