@@ -27,4 +27,8 @@ function M.reset_config(opts)
   end
 end
 
+function M.read_fixture(path)
+  return table.concat(vim.fn.readfile(plugin_dir .. '/spec/fixtures/' .. path), '\n')
+end
+
 return M

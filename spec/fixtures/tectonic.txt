@@ -1,0 +1,1 @@
+./document.tex:5: Missing $ inserted.
