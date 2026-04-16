@@ -20,6 +20,10 @@ local log = require('preview.log')
 
 ---@type table<integer, preview.BufState>
 local state = {}
+---@type table<integer, preview.Result>
+local results = {}
+---@type table<integer, integer>
+local output_buffers = {}
 
 local DEBOUNCE_MS = 500
 
@@ -116,6 +120,63 @@ local function clear_errors(bufnr, provider)
     vim.fn.setqflist({}, 'r')
     vim.cmd.cwindow()
   end
+end
+
+---@param output_bufnr integer
+---@param output? string
+local function set_output_lines(output_bufnr, output)
+  if not vim.api.nvim_buf_is_valid(output_bufnr) then
+    return
+  end
+  local lines = vim.split(output or '', '\n', { plain = true, trimempty = false })
+  vim.bo[output_bufnr].modifiable = true
+  vim.api.nvim_buf_set_lines(output_bufnr, 0, -1, false, lines)
+  vim.bo[output_bufnr].modifiable = false
+end
+
+---@param bufnr integer
+local function update_output_buffer(bufnr)
+  local output_bufnr = output_buffers[bufnr]
+  if not (output_bufnr and vim.api.nvim_buf_is_valid(output_bufnr)) then
+    return
+  end
+  set_output_lines(output_bufnr, results[bufnr] and results[bufnr].output or '')
+end
+
+---@param bufnr integer
+---@param result table
+local function set_result(bufnr, result)
+  results[bufnr] = vim.tbl_extend('force', results[bufnr] or {
+    stdout = '',
+    stderr = '',
+    output = '',
+  }, result)
+  results[bufnr].stdout = results[bufnr].stdout or ''
+  results[bufnr].stderr = results[bufnr].stderr or ''
+  if result.output == nil then
+    results[bufnr].output = results[bufnr].stdout .. results[bufnr].stderr
+  end
+  update_output_buffer(bufnr)
+end
+
+---@param bufnr integer
+---@param result table
+local function append_result(bufnr, result)
+  local current = results[bufnr] or {
+    stdout = '',
+    stderr = '',
+    output = '',
+  }
+  set_result(bufnr, {
+    provider = result.provider or current.provider,
+    cmd = result.cmd or current.cmd,
+    cwd = result.cwd or current.cwd,
+    code = result.code ~= nil and result.code or current.code,
+    output_file = result.output_file or current.output_file,
+    stdout = current.stdout .. (result.stdout or ''),
+    stderr = current.stderr .. (result.stderr or ''),
+    output = current.output .. (result.output or ''),
+  })
 end
 
 ---@param bufnr integer
@@ -257,6 +318,16 @@ function M.compile(bufnr, name, provider, ctx, opts)
   end
 
   if reload_cmd then
+    set_result(bufnr, {
+      provider = name,
+      cmd = reload_cmd,
+      cwd = cwd,
+      code = nil,
+      stdout = '',
+      stderr = '',
+      output = '',
+      output_file = output_file,
+    })
     log.dbg(
       'starting long-running process for buffer %d with provider "%s": %s',
       bufnr,
@@ -276,7 +347,12 @@ function M.compile(bufnr, name, provider, ctx, opts)
             return
           end
           stderr_acc[#stderr_acc + 1] = data
-          local count = handle_errors(bufnr, name, provider, ctx, table.concat(stderr_acc))
+          append_result(bufnr, {
+            stderr = data,
+            output = data,
+          })
+          local stderr = table.concat(stderr_acc)
+          local count = handle_errors(bufnr, name, provider, ctx, stderr)
           if count > 0 and not s.has_errors then
             s.has_errors = true
             vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
@@ -292,16 +368,29 @@ function M.compile(bufnr, name, provider, ctx, opts)
           return
         end
         if result.code ~= 0 then
+          local stdout = result.stdout or ''
+          local stderr = table.concat(stderr_acc)
+          local output = stdout .. stderr
+          if stdout ~= '' then
+            append_result(bufnr, {
+              stdout = stdout,
+              output = stdout,
+              code = result.code,
+            })
+          else
+            set_result(bufnr, {
+              code = result.code,
+            })
+          end
           log.dbg('long-running process failed for buffer %d (exit code %d)', bufnr, result.code)
           vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
-          handle_errors(bufnr, name, provider, ctx, (result.stdout or '') .. (result.stderr or ''))
+          handle_errors(bufnr, name, provider, ctx, output)
           vim.api.nvim_exec_autocmds('User', {
             pattern = 'PreviewCompileFailed',
             data = {
               bufnr = bufnr,
               provider = name,
               code = result.code,
-              stderr = result.stderr or '',
             },
           })
         end
@@ -420,6 +509,16 @@ function M.compile(bufnr, name, provider, ctx, opts)
   end
 
   log.dbg('compiling buffer %d with provider "%s": %s', bufnr, name, table.concat(cmd, ' '))
+  set_result(bufnr, {
+    provider = name,
+    cmd = cmd,
+    cwd = cwd,
+    code = nil,
+    stdout = '',
+    stderr = '',
+    output = '',
+    output_file = output_file,
+  })
 
   local obj
   obj = vim.system(
@@ -433,6 +532,13 @@ function M.compile(bufnr, name, provider, ctx, opts)
       if not vim.api.nvim_buf_is_valid(bufnr) then
         return
       end
+      local output = (result.stdout or '') .. (result.stderr or '')
+      set_result(bufnr, {
+        code = result.code,
+        stdout = result.stdout or '',
+        stderr = result.stderr or '',
+        output = output,
+      })
       if result.code == 0 then
         log.dbg('compilation succeeded for buffer %d', bufnr)
         vim.notify('[preview.nvim]: compilation complete', vim.log.levels.INFO)
@@ -462,14 +568,13 @@ function M.compile(bufnr, name, provider, ctx, opts)
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
         vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
-        handle_errors(bufnr, name, provider, ctx, (result.stdout or '') .. (result.stderr or ''))
+        handle_errors(bufnr, name, provider, ctx, output)
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',
           data = {
             bufnr = bufnr,
             provider = name,
             code = result.code,
-            stderr = result.stderr or '',
           },
         })
       end
@@ -521,6 +626,8 @@ function M.stop_all()
       pcall(vim.api.nvim_del_autocmd, s.cleanup_autocmd)
     end
     state[bufnr] = nil
+    results[bufnr] = nil
+    output_buffers[bufnr] = nil
   end
   require('preview.reload').stop()
 end
@@ -564,6 +671,8 @@ function M.toggle(bufnr, name, provider, ctx_builder)
         close_viewer(bufnr)
       end
       state[bufnr] = nil
+      results[bufnr] = nil
+      output_buffers[bufnr] = nil
     end,
   })
 
@@ -662,6 +771,38 @@ function M.open(bufnr, open_config)
   end
   do_open(bufnr, output, open_config)
   return true
+end
+
+---@param bufnr integer
+---@return boolean
+function M.output(bufnr)
+  if not results[bufnr] then
+    log.dbg('no compiler result for buffer %d', bufnr)
+    return false
+  end
+  if not (output_buffers[bufnr] and vim.api.nvim_buf_is_valid(output_buffers[bufnr])) then
+    output_buffers[bufnr] = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(output_buffers[bufnr], string.format('preview://output/%d', bufnr))
+    vim.bo[output_buffers[bufnr]].buftype = 'nofile'
+    vim.bo[output_buffers[bufnr]].bufhidden = 'wipe'
+    vim.bo[output_buffers[bufnr]].swapfile = false
+    vim.bo[output_buffers[bufnr]].modifiable = false
+  end
+  local win = vim.fn.bufwinid(output_buffers[bufnr])
+  if win ~= -1 then
+    vim.fn.win_gotoid(win)
+  else
+    vim.cmd('belowright split')
+    vim.api.nvim_win_set_buf(0, output_buffers[bufnr])
+  end
+  update_output_buffer(bufnr)
+  return true
+end
+
+---@param bufnr integer
+---@return preview.Result?
+function M.result(bufnr)
+  return results[bufnr] and vim.deepcopy(results[bufnr]) or nil
 end
 
 ---@param bufnr integer

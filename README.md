@@ -13,6 +13,7 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 - Built-in presets for Typst, LaTeX (latexmk, pdflatex, tectonic), Markdown,
   GitHub-flavored Markdown, AsciiDoc, PlantUML, Mermaid, and Quarto
 - Compiler errors via `vim.diagnostic` or quickfix
+- Full compiler output via `:Preview output`
 - Previewer auto-close on buffer deletion
 
 ## Requirements
@@ -102,3 +103,15 @@ vim.g.preview = {
 
 See `:help preview-synctex` for full recipes covering Zathura, Sioyek, and
 Okular.
+
+**Q: How do I inspect the full compiler output?**
+
+Use:
+
+```vim
+:Preview output
+```
+
+Compilation failures intentionally use a short generic notification. The full
+raw compiler output is available through `:Preview output` and
+`require('preview').result()`.

@@ -13,6 +13,9 @@ local handlers = {
   open = function()
     require('preview').open()
   end,
+  output = function()
+    require('preview').output()
+  end,
   status = function()
     local s = require('preview').status()
     local parts = {}
@@ -55,7 +58,7 @@ function M.setup()
     complete = function(lead)
       return complete(lead)
     end,
-    desc = 'Toggle, compile, clean, open, or check status of document preview',
+    desc = 'Toggle, compile, clean, open, inspect output, or check status of document preview',
   })
 
   vim.api.nvim_create_autocmd('VimLeavePre', {

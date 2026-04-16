@@ -39,6 +39,16 @@
 ---@field output_file string
 ---@field is_reload? boolean
 
+---@class preview.Result
+---@field provider? string
+---@field cmd? string[]
+---@field cwd? string
+---@field code? integer
+---@field stdout string
+---@field stderr string
+---@field output string
+---@field output_file? string
+
 ---@class preview
 ---@field setup fun(opts?: table)
 ---@field compile fun(bufnr?: integer)
@@ -46,6 +56,8 @@
 ---@field clean fun(bufnr?: integer)
 ---@field toggle fun(bufnr?: integer)
 ---@field open fun(bufnr?: integer)
+---@field output fun(bufnr?: integer)
+---@field result fun(bufnr?: integer): preview.Result?
 ---@field status fun(bufnr?: integer): preview.Status
 ---@field statusline fun(bufnr?: integer): string
 ---@field get_config fun(): preview.Config
@@ -231,6 +243,21 @@ function M.open(bufnr)
   if not compiler.open(bufnr, open_config) then
     vim.notify('[preview.nvim]: no output file available for this buffer', vim.log.levels.WARN)
   end
+end
+
+---@param bufnr? integer
+function M.output(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not compiler.output(bufnr) then
+    vim.notify('[preview.nvim]: no compiler output available for this buffer', vim.log.levels.WARN)
+  end
+end
+
+---@param bufnr? integer
+---@return preview.Result?
+function M.result(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  return compiler.result(bufnr)
 end
 
 ---@class preview.Status
