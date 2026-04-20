@@ -31,6 +31,7 @@
                 nlua
               ]
             ))
+            pkgs.just
             pkgs.prettier
             pkgs.stylua
             pkgs.selene
