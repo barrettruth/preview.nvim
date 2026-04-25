@@ -54,6 +54,20 @@ describe('preview', function()
       local presets = require('preview.presets')
       assert.are.same(presets.github, config.providers.markdown)
     end)
+
+    it('accepts failure_summary on custom providers', function()
+      local summary = function()
+        return 'bad input'
+      end
+      helpers.reset_config({
+        text = {
+          cmd = { 'cat' },
+          failure_summary = summary,
+        },
+      })
+      local config = require('preview').get_config()
+      assert.are.equal(summary, config.providers.text.failure_summary)
+    end)
   end)
 
   describe('resolve_provider', function()

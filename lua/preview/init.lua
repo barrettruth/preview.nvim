@@ -7,6 +7,7 @@
 ---@field env? table<string, string>
 ---@field output? string|fun(ctx: preview.Context): string
 ---@field error_parser? fun(output: string, ctx: preview.Context): preview.Diagnostic[]
+---@field failure_summary? fun(result: preview.Result, ctx: preview.Context): string?
 ---@field errors? false|'diagnostic'|'quickfix'
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
@@ -111,6 +112,7 @@ function M.setup(opts)
     vim.validate(prefix .. '.cwd', provider.cwd, { 'string', 'function' }, true)
     vim.validate(prefix .. '.output', provider.output, { 'string', 'function' }, true)
     vim.validate(prefix .. '.error_parser', provider.error_parser, 'function', true)
+    vim.validate(prefix .. '.failure_summary', provider.failure_summary, 'function', true)
     vim.validate(prefix .. '.errors', provider.errors, function(x)
       return x == nil or x == false or x == 'diagnostic' or x == 'quickfix'
     end, 'false, "diagnostic", or "quickfix"')

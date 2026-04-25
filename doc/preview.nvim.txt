@@ -86,6 +86,16 @@ Provider fields: ~
   {error_parser}     (function)         Receives (output, |preview.Context|)
                                         and returns vim.Diagnostic[].
 
+  {failure_summary}  (function)         Receives (|preview.Result|,
+                                        |preview.Context|) and returns a short
+                                        string shown after the `[preview.nvim]:`
+                                        prefix on failure. Return `nil` to fall
+                                        back to the generic failure message.
+                                        In long-running providers, this may run
+                                        before process exit, so `{code}` can be
+                                        `nil` and `{output}` is the accumulated
+                                        output so far.
+
   {errors}           (false|'diagnostic'|'quickfix')
                                         How parse errors are reported.
                                         `false` suppresses error handling.
@@ -166,6 +176,9 @@ Example with a fully custom provider (key is not a preset name): >lua
         end,
         output = function(ctx)
           return ctx.file:gsub('%.rst$', '.html')
+        end,
+        failure_summary = function(result)
+          return result.output:match('^ERROR:%s*(.+)$')
         end,
       },
     }
@@ -362,9 +375,10 @@ Q: How do I inspect the full compiler output?
 A: If a compile fails, check diagnostics or quickfix first when available.
    Use |:Preview| `output` to open the stored raw compiler output in a scratch
    split. One-shot providers replace the stored output on each compile.
-   Long-running providers append to the current watch-session log. Compile
-   failure notifications are intentionally terse; use |preview.result()| or
-   |:Preview| `output` when you need the raw output.
+   Long-running providers append to the current watch-session log. Providers
+   can optionally define `failure_summary(result, ctx)` for a short failure
+   notification, but |preview.result()| and |:Preview| `output` remain the raw
+   inspection path.
 
 ==============================================================================
 SYNCTEX                                                      *preview-synctex*
