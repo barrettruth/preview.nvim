@@ -176,7 +176,7 @@ describe('compiler', function()
       helpers.delete_buffer(bufnr)
     end)
 
-    it('notifies generically on compile failure', function()
+    it('notifies generically on compile failure when structured errors exist', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_summary.txt')
       vim.bo[bufnr].modified = false
@@ -209,6 +209,45 @@ exit 12]],
       local ctx = {
         bufnr = bufnr,
         file = '/tmp/preview_test_fail_summary.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('hints :Preview output when compile failure has no structured errors', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_output_hint.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'fatal compiler output' >&2
+exit 12]],
+        },
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_output_hint.txt',
         root = '/tmp',
         ft = 'text',
       }
@@ -412,6 +451,44 @@ exit 12]],
       vim.wait(2000, function()
         return process_done(bufnr)
       end, 50)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('hints :Preview output when long-running compile exits without structured errors', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_longrun_output_hint.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified_fail = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+          notified_fail = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = { 'sh' },
+        reload = function()
+          return { 'sh', '-c', 'echo "fatal compiler output" >&2; exit 12' }
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_longrun_output_hint.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'testprov', provider, ctx)
+
+      vim.wait(3000, function()
+        return notified_fail
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified_fail)
+      assert.is_truthy(compiler.result(bufnr).output:find('fatal compiler output', 1, true))
       helpers.delete_buffer(bufnr)
     end)
   end)

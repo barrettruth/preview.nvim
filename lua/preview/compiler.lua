@@ -122,6 +122,15 @@ local function clear_errors(bufnr, provider)
   end
 end
 
+---@param error_count integer
+---@return string
+local function compile_failed_message(error_count)
+  if error_count > 0 then
+    return '[preview.nvim]: compilation failed'
+  end
+  return '[preview.nvim]: compilation failed (see :Preview output)'
+end
+
 ---@param output_bufnr integer
 ---@param output? string
 local function set_output_lines(output_bufnr, output)
@@ -355,7 +364,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
           local count = handle_errors(bufnr, name, provider, ctx, stderr)
           if count > 0 and not s.has_errors then
             s.has_errors = true
-            vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
+            vim.notify(compile_failed_message(count), vim.log.levels.ERROR)
           end
         end),
       },
@@ -383,8 +392,8 @@ function M.compile(bufnr, name, provider, ctx, opts)
             })
           end
           log.dbg('long-running process failed for buffer %d (exit code %d)', bufnr, result.code)
-          vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
-          handle_errors(bufnr, name, provider, ctx, output)
+          local count = handle_errors(bufnr, name, provider, ctx, output)
+          vim.notify(compile_failed_message(count), vim.log.levels.ERROR)
           vim.api.nvim_exec_autocmds('User', {
             pattern = 'PreviewCompileFailed',
             data = {
@@ -567,8 +576,8 @@ function M.compile(bufnr, name, provider, ctx, opts)
         end
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
-        vim.notify('[preview.nvim]: compilation failed', vim.log.levels.ERROR)
-        handle_errors(bufnr, name, provider, ctx, output)
+        local count = handle_errors(bufnr, name, provider, ctx, output)
+        vim.notify(compile_failed_message(count), vim.log.levels.ERROR)
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',
           data = {

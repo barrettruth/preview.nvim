@@ -120,7 +120,8 @@ Okular.
 
 **Q: How do I inspect the full compiler output?**
 
-Use:
+If a compile fails, check diagnostics or quickfix first when available. For the
+raw compiler output, use:
 
 ```vim
 :Preview output
@@ -128,4 +129,6 @@ Use:
 
 Compilation failures intentionally use a short generic notification. The full
 raw compiler output is available through `:Preview output` and
-`require('preview').result()`.
+`require('preview').result()`. One-shot providers replace the stored output on
+each compile. Long-running providers such as `typst watch` show the current
+watch-session log.
