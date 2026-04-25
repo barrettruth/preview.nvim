@@ -237,7 +237,7 @@ COMMANDS                                                    *preview-commands*
     `compile`    One-shot compile of the current buffer.
     `clean`      Run the provider's clean command.
     `open`       Open the last compiled output without recompiling.
-    `output`     Open the last compiler output for the current buffer.
+    `output`     Open the stored raw compiler output for the current buffer.
     `status`     Echo compilation status (idle, compiling, watching).
 
 ==============================================================================
@@ -262,7 +262,9 @@ preview.open({bufnr?})                                        *preview.open()*
     Open the last compiled output for the buffer without recompiling.
 
 preview.output({bufnr?})                                    *preview.output()*
-    Open the last compiler output for the buffer in a scratch split.
+    Open the stored raw compiler output for the buffer in a scratch split.
+    One-shot providers replace the stored output on each compile. Long-running
+    providers append to the current watch-session log.
 
 preview.result({bufnr?})                                    *preview.result()*
     Returns a |preview.Result| table for the buffer, or `nil` if no
@@ -357,9 +359,12 @@ A: Override the `output` field. The `args` function references `ctx.output`,
 
 Q: How do I inspect the full compiler output?
 
-A: Use |:Preview| `output` to open the last compiler output in a scratch
-   split. Compile failure notifications are intentionally terse; use
-   |preview.result()| or |:Preview| `output` when you need the raw output.
+A: If a compile fails, check diagnostics or quickfix first when available.
+   Use |:Preview| `output` to open the stored raw compiler output in a scratch
+   split. One-shot providers replace the stored output on each compile.
+   Long-running providers append to the current watch-session log. Compile
+   failure notifications are intentionally terse; use |preview.result()| or
+   |:Preview| `output` when you need the raw output.
 
 ==============================================================================
 SYNCTEX                                                      *preview-synctex*
