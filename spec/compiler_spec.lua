@@ -263,6 +263,151 @@ exit 12]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses provider failure summary on compile failure', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_custom_summary.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local captured = {}
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: bad input' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'error: bad input' >&2
+exit 12]],
+        },
+        error_parser = function()
+          return {
+            {
+              lnum = 0,
+              col = 0,
+              message = 'diagnostic error',
+              severity = vim.diagnostic.severity.ERROR,
+            },
+          }
+        end,
+        failure_summary = function(result, ctx)
+          captured.code = result.code
+          captured.output = result.output
+          captured.file = ctx.file
+          captured.output_file = ctx.output
+          return 'bad input'
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_custom_summary.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      assert.are.equal(12, captured.code)
+      assert.are.equal('/tmp/preview_test_fail_custom_summary.txt', captured.file)
+      assert.are.equal('', captured.output_file)
+      assert.is_truthy(captured.output:find('bad input', 1, true))
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('falls back when provider failure summary returns nil', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_nil_summary.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'fatal compiler output' >&2
+exit 12]],
+        },
+        failure_summary = function()
+          return nil
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_nil_summary.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('falls back when provider failure summary errors', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_erroring_summary.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'fatal compiler output' >&2
+exit 12]],
+        },
+        failure_summary = function()
+          error('boom')
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_erroring_summary.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('stores full process output on failure', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_result.txt')
@@ -446,6 +591,68 @@ exit 12]],
       local s = compiler._test.state[bufnr]
       assert.is_true(s.has_errors)
       assert.is_truthy(compiler.result(bufnr).output:find('bad input', 1, true))
+
+      compiler.stop(bufnr)
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('uses provider failure summary for long-running failures', function()
+      local bufnr = helpers.create_buffer({ 'hello' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_longrun_custom_summary.txt')
+      vim.bo[bufnr].modified = false
+
+      local notified_fail = false
+      local captured = {}
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: bad input' and level == vim.log.levels.ERROR then
+          notified_fail = true
+        end
+      end
+
+      local provider = {
+        cmd = { 'sh' },
+        reload = function()
+          return { 'sh', '-c', 'echo "error: bad input" >&2; sleep 60' }
+        end,
+        error_parser = function()
+          return {
+            {
+              lnum = 0,
+              col = 0,
+              message = 'bad input',
+              severity = vim.diagnostic.severity.ERROR,
+            },
+          }
+        end,
+        failure_summary = function(result, ctx)
+          captured.code = result.code
+          captured.output = result.output
+          captured.file = ctx.file
+          return 'bad input'
+        end,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_longrun_custom_summary.txt',
+        root = '/tmp',
+        ft = 'text',
+      }
+
+      compiler.compile(bufnr, 'testprov', provider, ctx)
+
+      vim.wait(3000, function()
+        return notified_fail
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified_fail)
+      assert.is_nil(captured.code)
+      assert.are.equal('/tmp/preview_test_longrun_custom_summary.txt', captured.file)
+      assert.is_truthy(captured.output:find('bad input', 1, true))
 
       compiler.stop(bufnr)
       vim.wait(2000, function()

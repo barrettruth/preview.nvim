@@ -122,9 +122,51 @@ local function clear_errors(bufnr, provider)
   end
 end
 
+---@param summary string?
+---@return string?
+local function normalize_failure_summary(summary)
+  if type(summary) ~= 'string' then
+    return nil
+  end
+  summary = summary:gsub('%s+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+  if summary == '' then
+    return nil
+  end
+  return summary
+end
+
+---@param name string
+---@param provider preview.ProviderConfig
+---@param result preview.Result?
+---@param ctx preview.Context
+---@return string?
+local function failure_summary_message(name, provider, result, ctx)
+  if not (provider.failure_summary and result) then
+    return nil
+  end
+  local ok, summary = pcall(provider.failure_summary, result, ctx)
+  if not ok then
+    log.dbg('failure_summary for "%s" failed: %s', name, summary)
+    return nil
+  end
+  summary = normalize_failure_summary(summary)
+  if not summary then
+    return nil
+  end
+  return '[preview.nvim]: ' .. summary
+end
+
+---@param name string
+---@param provider preview.ProviderConfig
+---@param result preview.Result?
+---@param ctx preview.Context
 ---@param error_count integer
 ---@return string
-local function compile_failed_message(error_count)
+local function compile_failed_message(name, provider, result, ctx, error_count)
+  local summary = failure_summary_message(name, provider, result, ctx)
+  if summary then
+    return summary
+  end
   if error_count > 0 then
     return '[preview.nvim]: compilation failed'
   end
@@ -361,10 +403,13 @@ function M.compile(bufnr, name, provider, ctx, opts)
             output = data,
           })
           local stderr = table.concat(stderr_acc)
-          local count = handle_errors(bufnr, name, provider, ctx, stderr)
+          local count = handle_errors(bufnr, name, provider, resolved_ctx, stderr)
           if count > 0 and not s.has_errors then
             s.has_errors = true
-            vim.notify(compile_failed_message(count), vim.log.levels.ERROR)
+            vim.notify(
+              compile_failed_message(name, provider, results[bufnr], resolved_ctx, count),
+              vim.log.levels.ERROR
+            )
           end
         end),
       },
@@ -392,8 +437,11 @@ function M.compile(bufnr, name, provider, ctx, opts)
             })
           end
           log.dbg('long-running process failed for buffer %d (exit code %d)', bufnr, result.code)
-          local count = handle_errors(bufnr, name, provider, ctx, output)
-          vim.notify(compile_failed_message(count), vim.log.levels.ERROR)
+          local count = handle_errors(bufnr, name, provider, resolved_ctx, output)
+          vim.notify(
+            compile_failed_message(name, provider, results[bufnr], resolved_ctx, count),
+            vim.log.levels.ERROR
+          )
           vim.api.nvim_exec_autocmds('User', {
             pattern = 'PreviewCompileFailed',
             data = {
@@ -576,8 +624,11 @@ function M.compile(bufnr, name, provider, ctx, opts)
         end
       else
         log.dbg('compilation failed for buffer %d (exit code %d)', bufnr, result.code)
-        local count = handle_errors(bufnr, name, provider, ctx, output)
-        vim.notify(compile_failed_message(count), vim.log.levels.ERROR)
+        local count = handle_errors(bufnr, name, provider, resolved_ctx, output)
+        vim.notify(
+          compile_failed_message(name, provider, results[bufnr], resolved_ctx, count),
+          vim.log.levels.ERROR
+        )
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileFailed',
           data = {

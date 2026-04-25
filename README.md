@@ -73,6 +73,9 @@ vim.g.preview = {
     output = function(ctx)
       return ctx.file:gsub('%.rst$', '.html')
     end,
+    failure_summary = function(result)
+      return result.output:match('^ERROR:%s*(.+)$')
+    end,
   },
 }
 ```
@@ -127,8 +130,9 @@ raw compiler output, use:
 :Preview output
 ```
 
-Compilation failures intentionally use a short generic notification. The full
-raw compiler output is available through `:Preview output` and
+Compilation failures intentionally use a short notification. Providers can
+optionally define `failure_summary(result, ctx)` to customize that message. The
+full raw compiler output is available through `:Preview output` and
 `require('preview').result()`. One-shot providers replace the stored output on
 each compile. Long-running providers such as `typst watch` show the current
 watch-session log.
