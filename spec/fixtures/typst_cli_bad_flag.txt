@@ -1,0 +1,7 @@
+error: unexpected argument '--bogus-flag' found
+
+  tip: to pass '--bogus-flag' as a value, use '-- --bogus-flag'
+
+Usage: typst compile [OPTIONS] <INPUT> [OUTPUT]
+
+For more information, try '--help'.

@@ -324,6 +324,48 @@ exit 12]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses typst failure summary on compile failure', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ 'hello' }, 'typst')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_typst_summary.typ')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: expected expression' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'main.typ:3:12: error: expected expression' >&2
+exit 1]],
+        },
+        error_parser = presets.typst.error_parser,
+        failure_summary = presets.typst.failure_summary,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_typst_summary.typ',
+        root = '/tmp',
+        ft = 'typst',
+      }
+
+      compiler.compile(bufnr, 'typst', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('uses tectonic failure summary on compile failure', function()
       local presets = require('preview.presets')
       local bufnr = helpers.create_buffer({ 'hello' }, 'tex')

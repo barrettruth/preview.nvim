@@ -1,0 +1,11 @@
+watching watch_test.typ
+writing to watch_test.pdf
+
+[20:32:53] compiling ...
+
+watching watch_test.typ
+writing to watch_test.pdf
+
+[20:32:53] compiled with errors
+
+watch_test.typ:3:12: error: expected expression

@@ -23,6 +23,17 @@ local function parse_typst(output)
 end
 
 ---@param output string
+---@return string?
+local function summarize_typst(output)
+  local diagnostics = parse_typst(output)
+  for _, diagnostic in ipairs(diagnostics) do
+    if diagnostic.severity == vim.diagnostic.severity.ERROR then
+      return diagnostic.message
+    end
+  end
+end
+
+---@param output string
 ---@return preview.Diagnostic[]
 local function parse_latexmk(output)
   local diagnostics = {}
@@ -276,6 +287,9 @@ M.typst = {
   end,
   error_parser = function(output)
     return parse_typst(output)
+  end,
+  failure_summary = function(result)
+    return summarize_typst(result.output or '')
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.typ$', '.pdf')) }
