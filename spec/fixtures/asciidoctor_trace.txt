@@ -1,0 +1,2 @@
+/nix/store/k847n3yr24097d9v469m2mwr2xhbw811-ruby3.4-asciidoctor-2.0.26/lib/ruby/gems/3.4.0/gems/asciidoctor-2.0.26/lib/asciidoctor/document.rb:1339:in 'Asciidoctor::Document#update_backend_attributes': asciidoctor: FAILED: missing converter for backend 'nonexistent_backend'. Processing aborted. (NotImplementedError)
+	from /nix/store/k847n3yr24097d9v469m2mwr2xhbw811-ruby3.4-asciidoctor-2.0.26/lib/ruby/gems/3.4.0/gems/asciidoctor-2.0.26/lib/asciidoctor/document.rb:477:in 'Asciidoctor::Document#initialize'

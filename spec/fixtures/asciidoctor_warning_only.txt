@@ -1,0 +1,1 @@
+asciidoctor: WARNING: warning_only.adoc: line 8: section title out of sequence: expected level 2, got level 3

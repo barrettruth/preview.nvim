@@ -1,0 +1,2 @@
+asciidoctor: WARNING: mixed_err_warn.adoc: line 5: section title out of sequence: expected level 2, got level 3
+asciidoctor: ERROR: mixed_err_warn.adoc: line 7: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing.adoc
