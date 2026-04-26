@@ -1,0 +1,23 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./long_message.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/size10.clo))
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+l3backend/l3backend-pdftex.def)
+No file long_message.aux.
+./long_message.tex:3: Undefined control sequence.
+l.3 ...atwillgetwrappedacrossmultiplelinesofoutput
+                                                  
+(./long_message.aux) )
+(see the transcript file for additional information)
+No pages of output.
+Transcript written on long_message.log.

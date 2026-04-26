@@ -1,0 +1,34 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./syntax_only.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/size10.clo))
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+l3backend/l3backend-pdftex.def)
+No file syntax_only.aux.
+
+./syntax_only.tex:3: LaTeX Error: \begin{document} ended by \end{itemize}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3 \end{itemize}
+                 
+./syntax_only.tex:3: Extra \endgroup.
+\end  ...end#1\endcsname \@checkend {#1}\endgroup 
+                                                  \UseHook {env/#1/after}\if...
+l.3 \end{itemize}
+                 
+(./syntax_only.aux) )
+(see the transcript file for additional information)
+No pages of output.
+Transcript written on syntax_only.log.

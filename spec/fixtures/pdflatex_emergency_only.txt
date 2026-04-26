@@ -1,0 +1,12 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./empty.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+)
+! Emergency stop.
+<*> empty.tex
+             
+!  ==> Fatal error occurred, no output PDF file produced!
+Transcript written on empty.log.

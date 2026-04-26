@@ -1,0 +1,27 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./undefined_cs.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/size10.clo))
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+l3backend/l3backend-pdftex.def)
+No file undefined_cs.aux.
+./undefined_cs.tex:4: Undefined control sequence.
+l.4 \badcommand
+               
+[1{/nix/store/kah5ryh4bhdxk1w6zd0s0kz4ma5x9zy3-texlive-2025-r77567-env/share/te
+xmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./undefined_cs.aux) )
+(see the transcript file for additional information)</nix/store/pg73xqpq7cc8bd6
+g6agrzjv2c166pwrn-texlive-2025-r77567-env/fonts/type1/public/amsfonts/cm/cmr10.
+pfb>
+Output written on undefined_cs.pdf (1 page, 15297 bytes).
+SyncTeX written on undefined_cs.synctex.gz.
+Transcript written on undefined_cs.log.
