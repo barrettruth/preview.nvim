@@ -558,6 +558,56 @@ exit 1]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses asciidoctor failure summary when usage output precedes stderr', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ '= Hello' }, 'asciidoc')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_asciidoctor_summary.adoc')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: invalid option: --bogus-option' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = vim.tbl_extend('force', {}, presets.asciidoctor, {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'Usage: asciidoctor [OPTION]... FILE...'
+printf '%s\n' 'Convert the AsciiDoc input FILE(s) to the backend output format (e.g., HTML 5, DocBook 5, etc.)'
+printf '%s\n' 'Unless specified otherwise, the output is written to a file whose name is derived from the input file.'
+printf '%s\n' 'Application log messages are printed to STDERR.'
+printf '%s\n' 'asciidoctor: invalid option: --bogus-option' >&2
+exit 1]],
+        },
+      })
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_asciidoctor_summary.adoc',
+        root = '/tmp',
+        ft = 'asciidoc',
+        output = '/tmp/preview_test_fail_asciidoctor_summary.html',
+      }
+
+      compiler.compile(bufnr, 'asciidoctor', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      local diagnostics = vim.diagnostic.get(bufnr)
+      assert.is_true(notified)
+      assert.are.same({}, diagnostics)
+      assert.is_truthy(
+        compiler.result(bufnr).output:find('asciidoctor: invalid option: --bogus-option', 1, true)
+      )
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('falls back when provider failure summary returns nil', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_nil_summary.txt')

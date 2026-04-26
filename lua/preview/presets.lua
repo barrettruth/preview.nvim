@@ -398,6 +398,33 @@ local function parse_asciidoctor(output)
   return diagnostics
 end
 
+---@param output string?
+---@return string?
+local function summarize_asciidoctor(output)
+  if type(output) ~= 'string' or output == '' then
+    return nil
+  end
+  local first_warning
+  for line in output:gmatch('[^\r\n]+') do
+    local severity, body = line:match('^asciidoctor: (%u+): (.+)$')
+    if severity == 'ERROR' or severity == 'FATAL' then
+      return body
+    end
+    if severity == 'WARNING' and not first_warning then
+      first_warning = body
+    end
+    local failed = line:match('^asciidoctor: FAILED: (.+)$')
+    if failed then
+      return failed
+    end
+    local invalid = line:match('^asciidoctor: invalid (.+)$')
+    if invalid then
+      return 'invalid ' .. invalid
+    end
+  end
+  return first_warning
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_mermaid(output)
@@ -645,6 +672,9 @@ M.asciidoctor = {
   end,
   error_parser = function(output)
     return parse_asciidoctor(output)
+  end,
+  failure_summary = function(result)
+    return summarize_asciidoctor(result.output)
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.adoc$', '.html')) }

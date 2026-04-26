@@ -1,0 +1,3 @@
+asciidoctor: ERROR: multiple_errors.adoc: line 3: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing_a.adoc
+asciidoctor: ERROR: multiple_errors.adoc: line 5: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing_b.adoc
+asciidoctor: ERROR: multiple_errors.adoc: line 12: dropping cells from incomplete row detected end of table

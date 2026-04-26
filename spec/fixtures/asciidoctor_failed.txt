@@ -1,0 +1,1 @@
+asciidoctor: FAILED: input file /tmp/nonexistent-asciidoc-input.adoc is missing

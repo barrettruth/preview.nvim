@@ -1165,6 +1165,65 @@ describe('presets', function()
       assert.is_true(presets.asciidoctor.reload)
     end)
 
+    describe('failure_summary', function()
+      it('summarizes a single ERROR line', function()
+        local output = 'asciidoctor: ERROR: doc.adoc: line 5: include file not found: /tmp/a.adoc\n'
+        assert.are.equal(
+          'doc.adoc: line 5: include file not found: /tmp/a.adoc',
+          presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
+        )
+      end)
+
+      it('skips WARNING when an ERROR is present', function()
+        local output = helpers.read_fixture('asciidoctor_error_with_warning.txt')
+        assert.are.equal(
+          'mixed_err_warn.adoc: line 7: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing.adoc',
+          presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
+        )
+      end)
+
+      it('returns the first ERROR when many are present', function()
+        local output = helpers.read_fixture('asciidoctor_multi_error.txt')
+        assert.are.equal(
+          'multiple_errors.adoc: line 3: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing_a.adoc',
+          presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
+        )
+      end)
+
+      it('summarizes FAILED form', function()
+        local output = helpers.read_fixture('asciidoctor_failed.txt')
+        assert.are.equal(
+          'input file /tmp/nonexistent-asciidoc-input.adoc is missing',
+          presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
+        )
+      end)
+
+      it('summarizes invalid option even when usage precedes it', function()
+        local output = helpers.read_fixture('asciidoctor_invalid_option.txt')
+        assert.are.equal(
+          'invalid option: --bogus-option',
+          presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
+        )
+      end)
+
+      it('falls back to nil for Ruby stack traces without anchored asciidoctor lines', function()
+        local output = helpers.read_fixture('asciidoctor_trace.txt')
+        assert.is_nil(presets.asciidoctor.failure_summary({ output = output }, adoc_ctx))
+      end)
+
+      it('falls back to nil on empty output', function()
+        assert.is_nil(presets.asciidoctor.failure_summary({ output = '' }, adoc_ctx))
+      end)
+
+      it('summarizes WARNING when it is the only available severity', function()
+        local output = helpers.read_fixture('asciidoctor_warning_only.txt')
+        assert.are.equal(
+          'warning_only.adoc: line 8: section title out of sequence: expected level 2, got level 3',
+          presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
+        )
+      end)
+    end)
+
     it('parses error messages', function()
       local output =
         'asciidoctor: ERROR: document.adoc: line 8: invalid part, must have at least one section'
