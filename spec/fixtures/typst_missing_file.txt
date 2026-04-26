@@ -1,0 +1,1 @@
+negative_missing_file.typ:3:7: error: file not found (searched at /tmp/preview.nvim/audits/typst/repro/does_not_exist.png)

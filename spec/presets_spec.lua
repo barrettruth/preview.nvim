@@ -15,6 +15,11 @@ describe('presets', function()
   }
 
   describe('typst', function()
+    local function typst_result(path, code)
+      local output = helpers.read_fixture(path)
+      return { code = code or 1, stdout = '', stderr = output, output = output }
+    end
+
     it('has ft', function()
       assert.are.equal('typst', presets.typst.ft)
     end)
@@ -81,6 +86,73 @@ describe('presets', function()
       assert.are.equal(2, #diagnostics)
       assert.are.equal('unexpected token', diagnostics[1].message)
       assert.are.equal('unused variable', diagnostics[2].message)
+    end)
+
+    describe('failure_summary', function()
+      it('returns the message for a single error', function()
+        local result = {
+          code = 1,
+          stdout = '',
+          stderr = 'main.typ:3:12: error: expected expression',
+          output = 'main.typ:3:12: error: expected expression',
+        }
+        assert.are.equal('expected expression', presets.typst.failure_summary(result, ctx))
+      end)
+
+      it('returns the first error message when multiple errors are present', function()
+        assert.are.equal(
+          'expected expression',
+          presets.typst.failure_summary(typst_result('typst_multiple_errors.txt'), ctx)
+        )
+      end)
+
+      it('preserves messages containing colons and quoted text', function()
+        assert.are.equal(
+          'panicked with: "something went terribly wrong"',
+          presets.typst.failure_summary(typst_result('typst_panic.txt'), ctx)
+        )
+      end)
+
+      it('preserves file not found messages', function()
+        assert.are.equal(
+          'file not found (searched at /tmp/preview.nvim/audits/typst/repro/does_not_exist.png)',
+          presets.typst.failure_summary(typst_result('typst_missing_file.txt'), ctx)
+        )
+      end)
+
+      it('preserves long messages without truncation', function()
+        assert.are.equal(
+          'unknown variable: nonexistent_very_long_function_name_for_demonstrating_potentially_wrapping_diagnostic_output_lines',
+          presets.typst.failure_summary(typst_result('typst_long_message.txt'), ctx)
+        )
+      end)
+
+      it('skips watch-mode boilerplate and picks the first error', function()
+        local summary =
+          presets.typst.failure_summary(typst_result('typst_watch_first_fail.txt'), ctx)
+        assert.are.equal('expected expression', summary)
+        assert.is_nil(summary:find('watching ', 1, true))
+        assert.is_nil(summary:find('writing to ', 1, true))
+        assert.is_nil(summary:find('compiled with errors', 1, true))
+        assert.is_nil(summary:find('compiling ...', 1, true))
+      end)
+
+      it('returns nil for warning-only output', function()
+        assert.is_nil(presets.typst.failure_summary(typst_result('typst_warning_only.txt'), ctx))
+      end)
+
+      it('returns nil for CLI input-not-found output', function()
+        assert.is_nil(presets.typst.failure_summary(typst_result('typst_cli_no_input.txt'), ctx))
+      end)
+
+      it('returns nil for CLI argument parsing output', function()
+        assert.is_nil(presets.typst.failure_summary(typst_result('typst_cli_bad_flag.txt'), ctx))
+      end)
+
+      it('returns nil for empty output', function()
+        local result = { code = 1, stdout = '', stderr = '', output = '' }
+        assert.is_nil(presets.typst.failure_summary(result, ctx))
+      end)
     end)
 
     it('returns empty table for clean stderr', function()

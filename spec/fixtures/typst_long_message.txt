@@ -1,0 +1,1 @@
+negative_long_error.typ:5:1: error: unknown variable: nonexistent_very_long_function_name_for_demonstrating_potentially_wrapping_diagnostic_output_lines
