@@ -135,6 +135,26 @@ local function normalize_failure_summary(summary)
   return summary
 end
 
+---@param provider preview.ProviderConfig
+---@return string?
+local function summary_label(provider)
+  local label = provider._summary_label
+  if type(label) ~= 'string' or label == '' then
+    return nil
+  end
+  return label
+end
+
+---@param label string?
+---@param summary string?
+---@return string?
+local function prefix_summary_label(label, summary)
+  if not label or type(summary) ~= 'string' or summary:find(label .. ':', 1, true) == 1 then
+    return summary
+  end
+  return label .. ': ' .. summary
+end
+
 ---@param name string
 ---@param provider preview.ProviderConfig
 ---@param result preview.Result?
@@ -153,7 +173,7 @@ local function failure_summary_message(name, provider, result, ctx)
   if not summary then
     return nil
   end
-  return '[preview.nvim]: ' .. summary
+  return '[preview.nvim]: ' .. prefix_summary_label(summary_label(provider), summary)
 end
 
 ---@param name string
@@ -167,10 +187,12 @@ local function compile_failed_message(name, provider, result, ctx, error_count)
   if summary then
     return summary
   end
+  local label = summary_label(provider)
   if error_count > 0 then
-    return '[preview.nvim]: compilation failed'
+    return '[preview.nvim]: ' .. prefix_summary_label(label, 'compilation failed')
   end
-  return '[preview.nvim]: compilation failed (see :Preview output)'
+  return '[preview.nvim]: '
+    .. prefix_summary_label(label, 'compilation failed (see :Preview output)')
 end
 
 ---@param output_bufnr integer

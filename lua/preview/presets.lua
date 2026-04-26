@@ -1,5 +1,15 @@
 local M = {}
 
+---@param label string
+---@param summary string?
+---@return string?
+local function with_summary_label(label, summary)
+  if type(summary) ~= 'string' or summary == '' or summary:find(label .. ':', 1, true) == 1 then
+    return summary
+  end
+  return label .. ': ' .. summary
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_typst(output)
@@ -322,14 +332,14 @@ local function summarize_pandoc_common(output, opts)
     if opts.include_filter then
       local filter, detail = pandoc_filter_detail(line, lines, i + 1)
       if filter and detail then
-        return 'pandoc filter ' .. basename(filter) .. ': ' .. detail
+        return opts.filter_summary(filter, detail)
       end
     end
 
     if opts.include_bibliography then
       local bibliography, detail = pandoc_bibliography_detail(line, lines, i + 1)
       if bibliography and detail then
-        return 'pandoc: bibliography ' .. basename(bibliography) .. ': ' .. detail
+        return opts.bibliography_summary(bibliography, detail)
       end
     end
 
@@ -357,18 +367,24 @@ end
 ---@return string?
 local function summarize_pandoc(output)
   return summarize_pandoc_common(output, {
-    yaml_prefix = 'pandoc: YAML metadata: ',
+    yaml_prefix = 'YAML metadata: ',
     error_at_stop_on_blank = false,
     error_at_summary = function(src, msg)
-      return 'pandoc: ' .. basename(src) .. ': ' .. msg
+      return basename(src) .. ': ' .. msg
     end,
     include_filter = true,
     include_bibliography = true,
+    filter_summary = function(filter, detail)
+      return 'filter ' .. basename(filter) .. ': ' .. detail
+    end,
+    bibliography_summary = function(bibliography, detail)
+      return 'bibliography ' .. basename(bibliography) .. ': ' .. detail
+    end,
     pandoc_message = function(msg)
-      return 'pandoc: ' .. msg
+      return msg
     end,
     data_file_summary = function(data_file)
-      return 'pandoc: could not find data file ' .. basename(data_file)
+      return 'could not find data file ' .. basename(data_file)
     end,
     passthrough_patterns = {
       '^Unknown output format',
@@ -376,7 +392,7 @@ local function summarize_pandoc(output)
       '^Argument of ',
     },
     line_summary = function(line)
-      return 'pandoc: ' .. line
+      return line
     end,
   })
 end
@@ -473,10 +489,10 @@ local function summarize_plantuml(output)
   for line in output:gmatch('[^\r\n]+') do
     local lnum = plantuml_error_line(line)
     if lnum then
-      return string.format('plantuml: error on line %d (see :Preview output)', lnum)
+      return string.format('error on line %d (see :Preview output)', lnum)
     end
     if line == 'No diagram found' then
-      return 'plantuml: no diagram found (see :Preview output)'
+      return 'no diagram found (see :Preview output)'
     end
   end
 end
@@ -601,6 +617,7 @@ end
 ---@type preview.ProviderConfig
 M.typst = {
   ft = 'typst',
+  _summary_label = 'typst',
   cmd = { 'typst', 'compile' },
   args = function(ctx)
     return { '--diagnostic-format', 'short', ctx.file }
@@ -612,7 +629,7 @@ M.typst = {
     return parse_typst(output)
   end,
   failure_summary = function(result)
-    return summarize_typst(result.output or '')
+    return with_summary_label('typst', summarize_typst(result.output or ''))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.typ$', '.pdf')) }
@@ -626,6 +643,7 @@ M.typst = {
 ---@type preview.ProviderConfig
 M.latex = {
   ft = 'tex',
+  _summary_label = 'latex',
   cmd = { 'latexmk' },
   args = function(ctx)
     return {
@@ -643,7 +661,7 @@ M.latex = {
     return parse_latexmk(output)
   end,
   failure_summary = function(result)
-    return summarize_latexmk(result.output or '')
+    return with_summary_label('latex', summarize_latexmk(result.output or ''))
   end,
   clean = function(ctx)
     return { 'latexmk', '-c', ctx.file }
@@ -654,6 +672,7 @@ M.latex = {
 ---@type preview.ProviderConfig
 M.pdflatex = {
   ft = 'tex',
+  _summary_label = 'pdflatex',
   cmd = { 'pdflatex' },
   args = function(ctx)
     return { '-interaction=nonstopmode', '-file-line-error', '-synctex=1', ctx.file }
@@ -668,7 +687,7 @@ M.pdflatex = {
     return parse_latexmk(output)
   end,
   failure_summary = function(result)
-    return summarize_pdflatex(result.output or '')
+    return with_summary_label('pdflatex', summarize_pdflatex(result.output or ''))
   end,
   clean = function(ctx)
     local base = ctx.file:gsub('%.tex$', '')
@@ -680,6 +699,7 @@ M.pdflatex = {
 ---@type preview.ProviderConfig
 M.tectonic = {
   ft = 'tex',
+  _summary_label = 'tectonic',
   cmd = { 'tectonic' },
   args = function(ctx)
     return { ctx.file }
@@ -690,7 +710,9 @@ M.tectonic = {
   error_parser = function(output)
     return parse_latexmk(output)
   end,
-  failure_summary = summarize_tectonic,
+  failure_summary = function(result)
+    return with_summary_label('tectonic', summarize_tectonic(result))
+  end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.tex$', '.pdf')) }
   end,
@@ -700,6 +722,7 @@ M.tectonic = {
 ---@type preview.ProviderConfig
 M.markdown = {
   ft = 'markdown',
+  _summary_label = 'markdown',
   cmd = { 'pandoc' },
   args = function(ctx)
     return { ctx.file, '-s', '--katex', '-o', ctx.output }
@@ -711,7 +734,7 @@ M.markdown = {
     return parse_pandoc(output)
   end,
   failure_summary = function(result)
-    return summarize_pandoc(result.output or '')
+    return with_summary_label('markdown', summarize_pandoc(result.output or ''))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
@@ -723,6 +746,7 @@ M.markdown = {
 ---@type preview.ProviderConfig
 M.github = {
   ft = 'markdown',
+  _summary_label = 'github',
   cmd = { 'pandoc' },
   args = function(ctx)
     local template = vim.api.nvim_get_runtime_file('lua/preview/templates/gfm.html', false)[1]
@@ -748,7 +772,7 @@ M.github = {
     return parse_pandoc(output)
   end,
   failure_summary = function(result)
-    return summarize_github_pandoc(result.output or '')
+    return with_summary_label('github', summarize_github_pandoc(result.output or ''))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
@@ -760,6 +784,7 @@ M.github = {
 ---@type preview.ProviderConfig
 M.asciidoctor = {
   ft = 'asciidoc',
+  _summary_label = 'asciidoctor',
   cmd = { 'asciidoctor' },
   args = function(ctx)
     return { '--failure-level', 'ERROR', ctx.file, '-o', ctx.output }
@@ -771,7 +796,7 @@ M.asciidoctor = {
     return parse_asciidoctor(output)
   end,
   failure_summary = function(result)
-    return summarize_asciidoctor(result.output)
+    return with_summary_label('asciidoctor', summarize_asciidoctor(result.output))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.adoc$', '.html')) }
@@ -783,6 +808,7 @@ M.asciidoctor = {
 ---@type preview.ProviderConfig
 M.plantuml = {
   ft = 'plantuml',
+  _summary_label = 'plantuml',
   cmd = { 'plantuml' },
   args = function(ctx)
     return { '-tsvg', ctx.file }
@@ -806,7 +832,7 @@ M.plantuml = {
     return diagnostics
   end,
   failure_summary = function(result)
-    return summarize_plantuml(result.output)
+    return with_summary_label('plantuml', summarize_plantuml(result.output))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.puml$', '.svg')) }
@@ -817,6 +843,7 @@ M.plantuml = {
 ---@type preview.ProviderConfig
 M.mermaid = {
   ft = 'mermaid',
+  _summary_label = 'mermaid',
   cmd = { 'mmdc' },
   args = function(ctx)
     return { '-i', ctx.file, '-o', ctx.output }
@@ -828,7 +855,7 @@ M.mermaid = {
     return parse_mermaid(output)
   end,
   failure_summary = function(result)
-    return summarize_mermaid(result.output)
+    return with_summary_label('mermaid', summarize_mermaid(result.output))
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.mmd$', '.svg')) }
@@ -839,6 +866,7 @@ M.mermaid = {
 ---@type preview.ProviderConfig
 M.quarto = {
   ft = 'quarto',
+  _summary_label = 'quarto',
   cmd = { 'quarto' },
   args = function(ctx)
     return { 'render', ctx.file, '--to', 'html', '--embed-resources' }
@@ -850,7 +878,7 @@ M.quarto = {
     return parse_quarto(output)
   end,
   failure_summary = function(result)
-    return summarize_quarto(result)
+    return with_summary_label('quarto', summarize_quarto(result))
   end,
   clean = function(ctx)
     local base = ctx.file:gsub('%.qmd$', '')

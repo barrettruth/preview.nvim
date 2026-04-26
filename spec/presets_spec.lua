@@ -23,14 +23,14 @@ describe('presets', function()
     describe('failure_summary', function()
       it('produces YAML failure summary', function()
         assert.are.equal(
-          'pandoc: YAML metadata: mapping values are not allowed in this context',
+          'markdown: YAML metadata: mapping values are not allowed in this context',
           get_provider().failure_summary(pandoc_result('pandoc/yaml_simple.txt'), md_ctx)
         )
       end)
 
       it('walks "while parsing" YAML blocks to the deepest cause', function()
         assert.are.equal(
-          "pandoc: YAML metadata: did not find expected ',' or ']'",
+          "markdown: YAML metadata: did not find expected ',' or ']'",
           get_provider().failure_summary(pandoc_result('pandoc/yaml_flow.txt'), md_ctx)
         )
       end)
@@ -38,7 +38,7 @@ describe('presets', function()
       it('drops HasCallStack noise from pandoc IO failures', function()
         local summary = get_provider().failure_summary(pandoc_result('pandoc/io_error.txt'), md_ctx)
         assert.are.equal(
-          'pandoc: /nonexistent/file.md: withBinaryFile: does not exist (No such file or directory)',
+          'markdown: /nonexistent/file.md: withBinaryFile: does not exist (No such file or directory)',
           summary
         )
         assert.is_nil(summary:find('HasCallStack', 1, true))
@@ -47,48 +47,48 @@ describe('presets', function()
 
       it('strips the nix-store path from missing template errors', function()
         assert.are.equal(
-          'pandoc: could not find data file nonexistent_template.html5',
+          'markdown: could not find data file nonexistent_template.html5',
           get_provider().failure_summary(pandoc_result('pandoc/missing_data.txt'), md_ctx)
         )
       end)
 
       it('handles bibliography errors with filename context', function()
         assert.are.equal(
-          "pandoc: bibliography 08_bib.bib: unexpected 'a'",
+          "markdown: bibliography 08_bib.bib: unexpected 'a'",
           get_provider().failure_summary(pandoc_result('pandoc/bibliography.txt'), md_ctx)
         )
       end)
 
       it('handles reader error-at failures with filename context', function()
         assert.are.equal(
-          "pandoc: 08_bib.bib: unexpected 'a'",
+          "markdown: 08_bib.bib: unexpected 'a'",
           get_provider().failure_summary(pandoc_result('pandoc/error_at.txt'), md_ctx)
         )
       end)
 
       it('handles lua filter errors without stack traceback noise', function()
         local summary = get_provider().failure_summary(pandoc_result('pandoc/filter.txt'), md_ctx)
-        assert.are.equal('pandoc filter 19_filter.lua: 2: boom from filter', summary)
+        assert.are.equal('markdown: filter 19_filter.lua: 2: boom from filter', summary)
         assert.is_nil(summary:find('stack traceback', 1, true))
       end)
 
       it('handles unknown output formats', function()
         assert.are.equal(
-          'pandoc: Unknown output format bogus_format',
+          'markdown: Unknown output format bogus_format',
           get_provider().failure_summary(pandoc_result('pandoc/unknown_output.txt'), md_ctx)
         )
       end)
 
       it('handles unknown options', function()
         assert.are.equal(
-          'pandoc: Unknown option --bogus-flag.',
+          'markdown: Unknown option --bogus-flag.',
           get_provider().failure_summary(pandoc_result('pandoc/unknown_opt.txt'), md_ctx)
         )
       end)
 
       it('preserves long invalid pdf-engine messages', function()
         assert.are.equal(
-          'pandoc: ' .. helpers.read_fixture('pandoc/pdf_engine.txt'),
+          'markdown: ' .. helpers.read_fixture('pandoc/pdf_engine.txt'),
           get_provider().failure_summary(pandoc_result('pandoc/pdf_engine.txt'), md_ctx)
         )
       end)
@@ -97,7 +97,7 @@ describe('presets', function()
         local summary =
           get_provider().failure_summary(pandoc_result('pandoc/warning_then_io_error.txt'), md_ctx)
         assert.are.equal(
-          'pandoc: /tmp/preview.nvim/audits/markdown: withBinaryFile: inappropriate type (is a directory)',
+          'markdown: /tmp/preview.nvim/audits/markdown: withBinaryFile: inappropriate type (is a directory)',
           summary
         )
         assert.is_nil(summary:find('[WARNING]', 1, true))
@@ -122,28 +122,28 @@ describe('presets', function()
     describe('failure_summary', function()
       it('summarizes YAML mapping errors', function()
         assert.are.equal(
-          'YAML metadata: mapping values are not allowed in this context',
+          'github: YAML metadata: mapping values are not allowed in this context',
           presets.github.failure_summary(pandoc_result('github/yaml_mapping.txt'), md_ctx)
         )
       end)
 
       it('walks YAML blocks past while context', function()
         assert.are.equal(
-          "YAML metadata: did not find expected ',' or ']'",
+          "github: YAML metadata: did not find expected ',' or ']'",
           presets.github.failure_summary(pandoc_result('github/yaml_flow.txt'), md_ctx)
         )
       end)
 
       it('skips trailing Consider hints in YAML blocks', function()
         assert.are.equal(
-          'YAML metadata: did not find expected key',
+          'github: YAML metadata: did not find expected key',
           presets.github.failure_summary(pandoc_result('github/yaml_block.txt'), md_ctx)
         )
       end)
 
       it('summarizes YAML alias errors', function()
         assert.are.equal(
-          'YAML metadata: Unknown alias `undefined_anchor`',
+          'github: YAML metadata: Unknown alias `undefined_anchor`',
           presets.github.failure_summary(pandoc_result('github/yaml_alias.txt'), md_ctx)
         )
       end)
@@ -156,7 +156,7 @@ describe('presets', function()
           output = 'Error at "document.md" (line 12, column 5): unexpected "}" expecting letter',
         }
         assert.are.equal(
-          'document.md: unexpected "}" expecting letter',
+          'github: document.md: unexpected "}" expecting letter',
           presets.github.failure_summary(result, md_ctx)
         )
       end)
@@ -165,7 +165,7 @@ describe('presets', function()
         local summary =
           presets.github.failure_summary(pandoc_result('github/input_missing.txt'), md_ctx)
         assert.are.equal(
-          '/tmp/preview.nvim/audits/github/repro/__nonexistent.md: withBinaryFile: does not exist (No such file or directory)',
+          'github: /tmp/preview.nvim/audits/github/repro/__nonexistent.md: withBinaryFile: does not exist (No such file or directory)',
           summary
         )
         assert.is_nil(summary:find('HasCallStack', 1, true))
@@ -174,21 +174,21 @@ describe('presets', function()
 
       it('summarizes template-missing errors', function()
         assert.are.equal(
-          helpers.read_fixture('github/template_missing.txt'),
+          'github: ' .. helpers.read_fixture('github/template_missing.txt'),
           presets.github.failure_summary(pandoc_result('github/template_missing.txt'), md_ctx)
         )
       end)
 
       it('summarizes unknown option errors', function()
         assert.are.equal(
-          'Unknown option --bad-flag-does-not-exist.',
+          'github: Unknown option --bad-flag-does-not-exist.',
           presets.github.failure_summary(pandoc_result('github/unknown_option.txt'), md_ctx)
         )
       end)
 
       it('summarizes unsupported extension errors', function()
         assert.are.equal(
-          'The extension nonexistent_extension is not supported for gfm.',
+          'github: The extension nonexistent_extension is not supported for gfm.',
           presets.github.failure_summary(pandoc_result('github/bad_extension.txt'), md_ctx)
         )
       end)
@@ -287,33 +287,33 @@ describe('presets', function()
           stderr = 'main.typ:3:12: error: expected expression',
           output = 'main.typ:3:12: error: expected expression',
         }
-        assert.are.equal('expected expression', presets.typst.failure_summary(result, ctx))
+        assert.are.equal('typst: expected expression', presets.typst.failure_summary(result, ctx))
       end)
 
       it('returns the first error message when multiple errors are present', function()
         assert.are.equal(
-          'expected expression',
+          'typst: expected expression',
           presets.typst.failure_summary(typst_result('typst/multiple_errors.txt'), ctx)
         )
       end)
 
       it('preserves messages containing colons and quoted text', function()
         assert.are.equal(
-          'panicked with: "something went terribly wrong"',
+          'typst: panicked with: "something went terribly wrong"',
           presets.typst.failure_summary(typst_result('typst/panic.txt'), ctx)
         )
       end)
 
       it('preserves file not found messages', function()
         assert.are.equal(
-          'file not found (searched at /tmp/preview.nvim/audits/typst/repro/does_not_exist.png)',
+          'typst: file not found (searched at /tmp/preview.nvim/audits/typst/repro/does_not_exist.png)',
           presets.typst.failure_summary(typst_result('typst/missing_file.txt'), ctx)
         )
       end)
 
       it('preserves long messages without truncation', function()
         assert.are.equal(
-          'unknown variable: nonexistent_very_long_function_name_for_demonstrating_potentially_wrapping_diagnostic_output_lines',
+          'typst: unknown variable: nonexistent_very_long_function_name_for_demonstrating_potentially_wrapping_diagnostic_output_lines',
           presets.typst.failure_summary(typst_result('typst/long_message.txt'), ctx)
         )
       end)
@@ -321,7 +321,7 @@ describe('presets', function()
       it('skips watch-mode boilerplate and picks the first error', function()
         local summary =
           presets.typst.failure_summary(typst_result('typst/watch_first_fail.txt'), ctx)
-        assert.are.equal('expected expression', summary)
+        assert.are.equal('typst: expected expression', summary)
         assert.is_nil(summary:find('watching ', 1, true))
         assert.is_nil(summary:find('writing to ', 1, true))
         assert.is_nil(summary:find('compiled with errors', 1, true))
@@ -405,7 +405,7 @@ describe('presets', function()
       }, '\n')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        'document.tex:10: Undefined control sequence.',
+        'latex: document.tex:10: Undefined control sequence.',
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -414,7 +414,7 @@ describe('presets', function()
       local output = './my docs/document.tex:10: Undefined control sequence.'
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        'document.tex:10: Undefined control sequence.',
+        'latex: document.tex:10: Undefined control sequence.',
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -428,7 +428,7 @@ describe('presets', function()
       }, '\n')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        "LaTeX Error: File `enumitem.sty' not found.",
+        "latex: LaTeX Error: File `enumitem.sty' not found.",
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -440,7 +440,7 @@ describe('presets', function()
         '! Emergency stop.',
       }, '\n')
       local result = { code = 12, stdout = output, stderr = '', output = output }
-      assert.are.equal('Emergency stop.', presets.latex.failure_summary(result, tex_ctx))
+      assert.are.equal('latex: Emergency stop.', presets.latex.failure_summary(result, tex_ctx))
     end)
 
     it('falls back to the first ! line when there is no file-line error', function()
@@ -452,7 +452,7 @@ describe('presets', function()
       }, '\n')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        'File ended while scanning use of \\@fileswith@ptions.',
+        'latex: File ended while scanning use of \\@fileswith@ptions.',
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -482,7 +482,7 @@ describe('presets', function()
       local output = helpers.read_fixture('latexmk/undefined_cs.txt')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        'document.tex:4: Undefined control sequence.',
+        'latex: document.tex:4: Undefined control sequence.',
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -491,7 +491,7 @@ describe('presets', function()
       local output = helpers.read_fixture('latexmk/missing_pkg.txt')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        "LaTeX Error: File `definitelymissingpackage.sty' not found.",
+        "latex: LaTeX Error: File `definitelymissingpackage.sty' not found.",
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -500,7 +500,7 @@ describe('presets', function()
       local output = helpers.read_fixture('latexmk/noisy_multi.txt')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        'document.tex:4: Undefined control sequence.',
+        'latex: document.tex:4: Undefined control sequence.',
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -509,7 +509,7 @@ describe('presets', function()
       local output = helpers.read_fixture('latexmk/emergency_stop.txt')
       local result = { code = 12, stdout = output, stderr = '', output = output }
       assert.are.equal(
-        'File ended while scanning use of \\@fileswith@ptions.',
+        'latex: File ended while scanning use of \\@fileswith@ptions.',
         presets.latex.failure_summary(result, tex_ctx)
       )
     end)
@@ -624,21 +624,21 @@ describe('presets', function()
     describe('failure_summary', function()
       it('prefers LaTeX Error for missing package fixture output', function()
         assert.are.equal(
-          "LaTeX Error: File `definitelymissingpackage.sty' not found.",
+          "pdflatex: LaTeX Error: File `definitelymissingpackage.sty' not found.",
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/missing_package.txt'), tex_ctx)
         )
       end)
 
       it('uses the first non-noise ! line for missing brace fixture output', function()
         assert.are.equal(
-          'File ended while scanning use of \\textbf .',
+          'pdflatex: File ended while scanning use of \\textbf .',
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/missing_brace.txt'), tex_ctx)
         )
       end)
 
       it('uses the file-line message for undefined control sequence fixture output', function()
         assert.are.equal(
-          'Undefined control sequence.',
+          'pdflatex: Undefined control sequence.',
           presets.pdflatex.failure_summary(
             pdflatex_result('pdflatex/undefined_cs_full.txt'),
             tex_ctx
@@ -648,42 +648,42 @@ describe('presets', function()
 
       it('uses the first non-noise file-line message for missing dollar fixture output', function()
         assert.are.equal(
-          'Missing $ inserted.',
+          'pdflatex: Missing $ inserted.',
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/missing_dollar.txt'), tex_ctx)
         )
       end)
 
       it('prefers LaTeX Error for missing file fixture output', function()
         assert.are.equal(
-          "LaTeX Error: File `nonexistent_file_xyz.tex' not found.",
+          "pdflatex: LaTeX Error: File `nonexistent_file_xyz.tex' not found.",
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/file_not_found.txt'), tex_ctx)
         )
       end)
 
       it('ignores l.n continuations in long message fixture output', function()
         assert.are.equal(
-          'Undefined control sequence.',
+          'pdflatex: Undefined control sequence.',
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/long_message.txt'), tex_ctx)
         )
       end)
 
       it('uses file-line LaTeX Error for missing document environment fixture output', function()
         assert.are.equal(
-          'LaTeX Error: Missing \\begin{document}.',
+          'pdflatex: LaTeX Error: Missing \\begin{document}.',
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/missing_doc_env.txt'), tex_ctx)
         )
       end)
 
       it('uses the first file-line LaTeX Error in syntax-only fixture output', function()
         assert.are.equal(
-          'LaTeX Error: \\begin{document} ended by \\end{itemize}.',
+          'pdflatex: LaTeX Error: \\begin{document} ended by \\end{itemize}.',
           presets.pdflatex.failure_summary(pdflatex_result('pdflatex/syntax_only.txt'), tex_ctx)
         )
       end)
 
       it('summarizes unwrapped long file-line message fixture output', function()
         assert.are.equal(
-          'This is an intentionally extremely long error message designed to make pdflatex wrap the output onto multiple lines for testing purposes.',
+          'pdflatex: This is an intentionally extremely long error message designed to make pdflatex wrap the output onto multiple lines for testing purposes.',
           presets.pdflatex.failure_summary(
             pdflatex_result('pdflatex/wrapped_error_unwrapped.txt'),
             tex_ctx
@@ -693,7 +693,7 @@ describe('presets', function()
 
       it('summarizes unwrapped LaTeX Error fixture output', function()
         assert.are.equal(
-          "LaTeX Error: File `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.sty' not found.",
+          "pdflatex: LaTeX Error: File `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.sty' not found.",
           presets.pdflatex.failure_summary(
             pdflatex_result('pdflatex/wrapped_latex_error_unwrapped.txt'),
             tex_ctx
@@ -723,7 +723,10 @@ describe('presets', function()
           './document.tex:5: Missing $ inserted.',
         }, '\n')
         local result = { code = 1, stdout = output, stderr = '', output = output }
-        assert.are.equal('Missing $ inserted.', presets.pdflatex.failure_summary(result, tex_ctx))
+        assert.are.equal(
+          'pdflatex: Missing $ inserted.',
+          presets.pdflatex.failure_summary(result, tex_ctx)
+        )
       end)
 
       it('skips fatal continuation lines in both file-line and ! forms', function()
@@ -808,14 +811,14 @@ describe('presets', function()
 
     it('summarizes missing dollar fixture output', function()
       assert.are.equal(
-        'missing_dollar.tex:5: Missing $ inserted',
+        'tectonic: missing_dollar.tex:5: Missing $ inserted',
         presets.tectonic.failure_summary(tectonic_stderr_result('tectonic/basic.txt'), tex_ctx)
       )
     end)
 
     it('summarizes multi-error fixture output with the first error', function()
       assert.are.equal(
-        'multi_error.tex:3: Undefined control sequence',
+        'tectonic: multi_error.tex:3: Undefined control sequence',
         presets.tectonic.failure_summary(
           tectonic_stderr_result('tectonic/multi_error.txt'),
           tex_ctx
@@ -825,7 +828,7 @@ describe('presets', function()
 
     it('summarizes missing package fixture output', function()
       assert.are.equal(
-        "missing_package.tex:3: LaTeX Error: File `this-package-definitely-does-not-exist.sty' not found.",
+        "tectonic: missing_package.tex:3: LaTeX Error: File `this-package-definitely-does-not-exist.sty' not found.",
         presets.tectonic.failure_summary(
           tectonic_stderr_result('tectonic/missing_package.txt'),
           tex_ctx
@@ -835,7 +838,7 @@ describe('presets', function()
 
     it('summarizes missing input fixture output', function()
       assert.are.equal(
-        "missing_input.tex:3: LaTeX Error: File `nonexistent-file-xyz.tex' not found.",
+        "tectonic: missing_input.tex:3: LaTeX Error: File `nonexistent-file-xyz.tex' not found.",
         presets.tectonic.failure_summary(
           tectonic_stderr_result('tectonic/missing_input.txt'),
           tex_ctx
@@ -845,7 +848,7 @@ describe('presets', function()
 
     it('summarizes missing image fixture output', function()
       assert.are.equal(
-        "missing_image.tex:4: Unable to load picture or PDF file 'nonexistent-image.png'",
+        "tectonic: missing_image.tex:4: Unable to load picture or PDF file 'nonexistent-image.png'",
         presets.tectonic.failure_summary(
           tectonic_stderr_result('tectonic/missing_image.txt'),
           tex_ctx
@@ -855,7 +858,7 @@ describe('presets', function()
 
     it('skips continuation lines around wrapped long message fixture output', function()
       assert.are.equal(
-        'wrapped_long_msg.tex:6: LaTeX Error: \\begin{equation} on input line 4 ended by \\end{equationoops}.',
+        'tectonic: wrapped_long_msg.tex:6: LaTeX Error: \\begin{equation} on input line 4 ended by \\end{equationoops}.',
         presets.tectonic.failure_summary(
           tectonic_stderr_result('tectonic/wrapped_long_msg.txt'),
           tex_ctx
@@ -865,7 +868,7 @@ describe('presets', function()
 
     it('strips leading ! for missing brace fixture output', function()
       assert.are.equal(
-        'File ended while scanning use of \\textbf',
+        'tectonic: File ended while scanning use of \\textbf',
         presets.tectonic.failure_summary(
           tectonic_stderr_result('tectonic/missing_brace.txt'),
           tex_ctx
@@ -875,7 +878,7 @@ describe('presets', function()
 
     it('returns Emergency stop for empty fixture output', function()
       assert.are.equal(
-        'Emergency stop',
+        'tectonic: Emergency stop',
         presets.tectonic.failure_summary(tectonic_stderr_result('tectonic/empty.txt'), tex_ctx)
       )
     end)
@@ -1172,7 +1175,7 @@ describe('presets', function()
       it('summarizes a single ERROR line', function()
         local output = 'asciidoctor: ERROR: doc.adoc: line 5: include file not found: /tmp/a.adoc\n'
         assert.are.equal(
-          'doc.adoc: line 5: include file not found: /tmp/a.adoc',
+          'asciidoctor: doc.adoc: line 5: include file not found: /tmp/a.adoc',
           presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
         )
       end)
@@ -1180,7 +1183,7 @@ describe('presets', function()
       it('skips WARNING when an ERROR is present', function()
         local output = helpers.read_fixture('asciidoctor/error_with_warning.txt')
         assert.are.equal(
-          'mixed_err_warn.adoc: line 7: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing.adoc',
+          'asciidoctor: mixed_err_warn.adoc: line 7: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing.adoc',
           presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
         )
       end)
@@ -1188,7 +1191,7 @@ describe('presets', function()
       it('returns the first ERROR when many are present', function()
         local output = helpers.read_fixture('asciidoctor/multi_error.txt')
         assert.are.equal(
-          'multiple_errors.adoc: line 3: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing_a.adoc',
+          'asciidoctor: multiple_errors.adoc: line 3: include file not found: /tmp/preview.nvim/audits/asciidoctor/repro/missing_a.adoc',
           presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
         )
       end)
@@ -1196,7 +1199,7 @@ describe('presets', function()
       it('summarizes FAILED form', function()
         local output = helpers.read_fixture('asciidoctor/failed.txt')
         assert.are.equal(
-          'input file /tmp/nonexistent-asciidoc-input.adoc is missing',
+          'asciidoctor: input file /tmp/nonexistent-asciidoc-input.adoc is missing',
           presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
         )
       end)
@@ -1204,7 +1207,7 @@ describe('presets', function()
       it('summarizes invalid option even when usage precedes it', function()
         local output = helpers.read_fixture('asciidoctor/invalid_option.txt')
         assert.are.equal(
-          'invalid option: --bogus-option',
+          'asciidoctor: invalid option: --bogus-option',
           presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
         )
       end)
@@ -1221,7 +1224,7 @@ describe('presets', function()
       it('summarizes WARNING when it is the only available severity', function()
         local output = helpers.read_fixture('asciidoctor/warning_only.txt')
         assert.are.equal(
-          'warning_only.adoc: line 8: section title out of sequence: expected level 2, got level 3',
+          'asciidoctor: warning_only.adoc: line 8: section title out of sequence: expected level 2, got level 3',
           presets.asciidoctor.failure_summary({ output = output }, adoc_ctx)
         )
       end)
@@ -1383,21 +1386,21 @@ describe('presets', function()
     describe('failure_summary', function()
       it('returns failure summary for canonical parse error', function()
         assert.are.equal(
-          "Parse error on line 3: Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'MINUS'",
+          "mermaid: Parse error on line 3: Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'MINUS'",
           presets.mermaid.failure_summary(mermaid_result('mermaid/basic.txt'), mmd_ctx)
         )
       end)
 
       it('returns failure summary with line number greater than nine', function()
         assert.are.equal(
-          "Parse error on line 14: Expecting 'LINK', 'UNICODE_TEXT', 'EDGE_TEXT', got '1'",
+          "mermaid: Parse error on line 14: Expecting 'LINK', 'UNICODE_TEXT', 'EDGE_TEXT', got '1'",
           presets.mermaid.failure_summary(mermaid_result('mermaid/deep_error.txt'), mmd_ctx)
         )
       end)
 
       it('rejects bare Expecting in source excerpts', function()
         assert.are.equal(
-          "Parse error on line 3: Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'NUM'",
+          "mermaid: Parse error on line 3: Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'NUM'",
           presets.mermaid.failure_summary(mermaid_result('mermaid/poison_excerpt.txt'), mmd_ctx)
         )
       end)
@@ -1487,21 +1490,21 @@ describe('presets', function()
     describe('failure_summary', function()
       it('summarizes YAMLException with location', function()
         assert.are.equal(
-          'YAMLException: missed comma between flow collection entries (3:1)',
+          'quarto: YAMLException: missed comma between flow collection entries (3:1)',
           quarto_summary('quarto/basic.txt')
         )
       end)
 
       it('summarizes unknown render formats', function()
         assert.are.equal(
-          'Unknown format thisformatdoesnotexist',
+          'quarto: Unknown format thisformatdoesnotexist',
           quarto_summary('quarto/unknown_format.txt')
         )
       end)
 
       it('summarizes missing input files', function()
         assert.are.equal(
-          'No valid input files passed to render',
+          'quarto: No valid input files passed to render',
           quarto_summary('quarto/missing_input.txt')
         )
       end)

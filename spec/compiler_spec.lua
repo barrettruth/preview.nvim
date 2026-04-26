@@ -333,7 +333,7 @@ exit 12]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: expected expression' then
+        if msg == '[preview.nvim]: typst: expected expression' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -375,7 +375,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: missing_dollar.tex:5: Missing $ inserted' then
+        if msg == '[preview.nvim]: tectonic: missing_dollar.tex:5: Missing $ inserted' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -418,7 +418,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: pandoc: Unknown option --bogus-flag.' then
+        if msg == '[preview.nvim]: markdown: Unknown option --bogus-flag.' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -461,7 +461,8 @@ exit 6]],
       local orig = vim.notify
       vim.notify = function(msg, level)
         if
-          msg == '[preview.nvim]: YAML metadata: mapping values are not allowed in this context'
+          msg
+          == '[preview.nvim]: github: YAML metadata: mapping values are not allowed in this context'
         then
           notified = level == vim.log.levels.ERROR
         end
@@ -514,7 +515,8 @@ exit 64]],
       local orig = vim.notify
       vim.notify = function(msg, level)
         if
-          msg == '[preview.nvim]: YAMLException: missed comma between flow collection entries (3:1)'
+          msg
+          == '[preview.nvim]: quarto: YAMLException: missed comma between flow collection entries (3:1)'
         then
           notified = level == vim.log.levels.ERROR
         end
@@ -567,7 +569,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: invalid option: --bogus-option' then
+        if msg == '[preview.nvim]: asciidoctor: invalid option: --bogus-option' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -640,6 +642,47 @@ exit 12]],
       }
 
       compiler.compile(bufnr, 'falsecmd', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
+    it('labels built-in fallback failures when no summary shape matches', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ 'graph TD' }, 'mermaid')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_mermaid_fallback.mmd')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: mermaid: compilation failed (see :Preview output)' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = vim.tbl_extend('force', {}, presets.mermaid, {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'Input file "x.mmd" doesn'\''t exist' >&2
+exit 1]],
+        },
+      })
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_mermaid_fallback.mmd',
+        root = '/tmp',
+        ft = 'mermaid',
+        output = '/tmp/preview_test_fail_mermaid_fallback.svg',
+      }
+
+      compiler.compile(bufnr, 'mermaid', provider, ctx)
 
       vim.wait(2000, function()
         return process_done(bufnr)

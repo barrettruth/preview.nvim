@@ -90,6 +90,8 @@ Provider fields: ~
                                         string shown after the `[preview.nvim]:`
                                         prefix on failure. Return `nil` to fall
                                         back to the generic failure message.
+                                        Built-in presets label these summaries
+                                        with the preset name.
                                         In long-running providers, this may run
                                         before process exit, so `{code}` can be
                                         `nil` and `{output}` is the accumulated
@@ -192,6 +194,8 @@ individual fields by passing a table instead: >lua
 <
 
 The following presets are bundled:
+
+Built-in failure summaries are labeled with the preset name.
 
   `typst`      Compiles `.typ` files to PDF. Reload uses `typst watch`.
                Summary shows the first error diagnostic.
