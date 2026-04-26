@@ -114,6 +114,40 @@ local function summarize_pdflatex(output)
   end
 end
 
+---@param msg string?
+---@return string?
+local function normalize_tectonic_message(msg)
+  if type(msg) ~= 'string' then
+    return nil
+  end
+  msg = msg:gsub('%s+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+  if msg == '' then
+    return nil
+  end
+  local prefix, body = msg:match('^(.-:%d+:%s*)!%s*(.+)$')
+  if prefix and body then
+    return prefix .. body
+  end
+  msg = msg:gsub('^!%s*', '')
+  return msg
+end
+
+---@param result preview.Result
+---@return string?
+local function summarize_tectonic(result)
+  local stderr = result.stderr ~= '' and result.stderr or result.output or ''
+  for line in stderr:gmatch('[^\r\n]+') do
+    local msg = normalize_tectonic_message(line:match('^error:%s*(.+)$'))
+    if
+      msg
+      and msg ~= 'halted on potentially-recoverable error as specified'
+      and not msg:match('^%*%*%*%s')
+    then
+      return msg
+    end
+  end
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_pandoc(output)
@@ -319,6 +353,7 @@ M.tectonic = {
   error_parser = function(output)
     return parse_latexmk(output)
   end,
+  failure_summary = summarize_tectonic,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.tex$', '.pdf')) }
   end,

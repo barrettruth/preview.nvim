@@ -1,0 +1,2 @@
+error: missing_package.tex:3: ! LaTeX Error: File `this-package-definitely-does-not-exist.sty' not found.
+error: halted on potentially-recoverable error as specified

@@ -324,6 +324,49 @@ exit 12]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses tectonic failure summary on compile failure', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ 'hello' }, 'tex')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_tectonic_summary.tex')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: missing_dollar.tex:5: Missing $ inserted' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'error: missing_dollar.tex:5: Missing $ inserted' >&2
+printf '%s\n' 'error: halted on potentially-recoverable error as specified' >&2
+exit 1]],
+        },
+        error_parser = presets.tectonic.error_parser,
+        failure_summary = presets.tectonic.failure_summary,
+      }
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_tectonic_summary.tex',
+        root = '/tmp',
+        ft = 'tex',
+      }
+
+      compiler.compile(bufnr, 'tectonic', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('falls back when provider failure summary returns nil', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_nil_summary.txt')

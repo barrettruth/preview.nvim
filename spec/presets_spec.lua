@@ -503,6 +503,11 @@ describe('presets', function()
       ft = 'tex',
     }
 
+    local function tectonic_stderr_result(path, code)
+      local stderr = helpers.read_fixture(path)
+      return { code = code or 1, stdout = '', stderr = stderr, output = stderr }
+    end
+
     it('has ft', function()
       assert.are.equal('tex', presets.tectonic.ft)
     end)
@@ -531,13 +536,103 @@ describe('presets', function()
       assert.is_nil(presets.tectonic.reload)
     end)
 
-    it('parses file-line-error format', function()
-      local output = './document.tex:5: Missing $ inserted.'
+    it('returns nil failure summary for success output', function()
+      local stdout = helpers.read_fixture('tectonic_valid.txt')
+      local result = { code = 0, stdout = stdout, stderr = '', output = stdout }
+      assert.is_nil(presets.tectonic.failure_summary(result, tex_ctx))
+    end)
+
+    it('summarizes missing dollar fixture output', function()
+      assert.are.equal(
+        'missing_dollar.tex:5: Missing $ inserted',
+        presets.tectonic.failure_summary(tectonic_stderr_result('tectonic.txt'), tex_ctx)
+      )
+    end)
+
+    it('summarizes multi-error fixture output with the first error', function()
+      assert.are.equal(
+        'multi_error.tex:3: Undefined control sequence',
+        presets.tectonic.failure_summary(
+          tectonic_stderr_result('tectonic_multi_error.txt'),
+          tex_ctx
+        )
+      )
+    end)
+
+    it('summarizes missing package fixture output', function()
+      assert.are.equal(
+        "missing_package.tex:3: LaTeX Error: File `this-package-definitely-does-not-exist.sty' not found.",
+        presets.tectonic.failure_summary(
+          tectonic_stderr_result('tectonic_missing_package.txt'),
+          tex_ctx
+        )
+      )
+    end)
+
+    it('summarizes missing input fixture output', function()
+      assert.are.equal(
+        "missing_input.tex:3: LaTeX Error: File `nonexistent-file-xyz.tex' not found.",
+        presets.tectonic.failure_summary(
+          tectonic_stderr_result('tectonic_missing_input.txt'),
+          tex_ctx
+        )
+      )
+    end)
+
+    it('summarizes missing image fixture output', function()
+      assert.are.equal(
+        "missing_image.tex:4: Unable to load picture or PDF file 'nonexistent-image.png'",
+        presets.tectonic.failure_summary(
+          tectonic_stderr_result('tectonic_missing_image.txt'),
+          tex_ctx
+        )
+      )
+    end)
+
+    it('skips continuation lines around wrapped long message fixture output', function()
+      assert.are.equal(
+        'wrapped_long_msg.tex:6: LaTeX Error: \\begin{equation} on input line 4 ended by \\end{equationoops}.',
+        presets.tectonic.failure_summary(
+          tectonic_stderr_result('tectonic_wrapped_long_msg.txt'),
+          tex_ctx
+        )
+      )
+    end)
+
+    it('strips leading ! for missing brace fixture output', function()
+      assert.are.equal(
+        'File ended while scanning use of \\textbf',
+        presets.tectonic.failure_summary(
+          tectonic_stderr_result('tectonic_missing_brace.txt'),
+          tex_ctx
+        )
+      )
+    end)
+
+    it('returns Emergency stop for empty fixture output', function()
+      assert.are.equal(
+        'Emergency stop',
+        presets.tectonic.failure_summary(tectonic_stderr_result('tectonic_empty.txt'), tex_ctx)
+      )
+    end)
+
+    it('returns nil when only the halted trailer is present', function()
+      local result = {
+        code = 1,
+        stdout = '',
+        stderr = 'error: halted on potentially-recoverable error as specified',
+        output = 'error: halted on potentially-recoverable error as specified',
+      }
+      assert.is_nil(presets.tectonic.failure_summary(result, tex_ctx))
+    end)
+
+    it('parses real tectonic error format', function()
+      local output = 'error: missing_dollar.tex:5: Missing $ inserted'
       local diagnostics = presets.tectonic.error_parser(output, tex_ctx)
       assert.are.equal(1, #diagnostics)
       assert.are.equal(4, diagnostics[1].lnum)
       assert.are.equal(0, diagnostics[1].col)
-      assert.are.equal('Missing $ inserted.', diagnostics[1].message)
+      assert.are.equal('Missing $ inserted', diagnostics[1].message)
       assert.are.equal(vim.diagnostic.severity.ERROR, diagnostics[1].severity)
     end)
 
@@ -545,7 +640,13 @@ describe('presets', function()
       local diagnostics =
         presets.tectonic.error_parser(helpers.read_fixture('tectonic.txt'), tex_ctx)
       assert.are.equal(1, #diagnostics)
-      assert.are.equal('Missing $ inserted.', diagnostics[1].message)
+      assert.are.equal('Missing $ inserted', diagnostics[1].message)
+    end)
+
+    it('returns no diagnostics for missing brace fixture output', function()
+      local diagnostics =
+        presets.tectonic.error_parser(helpers.read_fixture('tectonic_missing_brace.txt'), tex_ctx)
+      assert.are.same({}, diagnostics)
     end)
 
     it('returns empty table for clean output', function()

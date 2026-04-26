@@ -1,0 +1,2 @@
+error: missing_input.tex:3: ! LaTeX Error: File `nonexistent-file-xyz.tex' not found.
+error: halted on potentially-recoverable error as specified

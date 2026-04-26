@@ -1,0 +1,5 @@
+error: wrapped_long_msg.tex:6: LaTeX Error: \begin{equation} on input line 4 ended by \end{equationoops}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help
+error: halted on potentially-recoverable error as specified
