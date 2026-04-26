@@ -1,2 +1,2 @@
-error: missing_dollar.tex:5: Missing $ inserted
+error: multi_error.tex:3: Undefined control sequence
 error: halted on potentially-recoverable error as specified

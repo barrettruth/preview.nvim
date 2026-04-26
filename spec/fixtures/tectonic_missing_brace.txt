@@ -1,2 +1,2 @@
-error: missing_dollar.tex:5: Missing $ inserted
+error: !File ended while scanning use of \textbf 
 error: halted on potentially-recoverable error as specified

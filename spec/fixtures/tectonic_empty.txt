@@ -1,0 +1,3 @@
+error: !Emergency stop
+*** (job aborted, no legal \end found)
+error: *** (job aborted, no legal \end found)

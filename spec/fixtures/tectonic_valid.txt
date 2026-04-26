@@ -1,0 +1,9 @@
+note: Running TeX ...
+note: Rerunning TeX because "valid.aux" changed ...
+note: Running xdvipdfmx ...
+note: downloading SHA256SUM
+note: downloading cmmi10.pfb
+note: downloading cmr10.pfb
+note: downloading cmr7.pfb
+note: Writing `valid.pdf` (7.11 KiB)
+note: Skipped writing 1 intermediate files (use --keep-intermediates to keep them)

@@ -1,0 +1,2 @@
+error: missing_image.tex:4: Unable to load picture or PDF file 'nonexistent-image.png'
+error: halted on potentially-recoverable error as specified
