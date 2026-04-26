@@ -118,6 +118,93 @@ describe('presets', function()
     end)
   end
 
+  local function define_github_failure_summary_tests(md_ctx)
+    describe('failure_summary', function()
+      it('summarizes YAML mapping errors', function()
+        assert.are.equal(
+          'YAML metadata: mapping values are not allowed in this context',
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_yaml_mapping.txt'), md_ctx)
+        )
+      end)
+
+      it('walks YAML blocks past while context', function()
+        assert.are.equal(
+          "YAML metadata: did not find expected ',' or ']'",
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_yaml_flow.txt'), md_ctx)
+        )
+      end)
+
+      it('skips trailing Consider hints in YAML blocks', function()
+        assert.are.equal(
+          'YAML metadata: did not find expected key',
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_yaml_block.txt'), md_ctx)
+        )
+      end)
+
+      it('summarizes YAML alias errors', function()
+        assert.are.equal(
+          'YAML metadata: Unknown alias `undefined_anchor`',
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_yaml_alias.txt'), md_ctx)
+        )
+      end)
+
+      it('handles Error at failures with filename context', function()
+        local result = {
+          code = 1,
+          stdout = '',
+          stderr = 'Error at "document.md" (line 12, column 5): unexpected "}" expecting letter',
+          output = 'Error at "document.md" (line 12, column 5): unexpected "}" expecting letter',
+        }
+        assert.are.equal(
+          'document.md: unexpected "}" expecting letter',
+          presets.github.failure_summary(result, md_ctx)
+        )
+      end)
+
+      it('summarizes pandoc IO errors without HasCallStack noise', function()
+        local summary =
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_input_missing.txt'), md_ctx)
+        assert.are.equal(
+          '/tmp/preview.nvim/audits/github/repro/__nonexistent.md: withBinaryFile: does not exist (No such file or directory)',
+          summary
+        )
+        assert.is_nil(summary:find('HasCallStack', 1, true))
+        assert.is_nil(summary:find('Exception.hs', 1, true))
+      end)
+
+      it('summarizes template-missing errors', function()
+        assert.are.equal(
+          helpers.read_fixture('pandoc_gfm_template_missing.txt'),
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_template_missing.txt'), md_ctx)
+        )
+      end)
+
+      it('summarizes unknown option errors', function()
+        assert.are.equal(
+          'Unknown option --bad-flag-does-not-exist.',
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_unknown_option.txt'), md_ctx)
+        )
+      end)
+
+      it('summarizes unsupported extension errors', function()
+        assert.are.equal(
+          'The extension nonexistent_extension is not supported for gfm.',
+          presets.github.failure_summary(pandoc_result('pandoc_gfm_bad_extension.txt'), md_ctx)
+        )
+      end)
+
+      it('returns nil for empty output', function()
+        assert.is_nil(presets.github.failure_summary({ output = '' }, md_ctx))
+      end)
+
+      it('returns nil when output matches no known pattern', function()
+        assert.is_nil(
+          presets.github.failure_summary({ output = 'random unrelated text\n' }, md_ctx)
+        )
+      end)
+    end)
+  end
+
   describe('typst', function()
     local function typst_result(path, code)
       local output = helpers.read_fixture(path)
@@ -916,7 +1003,7 @@ describe('presets', function()
     it('parses fixture output', function()
       local diagnostics = presets.markdown.error_parser(helpers.read_fixture('pandoc.txt'), md_ctx)
       assert.are.equal(1, #diagnostics)
-      assert.are.equal('while parsing a flow sequence:', diagnostics[1].message)
+      assert.are.equal("did not find expected ',' or ']'", diagnostics[1].message)
     end)
 
     it('returns empty table for clean output', function()
@@ -992,6 +1079,8 @@ describe('presets', function()
       assert.is_true(presets.github.reload)
     end)
 
+    define_github_failure_summary_tests(md_ctx)
+
     it('parses YAML metadata errors with multiline message', function()
       local output = table.concat({
         'Error parsing YAML metadata at "/tmp/test.md" (line 1, column 1):',
@@ -1020,7 +1109,14 @@ describe('presets', function()
     it('parses fixture output', function()
       local diagnostics = presets.github.error_parser(helpers.read_fixture('pandoc.txt'), md_ctx)
       assert.are.equal(1, #diagnostics)
-      assert.are.equal('while parsing a flow sequence:', diagnostics[1].message)
+      assert.are.equal("did not find expected ',' or ']'", diagnostics[1].message)
+    end)
+
+    it('parses YAML blocks past while and Consider lines', function()
+      local diagnostics =
+        presets.github.error_parser(helpers.read_fixture('pandoc_gfm_yaml_block.txt'), md_ctx)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal('did not find expected key', diagnostics[1].message)
     end)
 
     it('returns empty table for clean output', function()

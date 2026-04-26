@@ -451,6 +451,59 @@ exit 6]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses github failure summary on compile failure with diagnostics', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ '# hello' }, 'markdown')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_github_summary.md')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if
+          msg == '[preview.nvim]: YAML metadata: mapping values are not allowed in this context'
+        then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = vim.tbl_extend('force', {}, presets.github, {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'Error parsing YAML metadata at "/tmp/preview_test_fail_github_summary.md" (line 1, column 1):' >&2
+printf '%s\n' 'YAML parse exception at line 2, column 6:' >&2
+printf '%s\n' 'mapping values are not allowed in this context' >&2
+exit 64]],
+        },
+      })
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_github_summary.md',
+        root = '/tmp',
+        ft = 'markdown',
+        output = '/tmp/preview_test_fail_github_summary.html',
+      }
+
+      compiler.compile(bufnr, 'markdown', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      local diagnostics = vim.diagnostic.get(bufnr)
+      assert.is_true(notified)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal('mapping values are not allowed in this context', diagnostics[1].message)
+      assert.is_truthy(
+        compiler
+          .result(bufnr).output
+          :find('mapping values are not allowed in this context', 1, true)
+      )
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('falls back when provider failure summary returns nil', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_nil_summary.txt')

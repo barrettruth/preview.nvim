@@ -159,6 +159,31 @@ local function summarize_tectonic(result)
   end
 end
 
+local function is_pandoc_yaml_header(line)
+  return type(line) == 'string'
+    and line:match('^Error parsing YAML metadata at ".+" %(line %d+, column %d+%):$') ~= nil
+end
+
+local function pandoc_yaml_detail(lines, start)
+  for j = start, #lines do
+    local next_line = lines[j]
+    if next_line then
+      next_line = next_line:match('^%s*(.-)%s*$')
+    end
+    if next_line == '' then
+      break
+    end
+    if
+      next_line
+      and not next_line:match('^YAML parse exception')
+      and not next_line:match('^while ')
+      and not next_line:match('^Consider ')
+    then
+      return next_line
+    end
+  end
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_pandoc(output)
@@ -170,11 +195,18 @@ local function parse_pandoc(output)
     local lnum, col, msg = line:match('%(line (%d+), column (%d+)%):%s*(.*)$')
     if lnum then
       if msg == '' then
-        for j = i + 1, math.min(i + 2, #lines) do
-          local next_line = lines[j]:match('^%s*(.+)$')
-          if next_line and not next_line:match('^YAML parse exception') then
-            msg = next_line
-            break
+        if is_pandoc_yaml_header(line) then
+          msg = pandoc_yaml_detail(lines, i + 1) or ''
+        else
+          for j = i + 1, #lines do
+            local next_line = lines[j] and lines[j]:match('^%s*(.-)%s*$')
+            if next_line == '' then
+              break
+            end
+            if next_line and next_line ~= '' then
+              msg = next_line
+              break
+            end
           end
         end
       end
@@ -228,19 +260,8 @@ local function summarize_pandoc(output)
   local i = 1
   while i <= #lines do
     local line = lines[i]
-    if line:match('^Error parsing YAML metadata at ".+" %(line %d+, column %d+%):$') then
-      local summary
-      for j = i + 1, #lines do
-        local next_line = trim_line(lines[j])
-        if not next_line then
-          break
-        end
-        if
-          not next_line:match('^YAML parse exception') and not next_line:match('^while parsing')
-        then
-          summary = next_line
-        end
-      end
+    if is_pandoc_yaml_header(line) then
+      local summary = pandoc_yaml_detail(lines, i + 1)
       if summary then
         return 'pandoc: YAML metadata: ' .. summary
       end
@@ -300,6 +321,55 @@ local function summarize_pandoc(output)
       or line:match('^Argument of ')
     then
       return 'pandoc: ' .. line
+    end
+
+    i = i + 1
+  end
+end
+
+---@param output string
+---@return string?
+local function summarize_github_pandoc(output)
+  local lines = vim.split(output, '\n', { plain = true, trimempty = false })
+  local i = 1
+  while i <= #lines do
+    local line = lines[i]
+    if is_pandoc_yaml_header(line) then
+      local summary = pandoc_yaml_detail(lines, i + 1)
+      if summary then
+        return 'YAML metadata: ' .. summary
+      end
+    end
+
+    local src, msg = line:match('^Error at "(.-)" %(line %d+, column %d+%):%s*(.*)$')
+    if src then
+      msg = trim_line(msg)
+      if not msg then
+        for j = i + 1, #lines do
+          local next_line = trim_line(lines[j])
+          if not next_line then
+            break
+          end
+          msg = next_line
+          break
+        end
+      end
+      if msg then
+        return basename(src) .. ': ' .. msg
+      end
+    end
+
+    local pandoc_msg = line:match('^pandoc: (.+)$')
+    if pandoc_msg then
+      return pandoc_msg
+    end
+
+    if
+      line:match('^Could not find data file ')
+      or line:match('^Unknown option')
+      or line:match('^The extension ')
+    then
+      return line
     end
 
     i = i + 1
@@ -527,6 +597,9 @@ M.github = {
   end,
   error_parser = function(output)
     return parse_pandoc(output)
+  end,
+  failure_summary = function(result)
+    return summarize_github_pandoc(result.output or '')
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }
