@@ -1345,6 +1345,11 @@ describe('presets', function()
       output = '/tmp/document.svg',
     }
 
+    local function mermaid_result(path, code)
+      local output = helpers.read_fixture(path)
+      return { code = code or 1, stdout = '', stderr = output, output = output }
+    end
+
     it('has ft', function()
       assert.are.equal('mermaid', presets.mermaid.ft)
     end)
@@ -1372,11 +1377,59 @@ describe('presets', function()
       assert.is_true(presets.mermaid.open)
     end)
 
+    describe('failure_summary', function()
+      it('returns failure summary for canonical parse error', function()
+        assert.are.equal(
+          "Parse error on line 3: Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'MINUS'",
+          presets.mermaid.failure_summary(mermaid_result('mermaid.txt'), mmd_ctx)
+        )
+      end)
+
+      it('returns failure summary with line number greater than nine', function()
+        assert.are.equal(
+          "Parse error on line 14: Expecting 'LINK', 'UNICODE_TEXT', 'EDGE_TEXT', got '1'",
+          presets.mermaid.failure_summary(mermaid_result('mermaid_deep_error.txt'), mmd_ctx)
+        )
+      end)
+
+      it('rejects bare Expecting in source excerpts', function()
+        assert.are.equal(
+          "Parse error on line 3: Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'NUM'",
+          presets.mermaid.failure_summary(mermaid_result('mermaid_poison_excerpt.txt'), mmd_ctx)
+        )
+      end)
+
+      it('returns nil for UnknownDiagramError output', function()
+        assert.is_nil(
+          presets.mermaid.failure_summary(mermaid_result('mermaid_unknown_diagram.txt'), mmd_ctx)
+        )
+      end)
+
+      it('returns nil for CLI errors outside mermaid parse failures', function()
+        assert.is_nil(
+          presets.mermaid.failure_summary(
+            { output = 'Input file "x.mmd" doesn\'t exist\n' },
+            mmd_ctx
+          )
+        )
+      end)
+
+      it('returns nil for empty and success output', function()
+        assert.is_nil(presets.mermaid.failure_summary({ output = '' }, mmd_ctx))
+        assert.is_nil(
+          presets.mermaid.failure_summary({ output = 'Generating single mermaid chart\n' }, mmd_ctx)
+        )
+      end)
+    end)
+
     it('parses fixture output', function()
       local diagnostics = presets.mermaid.error_parser(helpers.read_fixture('mermaid.txt'), mmd_ctx)
       assert.are.equal(1, #diagnostics)
       assert.are.equal(2, diagnostics[1].lnum)
-      assert.is_truthy(diagnostics[1].message:find('Expecting', 1, true))
+      assert.are.equal(
+        "Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'MINUS'",
+        diagnostics[1].message
+      )
     end)
   end)
 

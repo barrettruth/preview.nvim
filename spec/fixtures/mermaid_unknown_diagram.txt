@@ -1,9 +1,10 @@
+error (ignored): SQLite database '/home/barrett/.cache/nix/eval-cache-v6/d699fe8c706dfb850b2c25fc6a981b745f4cb4235380b15aec843aa82004b38c.sqlite' is busy
 
-Error: Parse error on line 3:
-...[Start] --> B    B -> 1
-----------------------^
-Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'MINUS'
-Parser.parseError (/nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/mermaid/dist/mermaid.js:91236:28)
+UnknownDiagramError: No diagram type detected matching given configuration for text: notADiagramType
+    foo --> bar
+
+detectType (/nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/mermaid/dist/mermaid.js:20437:15)
+    at $eval ($eval at renderMermaid (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/src/index.js:266:33), <anonymous>:48:45)
     at #evaluate (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:388:19)
     at async ExecutionContext.evaluate (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:275:16)
     at async IsolatedWorld.evaluate (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/IsolatedWorld.js:97:16)
@@ -13,5 +14,4 @@ Parser.parseError (/nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12
     at async CdpFrame.$eval (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/Frame.js:450:20)
     at async CdpPage.$eval (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/api/Page.js:450:20)
     at async renderMermaid (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/src/index.js:266:22)
-    at fromText (/nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/mermaid/dist/mermaid.js:153955:21)
 
