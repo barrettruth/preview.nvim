@@ -1,0 +1,24 @@
+(0.187 - 248 Mo) 237 Mo - SecurityProfile LEGACY
+(0.212 - 248 Mo) 236 Mo - PlantUML Version 1.2026.2
+(0.213 - 248 Mo) 236 Mo - GraphicsEnvironment.isHeadless() true
+(0.214 - 248 Mo) 236 Mo - Forcing resource load on OpenJdk
+(0.288 - 248 Mo) 235 Mo - Found 1 files
+(0.303 - 248 Mo) 235 Mo - Using several threads: 12
+(0.312 - 248 Mo) 235 Mo - Working on syntax-error.puml
+(0.353 - 248 Mo) 234 Mo - Using charset UTF-8
+(0.361 - 248 Mo) 234 Mo - Reading from syntax-error.puml
+(0.431 - 248 Mo) 232 Mo - Setting current dir: /tmp/preview.nvim/audits/plantuml/repro/.
+(0.431 - 248 Mo) 232 Mo - Setting current dir: /tmp/preview.nvim/audits/plantuml/repro
+(0.603 - 248 Mo) 226 Mo - Trying to load style plantuml.skin
+(0.605 - 248 Mo) 226 Mo - Current dir is /tmp/preview.nvim/audits/plantuml/repro so trying /tmp/preview.nvim/audits/plantuml/repro/plantuml.skin
+(0.607 - 248 Mo) 226 Mo - File not found : 
+(0.611 - 248 Mo) 226 Mo - ... but plantuml.skin found inside the .jar
+(0.839 - 248 Mo) 235 Mo - Compilation duration 337
+(0.839 - 248 Mo) 235 Mo - Reading file: syntax-error.puml
+(0.841 - 248 Mo) 235 Mo - We are going to put data in [0]
+(0.842 - 248 Mo) 235 Mo - Creating file: /tmp/preview.nvim/audits/plantuml/repro/syntax-error.svg
+(0.916 - 248 Mo) 233 Mo - Reading from COMPRESS
+(0.928 - 248 Mo) 233 Mo - Transformer=class com.sun.org.apache.xalan.internal.xsltc.trax.TransformerImpl
+(0.993 - 248 Mo) 232 Mo - Number of image(s): 1
+Error line 3 in file: syntax-error.puml
+Some diagram description contains errors

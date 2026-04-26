@@ -1,0 +1,2 @@
+Warning: no image in no-startuml.puml
+No diagram found

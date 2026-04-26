@@ -425,6 +425,30 @@ local function summarize_asciidoctor(output)
   return first_warning
 end
 
+---@param line string?
+---@return integer?
+local function plantuml_error_line(line)
+  local lnum = type(line) == 'string' and line:match('^Error line (%d+) in file:')
+  return lnum and tonumber(lnum) or nil
+end
+
+---@param output string?
+---@return string?
+local function summarize_plantuml(output)
+  if type(output) ~= 'string' or output == '' then
+    return nil
+  end
+  for line in output:gmatch('[^\r\n]+') do
+    local lnum = plantuml_error_line(line)
+    if lnum then
+      return string.format('plantuml: error on line %d (see :Preview output)', lnum)
+    end
+    if line == 'No diagram found' then
+      return 'plantuml: no diagram found (see :Preview output)'
+    end
+  end
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_mermaid(output)
@@ -696,10 +720,10 @@ M.plantuml = {
   error_parser = function(output)
     local diagnostics = {}
     for line in output:gmatch('[^\r\n]+') do
-      local lnum = line:match('^Error line (%d+) in file:')
+      local lnum = plantuml_error_line(line)
       if lnum then
         table.insert(diagnostics, {
-          lnum = tonumber(lnum) - 1,
+          lnum = lnum - 1,
           col = 0,
           message = line,
           severity = vim.diagnostic.severity.ERROR,
@@ -707,6 +731,9 @@ M.plantuml = {
       end
     end
     return diagnostics
+  end,
+  failure_summary = function(result)
+    return summarize_plantuml(result.output)
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.puml$', '.svg')) }

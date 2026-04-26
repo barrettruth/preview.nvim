@@ -1265,6 +1265,11 @@ describe('presets', function()
       output = '/tmp/document.svg',
     }
 
+    local function plantuml_result(path, code)
+      local output = helpers.read_fixture(path)
+      return { code = code or 1, stdout = '', stderr = output, output = output }
+    end
+
     it('has ft', function()
       assert.are.equal('plantuml', presets.plantuml.ft)
     end)
@@ -1287,6 +1292,39 @@ describe('presets', function()
 
     it('has open enabled', function()
       assert.is_true(presets.plantuml.open)
+    end)
+
+    describe('failure_summary', function()
+      it('summarizes parse errors with the failing line number', function()
+        assert.are.equal(
+          'plantuml: error on line 3 (see :Preview output)',
+          presets.plantuml.failure_summary(plantuml_result('plantuml-error-line.txt'), puml_ctx)
+        )
+      end)
+
+      it('summarizes missing diagrams', function()
+        assert.are.equal(
+          'plantuml: no diagram found (see :Preview output)',
+          presets.plantuml.failure_summary(plantuml_result('plantuml-no-diagram.txt'), puml_ctx)
+        )
+      end)
+
+      it('ignores generic failures without a line number or no-diagram marker', function()
+        assert.is_nil(
+          presets.plantuml.failure_summary(plantuml_result('plantuml-checkonly.txt'), puml_ctx)
+        )
+      end)
+
+      it('finds the error line after verbose logging noise', function()
+        assert.are.equal(
+          'plantuml: error on line 3 (see :Preview output)',
+          presets.plantuml.failure_summary(plantuml_result('plantuml-verbose.txt'), puml_ctx)
+        )
+      end)
+
+      it('returns nil for empty output', function()
+        assert.is_nil(presets.plantuml.failure_summary({ output = '' }, puml_ctx))
+      end)
     end)
 
     it('parses fixture output', function()
