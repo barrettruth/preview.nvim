@@ -1,0 +1,4 @@
+Error parsing YAML metadata at "repro/03_yaml_flow.md" (line 1, column 1):
+YAML parse exception at line 4, column 7,
+while parsing a flow sequence:
+did not find expected ',' or ']'

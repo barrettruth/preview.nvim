@@ -1,0 +1,2 @@
+[WARNING] YAML warning (repro/18_repeated_yaml.md line 1 column 1): Duplicate key: .key2
+[WARNING] YAML warning (repro/18_repeated_yaml.md line 1 column 1): Duplicate key: .key1

@@ -409,6 +409,48 @@ exit 1]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses markdown failure summary on compile failure without diagnostics', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ '# hello' }, 'markdown')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_markdown_summary.md')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if msg == '[preview.nvim]: pandoc: Unknown option --bogus-flag.' then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = vim.tbl_extend('force', {}, presets.markdown, {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '%s\n' 'Unknown option --bogus-flag.' >&2
+printf '%s\n' 'Try pandoc --help for more information.' >&2
+exit 6]],
+        },
+      })
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_markdown_summary.md',
+        root = '/tmp',
+        ft = 'markdown',
+        output = '/tmp/preview_test_fail_markdown_summary.html',
+      }
+
+      compiler.compile(bufnr, 'markdown', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      assert.is_true(notified)
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('falls back when provider failure summary returns nil', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_nil_summary.txt')

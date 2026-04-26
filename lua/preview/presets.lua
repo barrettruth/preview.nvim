@@ -202,6 +202,110 @@ local function parse_pandoc(output)
   return diagnostics
 end
 
+---@param path string
+---@return string
+local function basename(path)
+  return path:match('([^/\\]+)$') or path
+end
+
+---@param line string?
+---@return string?
+local function trim_line(line)
+  if type(line) ~= 'string' then
+    return nil
+  end
+  line = line:match('^%s*(.-)%s*$')
+  if line == '' then
+    return nil
+  end
+  return line
+end
+
+---@param output string
+---@return string?
+local function summarize_pandoc(output)
+  local lines = vim.split(output, '\n', { plain = true, trimempty = false })
+  local i = 1
+  while i <= #lines do
+    local line = lines[i]
+    if line:match('^Error parsing YAML metadata at ".+" %(line %d+, column %d+%):$') then
+      local summary
+      for j = i + 1, #lines do
+        local next_line = trim_line(lines[j])
+        if not next_line then
+          break
+        end
+        if
+          not next_line:match('^YAML parse exception') and not next_line:match('^while parsing')
+        then
+          summary = next_line
+        end
+      end
+      if summary then
+        return 'pandoc: YAML metadata: ' .. summary
+      end
+    end
+
+    local src, msg = line:match('^Error at "(.-)" %(line %d+, column %d+%):%s*(.*)$')
+    if src then
+      msg = trim_line(msg)
+      if not msg then
+        for j = i + 1, #lines do
+          local next_line = trim_line(lines[j])
+          if next_line then
+            msg = next_line
+            break
+          end
+        end
+      end
+      if msg then
+        return 'pandoc: ' .. basename(src) .. ': ' .. msg
+      end
+    end
+
+    local filter = line:match('^Error running filter (.+):$')
+    if filter then
+      for j = i + 1, #lines do
+        local next_line = trim_line(lines[j])
+        if next_line then
+          local detail = next_line:match('^.+:(%d+:%s*.+)$') or next_line
+          return 'pandoc filter ' .. basename(filter) .. ': ' .. detail
+        end
+      end
+    end
+
+    local bibliography = line:match('^Error reading bibliography file (.+):$')
+    if bibliography then
+      for j = i + 1, #lines do
+        local next_line = trim_line(lines[j])
+        if next_line and not next_line:match('^%(') then
+          return 'pandoc: bibliography ' .. basename(bibliography) .. ': ' .. next_line
+        end
+      end
+    end
+
+    local pandoc_msg = line:match('^pandoc: (.+)$')
+    if pandoc_msg then
+      return 'pandoc: ' .. pandoc_msg
+    end
+
+    local data_file = line:match('^Could not find data file (.+)$')
+    if data_file then
+      return 'pandoc: could not find data file ' .. basename(data_file)
+    end
+
+    if
+      line:match('^Unknown output format')
+      or line:match('^Unknown option')
+      or line:match('^Argument of ')
+    then
+      return 'pandoc: ' .. line
+    end
+
+    i = i + 1
+  end
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_asciidoctor(output)
@@ -386,6 +490,9 @@ M.markdown = {
   end,
   error_parser = function(output)
     return parse_pandoc(output)
+  end,
+  failure_summary = function(result)
+    return summarize_pandoc(result.output or '')
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.md$', '.html')) }

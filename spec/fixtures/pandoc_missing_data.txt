@@ -1,0 +1,1 @@
+Could not find data file /nix/store/krs6qh2x20h4yx4r23rd1vqan6cxlfmq-pandoc-3.7.0.2-data/share/ghc-9.10.3/x86_64-linux-ghc-9.10.3-7361/pandoc-3.7.0.2/data/templates/nonexistent_template.html5

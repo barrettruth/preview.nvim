@@ -1,0 +1,2 @@
+Unknown option --bogus-flag.
+Try pandoc --help for more information.

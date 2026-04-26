@@ -14,6 +14,110 @@ describe('presets', function()
     ft = 'typst',
   }
 
+  local function pandoc_result(path, code)
+    local output = helpers.read_fixture(path)
+    return { code = code or 1, stdout = '', stderr = output, output = output }
+  end
+
+  local function define_pandoc_failure_summary_tests(get_provider, md_ctx)
+    describe('failure_summary', function()
+      it('produces YAML failure summary', function()
+        assert.are.equal(
+          'pandoc: YAML metadata: mapping values are not allowed in this context',
+          get_provider().failure_summary(pandoc_result('pandoc_yaml_simple.txt'), md_ctx)
+        )
+      end)
+
+      it('walks "while parsing" YAML blocks to the deepest cause', function()
+        assert.are.equal(
+          "pandoc: YAML metadata: did not find expected ',' or ']'",
+          get_provider().failure_summary(pandoc_result('pandoc_yaml_flow.txt'), md_ctx)
+        )
+      end)
+
+      it('drops HasCallStack noise from pandoc IO failures', function()
+        local summary = get_provider().failure_summary(pandoc_result('pandoc_io_error.txt'), md_ctx)
+        assert.are.equal(
+          'pandoc: /nonexistent/file.md: withBinaryFile: does not exist (No such file or directory)',
+          summary
+        )
+        assert.is_nil(summary:find('HasCallStack', 1, true))
+        assert.is_nil(summary:find('Exception.hs', 1, true))
+      end)
+
+      it('strips the nix-store path from missing template errors', function()
+        assert.are.equal(
+          'pandoc: could not find data file nonexistent_template.html5',
+          get_provider().failure_summary(pandoc_result('pandoc_missing_data.txt'), md_ctx)
+        )
+      end)
+
+      it('handles bibliography errors with filename context', function()
+        assert.are.equal(
+          "pandoc: bibliography 08_bib.bib: unexpected 'a'",
+          get_provider().failure_summary(pandoc_result('pandoc_bibliography.txt'), md_ctx)
+        )
+      end)
+
+      it('handles reader error-at failures with filename context', function()
+        assert.are.equal(
+          "pandoc: 08_bib.bib: unexpected 'a'",
+          get_provider().failure_summary(pandoc_result('pandoc_error_at.txt'), md_ctx)
+        )
+      end)
+
+      it('handles lua filter errors without stack traceback noise', function()
+        local summary = get_provider().failure_summary(pandoc_result('pandoc_filter.txt'), md_ctx)
+        assert.are.equal('pandoc filter 19_filter.lua: 2: boom from filter', summary)
+        assert.is_nil(summary:find('stack traceback', 1, true))
+      end)
+
+      it('handles unknown output formats', function()
+        assert.are.equal(
+          'pandoc: Unknown output format bogus_format',
+          get_provider().failure_summary(pandoc_result('pandoc_unknown_output.txt'), md_ctx)
+        )
+      end)
+
+      it('handles unknown options', function()
+        assert.are.equal(
+          'pandoc: Unknown option --bogus-flag.',
+          get_provider().failure_summary(pandoc_result('pandoc_unknown_opt.txt'), md_ctx)
+        )
+      end)
+
+      it('preserves long invalid pdf-engine messages', function()
+        assert.are.equal(
+          'pandoc: ' .. helpers.read_fixture('pandoc_pdf_engine.txt'),
+          get_provider().failure_summary(pandoc_result('pandoc_pdf_engine.txt'), md_ctx)
+        )
+      end)
+
+      it('ignores leading warnings before pandoc IO errors', function()
+        local summary =
+          get_provider().failure_summary(pandoc_result('pandoc_warning_then_io_error.txt'), md_ctx)
+        assert.are.equal(
+          'pandoc: /tmp/preview.nvim/audits/markdown: withBinaryFile: inappropriate type (is a directory)',
+          summary
+        )
+        assert.is_nil(summary:find('[WARNING]', 1, true))
+      end)
+
+      it('returns nil for warning-only output', function()
+        assert.is_nil(
+          get_provider().failure_summary(pandoc_result('pandoc_warning_only.txt'), md_ctx)
+        )
+      end)
+
+      it('returns nil when no shape matches', function()
+        assert.is_nil(get_provider().failure_summary({ output = '' }, md_ctx))
+        assert.is_nil(
+          get_provider().failure_summary({ output = 'random unrelated text\n' }, md_ctx)
+        )
+      end)
+    end)
+  end
+
   describe('typst', function()
     local function typst_result(path, code)
       local output = helpers.read_fixture(path)
@@ -768,6 +872,10 @@ describe('presets', function()
     it('has reload enabled for SSE', function()
       assert.is_true(presets.markdown.reload)
     end)
+
+    define_pandoc_failure_summary_tests(function()
+      return presets.markdown
+    end, md_ctx)
 
     it('parses YAML metadata errors with multiline message', function()
       local output = table.concat({

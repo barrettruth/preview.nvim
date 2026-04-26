@@ -1,0 +1,4 @@
+Error running filter repro/19_filter.lua:
+repro/19_filter.lua:2: boom from filter
+stack traceback:
+	repro/19_filter.lua:2: in function 'Pandoc'
