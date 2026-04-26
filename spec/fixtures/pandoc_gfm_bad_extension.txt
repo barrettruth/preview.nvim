@@ -1,0 +1,2 @@
+The extension nonexistent_extension is not supported for gfm.
+Use --list-extensions=gfm to list supported extensions.

@@ -1,0 +1,2 @@
+Unknown option --bad-flag-does-not-exist.
+Try pandoc --help for more information.

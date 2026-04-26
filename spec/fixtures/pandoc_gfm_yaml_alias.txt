@@ -1,0 +1,2 @@
+Error parsing YAML metadata at "repro/neg_yaml_anchor.md" (line 1, column 1):
+Unknown alias `undefined_anchor`
