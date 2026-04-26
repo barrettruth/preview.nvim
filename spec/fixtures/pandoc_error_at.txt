@@ -1,0 +1,4 @@
+Error at "repro/08_bib.bib" (line 3, column 3):
+unexpected 'a'
+  author = "X"
+  ^
