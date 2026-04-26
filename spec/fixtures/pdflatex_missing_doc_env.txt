@@ -1,0 +1,28 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./missing_doc_env.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/size10.clo))
+
+./missing_doc_env.tex:2: LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 H
+     ello with no document environment.
+)
+! Emergency stop.
+<*> missing_doc_env.tex
+                       
+!  ==> Fatal error occurred, no output PDF file produced!
+Transcript written on missing_doc_env.log.

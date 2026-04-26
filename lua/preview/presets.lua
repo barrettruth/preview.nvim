@@ -66,6 +66,54 @@ local function summarize_latexmk(output)
   end
 end
 
+---@param msg string?
+---@return string?
+local function normalize_pdflatex_message(msg)
+  if type(msg) ~= 'string' then
+    return nil
+  end
+  msg = msg:gsub('%s+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+  if msg == '' then
+    return nil
+  end
+  return msg
+end
+
+---@param msg string?
+---@return boolean
+local function is_pdflatex_noise(msg)
+  msg = normalize_pdflatex_message(msg)
+  if not msg then
+    return true
+  end
+  return msg == 'Emergency stop.'
+    or msg:match('^==>%s*Fatal error occurred, no output PDF file produced!?$') ~= nil
+end
+
+---@param output string
+---@return string?
+local function summarize_pdflatex(output)
+  for line in output:gmatch('[^\r\n]+') do
+    local msg = normalize_pdflatex_message(line:match('^!%s+(LaTeX Error: .+)$'))
+    if msg then
+      return msg
+    end
+  end
+  for line in output:gmatch('[^\r\n]+') do
+    local _, _, msg = line:match('^%.?/?(.+%.tex):(%d+):%s*(.+)$')
+    msg = normalize_pdflatex_message(msg)
+    if msg and not is_pdflatex_noise(msg) then
+      return msg
+    end
+  end
+  for line in output:gmatch('[^\r\n]+') do
+    local msg = normalize_pdflatex_message(line:match('^!%s+(.+)$'))
+    if msg and not is_pdflatex_noise(msg) then
+      return msg
+    end
+  end
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_pandoc(output)
@@ -239,11 +287,17 @@ M.pdflatex = {
   args = function(ctx)
     return { '-interaction=nonstopmode', '-file-line-error', '-synctex=1', ctx.file }
   end,
+  env = {
+    max_print_line = '10000',
+  },
   output = function(ctx)
     return (ctx.file:gsub('%.tex$', '.pdf'))
   end,
   error_parser = function(output)
     return parse_latexmk(output)
+  end,
+  failure_summary = function(result)
+    return summarize_pdflatex(result.output or '')
   end,
   clean = function(ctx)
     local base = ctx.file:gsub('%.tex$', '')

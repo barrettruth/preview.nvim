@@ -308,6 +308,11 @@ describe('presets', function()
       ft = 'tex',
     }
 
+    local function pdflatex_result(path, code)
+      local output = helpers.read_fixture(path)
+      return { code = code or 1, stdout = output, stderr = '', output = output }
+    end
+
     it('has ft', function()
       assert.are.equal('tex', presets.pdflatex.ft)
     end)
@@ -346,6 +351,126 @@ describe('presets', function()
 
     it('has no reload', function()
       assert.is_nil(presets.pdflatex.reload)
+    end)
+
+    it('sets max_print_line env for stable failure summaries', function()
+      assert.are.same({ max_print_line = '10000' }, presets.pdflatex.env)
+    end)
+
+    describe('failure_summary', function()
+      it('prefers LaTeX Error for missing package fixture output', function()
+        assert.are.equal(
+          "LaTeX Error: File `definitelymissingpackage.sty' not found.",
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_missing_package.txt'), tex_ctx)
+        )
+      end)
+
+      it('uses the first non-noise ! line for missing brace fixture output', function()
+        assert.are.equal(
+          'File ended while scanning use of \\textbf .',
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_missing_brace.txt'), tex_ctx)
+        )
+      end)
+
+      it('uses the file-line message for undefined control sequence fixture output', function()
+        assert.are.equal(
+          'Undefined control sequence.',
+          presets.pdflatex.failure_summary(
+            pdflatex_result('pdflatex_undefined_cs_full.txt'),
+            tex_ctx
+          )
+        )
+      end)
+
+      it('uses the first non-noise file-line message for missing dollar fixture output', function()
+        assert.are.equal(
+          'Missing $ inserted.',
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_missing_dollar.txt'), tex_ctx)
+        )
+      end)
+
+      it('prefers LaTeX Error for missing file fixture output', function()
+        assert.are.equal(
+          "LaTeX Error: File `nonexistent_file_xyz.tex' not found.",
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_file_not_found.txt'), tex_ctx)
+        )
+      end)
+
+      it('ignores l.n continuations in long message fixture output', function()
+        assert.are.equal(
+          'Undefined control sequence.',
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_long_message.txt'), tex_ctx)
+        )
+      end)
+
+      it('uses file-line LaTeX Error for missing document environment fixture output', function()
+        assert.are.equal(
+          'LaTeX Error: Missing \\begin{document}.',
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_missing_doc_env.txt'), tex_ctx)
+        )
+      end)
+
+      it('uses the first file-line LaTeX Error in syntax-only fixture output', function()
+        assert.are.equal(
+          'LaTeX Error: \\begin{document} ended by \\end{itemize}.',
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_syntax_only.txt'), tex_ctx)
+        )
+      end)
+
+      it('summarizes unwrapped long file-line message fixture output', function()
+        assert.are.equal(
+          'This is an intentionally extremely long error message designed to make pdflatex wrap the output onto multiple lines for testing purposes.',
+          presets.pdflatex.failure_summary(
+            pdflatex_result('pdflatex_wrapped_error_unwrapped.txt'),
+            tex_ctx
+          )
+        )
+      end)
+
+      it('summarizes unwrapped LaTeX Error fixture output', function()
+        assert.are.equal(
+          "LaTeX Error: File `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.sty' not found.",
+          presets.pdflatex.failure_summary(
+            pdflatex_result('pdflatex_wrapped_latex_error_unwrapped.txt'),
+            tex_ctx
+          )
+        )
+      end)
+
+      it('returns nil for emergency-only fixture output', function()
+        assert.is_nil(
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_emergency_only.txt'), tex_ctx)
+        )
+      end)
+
+      it('returns nil for successful fixture output', function()
+        assert.is_nil(
+          presets.pdflatex.failure_summary(pdflatex_result('pdflatex_valid.txt', 0), tex_ctx)
+        )
+      end)
+
+      it('returns nil for empty output', function()
+        assert.is_nil(presets.pdflatex.failure_summary({ output = '' }, tex_ctx))
+      end)
+
+      it('does not pick Emergency stop when a later file-line error exists', function()
+        local output = table.concat({
+          './document.tex:3: Emergency stop.',
+          './document.tex:5: Missing $ inserted.',
+        }, '\n')
+        local result = { code = 1, stdout = output, stderr = '', output = output }
+        assert.are.equal('Missing $ inserted.', presets.pdflatex.failure_summary(result, tex_ctx))
+      end)
+
+      it('skips fatal continuation lines in both file-line and ! forms', function()
+        local output = table.concat({
+          './document.tex:3:  ==> Fatal error occurred, no output PDF file produced!',
+          '!  ==> Fatal error occurred, no output PDF file produced!',
+          '! Emergency stop.',
+        }, '\n')
+        local result = { code = 1, stdout = output, stderr = '', output = output }
+        assert.is_nil(presets.pdflatex.failure_summary(result, tex_ctx))
+      end)
     end)
 
     it('parses file-line-error format', function()
