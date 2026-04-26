@@ -133,6 +133,124 @@ describe('presets', function()
       assert.is_true(presets.latex.open)
     end)
 
+    it('summarizes file-line-error format from output', function()
+      local output = table.concat({
+        './document.tex:10: Undefined control sequence.',
+        'l.10 \\badcommand',
+        'Collected error summary (may duplicate other messages):',
+        "  pdflatex: Command for 'pdflatex' gave return code 256",
+      }, '\n')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        'document.tex:10: Undefined control sequence.',
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('summarizes file-line-error format with spaces in the path', function()
+      local output = './my docs/document.tex:10: Undefined control sequence.'
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        'document.tex:10: Undefined control sequence.',
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('prefers ! LaTeX Error over later cascading file-line errors', function()
+      local output = table.concat({
+        "! LaTeX Error: File `enumitem.sty' not found.",
+        './document.tex:3: Emergency stop.',
+        './document.tex:3:  ==> Fatal error occurred, no output PDF file produced!',
+        "  pdflatex: Command for 'pdflatex' gave return code 1",
+      }, '\n')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        "LaTeX Error: File `enumitem.sty' not found.",
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('skips ==> continuation lines in both formats', function()
+      local output = table.concat({
+        './document.tex:3:  ==> Fatal error occurred',
+        '!  ==> Fatal error occurred, no output PDF file produced!',
+        '! Emergency stop.',
+      }, '\n')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal('Emergency stop.', presets.latex.failure_summary(result, tex_ctx))
+    end)
+
+    it('falls back to the first ! line when there is no file-line error', function()
+      local output = table.concat({
+        'Runaway argument?',
+        '! File ended while scanning use of \\@fileswith@ptions.',
+        '! Emergency stop.',
+        '!  ==> Fatal error occurred, no output PDF file produced!',
+      }, '\n')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        'File ended while scanning use of \\@fileswith@ptions.',
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('returns nil for boilerplate-only output', function()
+      local output = table.concat({
+        'Latexmk: Errors, so I did not complete making targets',
+        'Collected error summary (may duplicate other messages):',
+        "  pdflatex: Command for 'pdflatex' gave return code 1",
+      }, '\n')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.is_nil(presets.latex.failure_summary(result, tex_ctx))
+    end)
+
+    it('returns nil for successful fixture output', function()
+      local output = helpers.read_fixture('latexmk_positive.txt')
+      local result = { code = 0, stdout = output, stderr = '', output = output }
+      assert.is_nil(presets.latex.failure_summary(result, tex_ctx))
+    end)
+
+    it('returns nil for empty output', function()
+      local result = { code = 12, stdout = '', stderr = '', output = '' }
+      assert.is_nil(presets.latex.failure_summary(result, tex_ctx))
+    end)
+
+    it('summarizes undefined control sequence fixture output', function()
+      local output = helpers.read_fixture('latexmk_undefined_cs.txt')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        'document.tex:4: Undefined control sequence.',
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('summarizes missing package fixture output', function()
+      local output = helpers.read_fixture('latexmk_missing_pkg.txt')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        "LaTeX Error: File `definitelymissingpackage.sty' not found.",
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('summarizes noisy multi-error fixture output', function()
+      local output = helpers.read_fixture('latexmk_noisy_multi.txt')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        'document.tex:4: Undefined control sequence.',
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
+    it('summarizes emergency stop fixture output', function()
+      local output = helpers.read_fixture('latexmk_emergency_stop.txt')
+      local result = { code = 12, stdout = output, stderr = '', output = output }
+      assert.are.equal(
+        'File ended while scanning use of \\@fileswith@ptions.',
+        presets.latex.failure_summary(result, tex_ctx)
+      )
+    end)
+
     it('parses file-line-error format from output', function()
       local output = table.concat({
         './document.tex:10: Undefined control sequence.',

@@ -51,6 +51,22 @@ local function parse_latexmk(output)
 end
 
 ---@param output string
+---@return string?
+local function summarize_latexmk(output)
+  for line in output:gmatch('[^\r\n]+') do
+    local fpath, lnum, msg = line:match('^%.?/?(.+%.tex):(%d+):%s*(.+)$')
+    if fpath and msg and not msg:match('^%s*==>') then
+      local fname = fpath:match('([^/]+)$') or fpath
+      return string.format('%s:%s: %s', fname, lnum, msg)
+    end
+    local bang = line:match('^!%s+(.+)$')
+    if bang and not bang:match('^%s*==>') then
+      return bang
+    end
+  end
+end
+
+---@param output string
 ---@return preview.Diagnostic[]
 local function parse_pandoc(output)
   local diagnostics = {}
@@ -206,6 +222,9 @@ M.latex = {
   end,
   error_parser = function(output)
     return parse_latexmk(output)
+  end,
+  failure_summary = function(result)
+    return summarize_latexmk(result.output or '')
   end,
   clean = function(ctx)
     return { 'latexmk', '-c', ctx.file }

@@ -1,0 +1,47 @@
+Rc files read:
+  NONE
+Latexmk: This is Latexmk, John Collins, 15 June 2025. Version 4.87.
+No existing .aux file, so I'll make a simple one, and require run of *latex.
+Latexmk: applying rule 'pdflatex'...
+Rule 'pdflatex':  Reasons for rerun
+Category 'other':
+  Rerun of 'pdflatex' forced or previously required:
+    Reason or flag: 'Initial setup'
+
+------------
+Run number 1 of rule 'pdflatex'
+------------
+------------
+Running 'pdflatex -file-line-error -interaction=nonstopmode  -interaction=nonstopmode -synctex=1 -recorder  "document.tex"'
+------------
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./document.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+base/size10.clo))
+(/nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/tex/latex/
+l3backend/l3backend-pdftex.def) (./document.aux) [1{/nix/store/kah5ryh4bhdxk1w6
+zd0s0kz4ma5x9zy3-texlive-2025-r77567-env/share/texmf-var/fonts/map/pdftex/updma
+p/pdftex.map}] (./document.aux) )</nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-t
+exlive-2025-r77567-env/fonts/type1/public/amsfonts/cm/cmr10.pfb></nix/store/pg7
+3xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r77567-env/fonts/type1/public/amsfon
+ts/cm/cmr12.pfb></nix/store/pg73xqpq7cc8bd6g6agrzjv2c166pwrn-texlive-2025-r7756
+7-env/fonts/type1/public/amsfonts/cm/cmr17.pfb>
+Output written on document.pdf (1 page, 31715 bytes).
+SyncTeX written on document.synctex.gz.
+Transcript written on document.log.
+Latexmk: Getting log file 'document.log'
+Latexmk: Examining 'document.fls'
+Latexmk: Examining 'document.log'
+Latexmk: Log file says output to 'document.pdf'
+Latexmk: All targets (document.pdf) are up-to-date
+
+Latexmk: Using bibtex to make bibliography file(s).

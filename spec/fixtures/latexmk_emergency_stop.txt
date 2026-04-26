@@ -1,0 +1,50 @@
+Rc files read:
+  NONE
+Latexmk: This is Latexmk, John Collins, 15 June 2025. Version 4.87.
+No existing .aux file, so I'll make a simple one, and require run of *latex.
+Latexmk: applying rule 'pdflatex'...
+Rule 'pdflatex':  Reasons for rerun
+Category 'other':
+  Rerun of 'pdflatex' forced or previously required:
+    Reason or flag: 'Initial setup'
+
+------------
+Run number 1 of rule 'pdflatex'
+------------
+------------
+Running 'pdflatex -file-line-error -interaction=nonstopmode  -interaction=nonstopmode -synctex=1 -recorder  "document.tex"'
+------------
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025/nixos.org) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./document.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-01-19>
+)
+Runaway argument?
+{article \begin {document} This will trigger an emergency stop becaus\ETC.
+! File ended while scanning use of \@fileswith@ptions.
+<inserted text> 
+                \par 
+<*> document.tex
+                
+! Emergency stop.
+<*> document.tex
+                
+!  ==> Fatal error occurred, no output PDF file produced!
+Transcript written on document.log.
+Latexmk: Getting log file 'document.log'
+Latexmk: Examining 'document.fls'
+Latexmk: Examining 'document.log'
+Latexmk: Errors, so I did not complete making targets
+Collected error summary (may duplicate other messages):
+  pdflatex: Command for 'pdflatex' gave return code 1
+      Refer to 'document.log' and/or above output for details
+
+Latexmk: Using bibtex to make bibliography file(s).
+Latexmk: Sometimes, the -f option can be used to get latexmk
+  to try to force complete processing.
+  But normally, you will need to correct the file(s) that caused the
+  error, and then rerun latexmk.
+  In some cases, it is best to clean out generated files before rerunning
+  latexmk after you've corrected the files.
