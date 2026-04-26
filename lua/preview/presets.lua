@@ -449,19 +449,60 @@ local function summarize_plantuml(output)
   end
 end
 
+---@param line string?
+---@return integer?
+local function mermaid_parse_error_line(line)
+  if type(line) ~= 'string' then
+    return nil
+  end
+  local lnum = line:match('^Error: Parse error on line (%d+):$')
+    or line:match('^Parse error on line (%d+):$')
+  return lnum and tonumber(lnum) or nil
+end
+
+---@param line string?
+---@return string?
+local function mermaid_expectation(line)
+  if type(line) ~= 'string' then
+    return nil
+  end
+  return line:match("^%s*(Expecting '.-got '.+')%s*$")
+end
+
+---@param output string?
+---@return string?
+local function summarize_mermaid(output)
+  if type(output) ~= 'string' or output == '' then
+    return nil
+  end
+  local lnum
+  local msg
+  for line in output:gmatch('[^\r\n]+') do
+    lnum = lnum or mermaid_parse_error_line(line)
+    msg = msg or mermaid_expectation(line)
+  end
+  if lnum and msg then
+    return string.format('Parse error on line %d: %s', lnum, msg)
+  end
+end
+
 ---@param output string
 ---@return preview.Diagnostic[]
 local function parse_mermaid(output)
-  local lnum = output:match('Parse error on line (%d+)')
+  local lnum
+  local msg
+  for line in output:gmatch('[^\r\n]+') do
+    lnum = lnum or mermaid_parse_error_line(line)
+    msg = msg or mermaid_expectation(line)
+  end
   if not lnum then
     return {}
   end
-  local msg = output:match('(Expecting .+)') or 'parse error'
   return {
     {
-      lnum = tonumber(lnum) - 1,
+      lnum = lnum - 1,
       col = 0,
-      message = msg,
+      message = msg or 'parse error',
       severity = vim.diagnostic.severity.ERROR,
     },
   }
@@ -753,6 +794,9 @@ M.mermaid = {
   end,
   error_parser = function(output)
     return parse_mermaid(output)
+  end,
+  failure_summary = function(result)
+    return summarize_mermaid(result.output)
   end,
   clean = function(ctx)
     return { 'rm', '-f', (ctx.file:gsub('%.mmd$', '.svg')) }

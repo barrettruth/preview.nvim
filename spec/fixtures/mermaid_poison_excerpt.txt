@@ -1,8 +1,9 @@
+error (ignored): SQLite database '/home/barrett/.cache/nix/eval-cache-v6/d699fe8c706dfb850b2c25fc6a981b745f4cb4235380b15aec843aa82004b38c.sqlite' is busy
 
 Error: Parse error on line 3:
-...[Start] --> B    B -> 1
+...--> Expecting    B 1
 ----------------------^
-Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'MINUS'
+Expecting 'SEMI', 'NEWLINE', 'EOF', 'AMP', 'START_LINK', 'LINK', 'LINK_ID', got 'NUM'
 Parser.parseError (/nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/mermaid/dist/mermaid.js:91236:28)
     at #evaluate (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:388:19)
     at async ExecutionContext.evaluate (file:///nix/store/vqjy0drbsz4dmkh16myi45lwx0phcldv-mermaid-cli-11.12.0/lib/node_modules/@mermaid-js/mermaid-cli/node_modules/puppeteer-core/lib/esm/puppeteer/cdp/ExecutionContext.js:275:16)
