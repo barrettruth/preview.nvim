@@ -1,0 +1,20 @@
+
+Starting python3 kernel...Done
+
+Executing 'python_engine_error.quarto_ipynb'
+  Cell 1/1: ''...
+
+An error occurred while executing the following cell:
+------------------
+1 / 0
+------------------
+
+
+[31m---------------------------------------------------------------------------[39m
+[31mZeroDivisionError[39m                         Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[1][39m[32m, line 1[39m
+[32m----> [39m[32m1[39m [32;43m1[39;49m[43m [49m[43m/[49m[43m [49m[32;43m0[39;49m
+
+[31mZeroDivisionError[39m: division by zero
+
+[33mWARN: Error encountered when rendering files[39m

@@ -1,0 +1,13 @@
+[91mERROR: Unknown format thisformatdoesnotexist
+
+Stack trace:
+    at resolveFormats (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:118044:13)
+    at async renderContexts (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:117794:20)
+    at async renderFileInternal (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:123778:16)
+    at async renderFiles (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:123695:9)
+    at async render (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:129503:19)
+    at async _Command.actionHandler (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:129745:24)
+    at async _Command.execute (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:9840:7)
+    at async _Command.parseCommand (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:9717:14)
+    at async quarto (file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:175538:5)
+    at async file:///nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/bin/quarto.js:175566:5[39m

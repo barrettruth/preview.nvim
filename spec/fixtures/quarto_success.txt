@@ -1,0 +1,19 @@
+[1mpandoc --embed-resources[22m
+  to: html
+  output-file: positive.html
+  standalone: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  title: Positive Path
+  
+Output created: positive.html
+
