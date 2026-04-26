@@ -1,0 +1,19 @@
+[1mpandoc --embed-resources[22m
+  to: html
+  output-file: pandoc_filter_missing.html
+  standalone: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  title: Missing lua filter
+  
+[31mERROR (/nix/store/9y19yq7842p72l9nmqdbs1s3cddzld9m-quarto-1.8.26/share/filters/main.lua:3828) cannot open this-filter-does-not-exist.lua: No such file or directory
+[39m[33mWARN: Error encountered when rendering files[39m

@@ -504,6 +504,60 @@ exit 64]],
       helpers.delete_buffer(bufnr)
     end)
 
+    it('uses quarto failure summary on compile failure with diagnostics', function()
+      local presets = require('preview.presets')
+      local bufnr = helpers.create_buffer({ '---', 'title: [oops', 'format: html' }, 'quarto')
+      vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_quarto_summary.qmd')
+      vim.bo[bufnr].modified = false
+
+      local notified = false
+      local orig = vim.notify
+      vim.notify = function(msg, level)
+        if
+          msg == '[preview.nvim]: YAMLException: missed comma between flow collection entries (3:1)'
+        then
+          notified = level == vim.log.levels.ERROR
+        end
+      end
+
+      local provider = vim.tbl_extend('force', {}, presets.quarto, {
+        cmd = {
+          'sh',
+          '-c',
+          [[printf '\033[91mERROR: YAMLException: missed comma between flow collection entries (3:1)\n\n 1 |\n 2 | title: [oops\n 3 | format: html\n-----^\n\nStack trace:\n    at generateError2 (file:///nix/store/example/bin/quarto.js:1:1)\033[39m' >&2
+exit 1]],
+        },
+      })
+      local ctx = {
+        bufnr = bufnr,
+        file = '/tmp/preview_test_fail_quarto_summary.qmd',
+        root = '/tmp',
+        ft = 'quarto',
+        output = '/tmp/preview_test_fail_quarto_summary.html',
+      }
+
+      compiler.compile(bufnr, 'quarto', provider, ctx)
+
+      vim.wait(2000, function()
+        return process_done(bufnr)
+      end, 50)
+
+      vim.notify = orig
+      local diagnostics = vim.diagnostic.get(bufnr)
+      assert.is_true(notified)
+      assert.are.equal(1, #diagnostics)
+      assert.are.equal(
+        'YAMLException: missed comma between flow collection entries',
+        diagnostics[1].message
+      )
+      assert.is_truthy(
+        compiler
+          .result(bufnr).output
+          :find('YAMLException: missed comma between flow collection entries', 1, true)
+      )
+      helpers.delete_buffer(bufnr)
+    end)
+
     it('falls back when provider failure summary returns nil', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')
       vim.api.nvim_buf_set_name(bufnr, '/tmp/preview_test_fail_nil_summary.txt')

@@ -1,0 +1,9 @@
+[91mERROR: Validation of YAML front matter failed.[39m
+ERROR: In file yaml_validation.qmd
+(line 2, columns 1--6) Field "[34mtitle[39m" has empty value but it must instead be a string
+1: [34m---[39m
+2: [34mtitle:[39m
+        ~
+3: [34mformat: html[39m
+
+[91mERROR: Render failed due to invalid YAML.[39m

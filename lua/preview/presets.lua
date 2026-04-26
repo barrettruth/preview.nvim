@@ -449,6 +449,31 @@ local function parse_quarto(output)
   return {}
 end
 
+local QUARTO_NOISE = {
+  ['Validation of YAML front matter failed.'] = true,
+  ['Render failed due to invalid YAML.'] = true,
+  ['Error encountered when rendering files'] = true,
+}
+
+---@param result preview.Result
+---@return string?
+local function summarize_quarto(result)
+  local output = result.output or ''
+  if output == '' then
+    return nil
+  end
+  output = output:gsub('\27%[[0-9;]*m', '')
+  for line in output:gmatch('[^\r\n]+') do
+    local msg = line:match('^ERROR:%s*(.+)$')
+    if msg then
+      msg = msg:gsub('^%s*(.-)%s*$', '%1')
+      if not QUARTO_NOISE[msg] and not msg:match('^In file ') then
+        return msg
+      end
+    end
+  end
+end
+
 ---@type preview.ProviderConfig
 M.typst = {
   ft = 'typst',
@@ -690,6 +715,9 @@ M.quarto = {
   end,
   error_parser = function(output)
     return parse_quarto(output)
+  end,
+  failure_summary = function(result)
+    return summarize_quarto(result)
   end,
   clean = function(ctx)
     local base = ctx.file:gsub('%.qmd$', '')

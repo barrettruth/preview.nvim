@@ -1292,6 +1292,10 @@ describe('presets', function()
       output = '/tmp/document.html',
     }
 
+    local function quarto_summary(path, code)
+      return presets.quarto.failure_summary(pandoc_result(path, code), qmd_ctx)
+    end
+
     it('has ft', function()
       assert.are.equal('quarto', presets.quarto.ft)
     end)
@@ -1324,6 +1328,45 @@ describe('presets', function()
 
     it('has reload enabled for SSE', function()
       assert.is_true(presets.quarto.reload)
+    end)
+
+    describe('failure_summary', function()
+      it('summarizes YAMLException with location', function()
+        assert.are.equal(
+          'YAMLException: missed comma between flow collection entries (3:1)',
+          quarto_summary('quarto.txt')
+        )
+      end)
+
+      it('summarizes unknown render formats', function()
+        assert.are.equal(
+          'Unknown format thisformatdoesnotexist',
+          quarto_summary('quarto_unknown_format.txt')
+        )
+      end)
+
+      it('summarizes missing input files', function()
+        assert.are.equal(
+          'No valid input files passed to render',
+          quarto_summary('quarto_missing_input.txt')
+        )
+      end)
+
+      it('returns nil for YAML validation wrapper output', function()
+        assert.is_nil(quarto_summary('quarto_yaml_validation.txt'))
+      end)
+
+      it('returns nil for pandoc-routed filter errors', function()
+        assert.is_nil(quarto_summary('quarto_filter_missing.txt'))
+      end)
+
+      it('returns nil for python tracebacks', function()
+        assert.is_nil(quarto_summary('quarto_python_traceback.txt'))
+      end)
+
+      it('returns nil for success output', function()
+        assert.is_nil(quarto_summary('quarto_success.txt', 0))
+      end)
     end)
 
     it('parses fixture output', function()
