@@ -8,6 +8,7 @@
 ---@field output? string|fun(ctx: preview.Context): string
 ---@field error_parser? fun(output: string, ctx: preview.Context): preview.Diagnostic[]
 ---@field failure_summary? fun(result: preview.Result, ctx: preview.Context): string?
+---@field _summary_label? string
 ---@field errors? false|'diagnostic'|'quickfix'
 ---@field clean? string[]|fun(ctx: preview.Context): string[]
 ---@field open? boolean|string[]
