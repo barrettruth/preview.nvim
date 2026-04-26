@@ -253,9 +253,56 @@ local function trim_line(line)
   return line
 end
 
----@param output string
----@return string?
-local function summarize_pandoc(output)
+local function pandoc_next_detail(lines, start, stop_on_blank)
+  for j = start, #lines do
+    local next_raw = lines[j]
+    local next_line = trim_line(next_raw)
+    if next_line then
+      return next_line
+    end
+    if stop_on_blank and type(next_raw) == 'string' and next_raw:match('^%s*$') then
+      break
+    end
+  end
+end
+
+local function pandoc_error_at_detail(line, lines, start, stop_on_blank)
+  local src, msg = line:match('^Error at "(.-)" %(line %d+, column %d+%):%s*(.*)$')
+  if not src then
+    return nil
+  end
+  msg = trim_line(msg) or pandoc_next_detail(lines, start, stop_on_blank)
+  if msg then
+    return src, msg
+  end
+end
+
+local function pandoc_filter_detail(line, lines, start)
+  local filter = line:match('^Error running filter (.+):$')
+  if not filter then
+    return nil
+  end
+  local next_line = pandoc_next_detail(lines, start, false)
+  if next_line then
+    local detail = next_line:match('^.+:(%d+:%s*.+)$') or next_line
+    return filter, detail
+  end
+end
+
+local function pandoc_bibliography_detail(line, lines, start)
+  local bibliography = line:match('^Error reading bibliography file (.+):$')
+  if not bibliography then
+    return nil
+  end
+  for j = start, #lines do
+    local next_line = trim_line(lines[j])
+    if next_line and not next_line:match('^%(') then
+      return bibliography, next_line
+    end
+  end
+end
+
+local function summarize_pandoc_common(output, opts)
   local lines = vim.split(output, '\n', { plain = true, trimempty = false })
   local i = 1
   while i <= #lines do
@@ -263,64 +310,43 @@ local function summarize_pandoc(output)
     if is_pandoc_yaml_header(line) then
       local summary = pandoc_yaml_detail(lines, i + 1)
       if summary then
-        return 'pandoc: YAML metadata: ' .. summary
+        return opts.yaml_prefix .. summary
       end
     end
 
-    local src, msg = line:match('^Error at "(.-)" %(line %d+, column %d+%):%s*(.*)$')
-    if src then
-      msg = trim_line(msg)
-      if not msg then
-        for j = i + 1, #lines do
-          local next_line = trim_line(lines[j])
-          if next_line then
-            msg = next_line
-            break
-          end
-        end
-      end
-      if msg then
-        return 'pandoc: ' .. basename(src) .. ': ' .. msg
+    local src, msg = pandoc_error_at_detail(line, lines, i + 1, opts.error_at_stop_on_blank)
+    if src and msg then
+      return opts.error_at_summary(src, msg)
+    end
+
+    if opts.include_filter then
+      local filter, detail = pandoc_filter_detail(line, lines, i + 1)
+      if filter and detail then
+        return 'pandoc filter ' .. basename(filter) .. ': ' .. detail
       end
     end
 
-    local filter = line:match('^Error running filter (.+):$')
-    if filter then
-      for j = i + 1, #lines do
-        local next_line = trim_line(lines[j])
-        if next_line then
-          local detail = next_line:match('^.+:(%d+:%s*.+)$') or next_line
-          return 'pandoc filter ' .. basename(filter) .. ': ' .. detail
-        end
-      end
-    end
-
-    local bibliography = line:match('^Error reading bibliography file (.+):$')
-    if bibliography then
-      for j = i + 1, #lines do
-        local next_line = trim_line(lines[j])
-        if next_line and not next_line:match('^%(') then
-          return 'pandoc: bibliography ' .. basename(bibliography) .. ': ' .. next_line
-        end
+    if opts.include_bibliography then
+      local bibliography, detail = pandoc_bibliography_detail(line, lines, i + 1)
+      if bibliography and detail then
+        return 'pandoc: bibliography ' .. basename(bibliography) .. ': ' .. detail
       end
     end
 
     local pandoc_msg = line:match('^pandoc: (.+)$')
     if pandoc_msg then
-      return 'pandoc: ' .. pandoc_msg
+      return opts.pandoc_message(pandoc_msg)
     end
 
     local data_file = line:match('^Could not find data file (.+)$')
-    if data_file then
-      return 'pandoc: could not find data file ' .. basename(data_file)
+    if data_file and opts.data_file_summary then
+      return opts.data_file_summary(data_file, line)
     end
 
-    if
-      line:match('^Unknown output format')
-      or line:match('^Unknown option')
-      or line:match('^Argument of ')
-    then
-      return 'pandoc: ' .. line
+    for _, pattern in ipairs(opts.passthrough_patterns or {}) do
+      if line:match(pattern) then
+        return opts.line_summary(line)
+      end
     end
 
     i = i + 1
@@ -329,51 +355,57 @@ end
 
 ---@param output string
 ---@return string?
+local function summarize_pandoc(output)
+  return summarize_pandoc_common(output, {
+    yaml_prefix = 'pandoc: YAML metadata: ',
+    error_at_stop_on_blank = false,
+    error_at_summary = function(src, msg)
+      return 'pandoc: ' .. basename(src) .. ': ' .. msg
+    end,
+    include_filter = true,
+    include_bibliography = true,
+    pandoc_message = function(msg)
+      return 'pandoc: ' .. msg
+    end,
+    data_file_summary = function(data_file)
+      return 'pandoc: could not find data file ' .. basename(data_file)
+    end,
+    passthrough_patterns = {
+      '^Unknown output format',
+      '^Unknown option',
+      '^Argument of ',
+    },
+    line_summary = function(line)
+      return 'pandoc: ' .. line
+    end,
+  })
+end
+
+---@param output string
+---@return string?
 local function summarize_github_pandoc(output)
-  local lines = vim.split(output, '\n', { plain = true, trimempty = false })
-  local i = 1
-  while i <= #lines do
-    local line = lines[i]
-    if is_pandoc_yaml_header(line) then
-      local summary = pandoc_yaml_detail(lines, i + 1)
-      if summary then
-        return 'YAML metadata: ' .. summary
-      end
-    end
-
-    local src, msg = line:match('^Error at "(.-)" %(line %d+, column %d+%):%s*(.*)$')
-    if src then
-      msg = trim_line(msg)
-      if not msg then
-        for j = i + 1, #lines do
-          local next_line = trim_line(lines[j])
-          if not next_line then
-            break
-          end
-          msg = next_line
-          break
-        end
-      end
-      if msg then
-        return basename(src) .. ': ' .. msg
-      end
-    end
-
-    local pandoc_msg = line:match('^pandoc: (.+)$')
-    if pandoc_msg then
-      return pandoc_msg
-    end
-
-    if
-      line:match('^Could not find data file ')
-      or line:match('^Unknown option')
-      or line:match('^The extension ')
-    then
+  return summarize_pandoc_common(output, {
+    yaml_prefix = 'YAML metadata: ',
+    error_at_stop_on_blank = true,
+    error_at_summary = function(src, msg)
+      return basename(src) .. ': ' .. msg
+    end,
+    include_filter = false,
+    include_bibliography = false,
+    pandoc_message = function(msg)
+      return msg
+    end,
+    data_file_summary = function(_, line)
       return line
-    end
-
-    i = i + 1
-  end
+    end,
+    passthrough_patterns = {
+      '^Unknown option',
+      '^The extension ',
+    },
+    line_summary = function(line)
+      return line
+    end,
+  })
 end
 
 ---@param output string
