@@ -191,10 +191,6 @@ individual fields by passing a table instead: >lua
     vim.g.preview = { typst = true, latex = true, github = true }
 <
 
-Exact preset defaults and parser behavior live in `lua/preview/presets.lua`.
-This section covers stable user-facing defaults and common
-`failure_summary` behavior. See |preview.ProviderConfig|.
-
 The following presets are bundled:
 
   `typst`      Compiles `.typ` files to PDF. Reload uses `typst watch`.
@@ -233,6 +229,10 @@ The following presets are bundled:
 
   `quarto`     Renders `.qmd` files to HTML with `--embed-resources`
                and reload support. Summary uses Quarto `ERROR:` lines.
+
+Exact preset defaults and parser behavior live in `lua/preview/presets.lua`.
+This section covers stable user-facing defaults and common
+`failure_summary` behavior. See |preview.ProviderConfig|.
 
 Pandoc math rendering ~
                                                                 *preview-math*
