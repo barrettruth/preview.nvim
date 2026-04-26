@@ -21,18 +21,12 @@ CONTENTS                                                    *preview-contents*
   3. Install ............................................... |preview-install|
   4. Configuration .......................................... |preview-config|
   5. Presets ............................................... |preview-presets|
-     - Preset notes ................................... |preview-preset-notes|
-     - LaTeX presets ................................. |preview-latex-presets|
-     - Pandoc presets ............................... |preview-pandoc-presets|
-     - Pandoc math rendering .................................. |preview-math|
-     - Diagram presets ............................. |preview-diagram-presets|
-     - HTML presets ................................... |preview-html-presets|
   6. Commands ............................................. |preview-commands|
   7. Lua API ................................................... |preview-api|
   8. Events ................................................. |preview-events|
   9. Health ................................................. |preview-health|
-  10. FAQ ..................................................... |preview-faq|
-  11. SyncTeX ............................................. |preview-synctex|
+  10. FAQ ...................................................... |preview-faq|
+  11. SyncTeX .............................................. |preview-synctex|
 
 ==============================================================================
 REQUIREMENTS                                            *preview-requirements*
@@ -197,49 +191,48 @@ individual fields by passing a table instead: >lua
     vim.g.preview = { typst = true, latex = true, github = true }
 <
 
-  `typst`              typst compile → PDF
-  `latex`              latexmk -pdf → PDF (with clean support)
-  `pdflatex`           pdflatex → PDF (single pass, no latexmk)
-  `tectonic`           tectonic → PDF (Rust-based LaTeX engine)
-  `markdown`           pandoc → HTML (standalone, KaTeX math)
-  `github`             pandoc → HTML (GitHub-styled, `-f gfm`, KaTeX math)
-  `asciidoctor`        asciidoctor → HTML (AsciiDoc with SSE reload)
-  `plantuml`           plantuml → SVG (UML diagrams, `.puml`)
-  `mermaid`            mmdc → SVG (Mermaid diagrams, `.mmd`)
-  `quarto`             quarto render → HTML (scientific publishing)
-
 Exact preset defaults and parser behavior live in `lua/preview/presets.lua`.
 This section covers stable user-facing defaults and common
 `failure_summary` behavior. See |preview.ProviderConfig|.
 
-Preset notes ~
-                                                        *preview-preset-notes*
+The following presets are bundled:
 
-  `typst`    `.typ` → PDF. Reload uses `typst watch`.
-             Summary shows the first error diagnostic.
+  `typst`      Compiles `.typ` files to PDF. Reload uses `typst watch`.
+               Summary shows the first error diagnostic.
 
-LaTeX presets ~
-                                                       *preview-latex-presets*
+  `latex`      Compiles `.tex` files to PDF with `latexmk -pdf`.
+               `:Preview clean` runs `latexmk -c`. Summary prefers the
+               first actionable file-line or `!` error.
 
-  `latex`    `latexmk -pdf`; `:Preview clean` runs `latexmk -c`.
-             Summary prefers the first actionable file-line or `!` error.
+  `pdflatex`   Compiles `.tex` files to PDF with single-pass `pdflatex`
+               and `-file-line-error`. Summary skips common fatal noise
+               and prefers the first real LaTeX error.
 
-  `pdflatex` Single-pass `pdflatex` with `-file-line-error`.
-             Summary skips common fatal noise and prefers the first real
-             LaTeX error.
+  `tectonic`   Compiles `.tex` files to PDF with `tectonic`.
+               Summary uses `error:` lines and ignores the generic halt
+               line.
 
-  `tectonic` `tectonic`-based `.tex` → PDF.
-             Summary uses `error:` lines and ignores the generic halt line.
+  `markdown`   Renders standalone HTML with pandoc and reload support.
+               Summary shortens common YAML, parse, filter, and
+               bibliography errors. See |preview-math|.
 
-Pandoc presets ~
-                                                      *preview-pandoc-presets*
+  `github`     Renders GitHub-style HTML from pandoc `-f gfm`.
+               Uses the bundled template when available. Summary matches
+               `markdown`. See |preview-math|.
 
-  `markdown` Pandoc standalone HTML with reload support.
-             Summary shortens common YAML, parse, filter, and bibliography
-             errors.
+  `asciidoctor` Renders `.adoc` files to HTML with reload support.
+                Summary shows the first actionable asciidoctor error.
 
-  `github`   Pandoc HTML from `-f gfm`, with the bundled GitHub-style
-             template when available. Summary matches `markdown`.
+  `plantuml`   Renders `.puml` files to SVG.
+               Summary covers line-based parse errors and
+               "no diagram found".
+
+  `mermaid`    Renders `.mmd` files to SVG via `mmdc`.
+               Summary only covers Mermaid parse errors, not generic CLI
+               failures.
+
+  `quarto`     Renders `.qmd` files to HTML with `--embed-resources`
+               and reload support. Summary uses Quarto `ERROR:` lines.
 
 Pandoc math rendering ~
                                                                 *preview-math*
@@ -266,33 +259,14 @@ Self-contained output with `--embed-resources`: >lua
     }
 <
 
-This inlines external resources into the HTML. With `--katex`, compile time
-increases by about 15s per save because pandoc fetches KaTeX during
+This inlines external resources into the HTML. With `--katex`, compile
+time increases by about 15s per save because pandoc fetches KaTeX during
 compilation. Pair with `--mathml` to avoid that penalty: >lua
 
     vim.g.preview = {
       github = { extra_args = { '--embed-resources', '--mathml' } },
     }
 <
-
-Diagram presets ~
-                                                    *preview-diagram-presets*
-
-  `plantuml` `.puml` → SVG.
-             Summary covers line-based parse errors and "no diagram found".
-
-  `mermaid`  `.mmd` → SVG via `mmdc`.
-             Summary only covers Mermaid parse errors, not generic CLI
-             failures.
-
-HTML presets ~
-                                                       *preview-html-presets*
-
-  `asciidoctor` `.adoc` → HTML with reload support.
-                Summary shows the first actionable asciidoctor error.
-
-  `quarto`      `.qmd` → HTML with `--embed-resources` and reload support.
-                Summary uses Quarto `ERROR:` lines.
 
 ==============================================================================
 COMMANDS                                                    *preview-commands*
