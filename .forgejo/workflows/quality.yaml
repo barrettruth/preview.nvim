@@ -9,21 +9,21 @@ on:
 jobs:
   format:
     name: Format
-    runs-on: spark
+    runs-on: nix
     steps:
       - uses: actions/checkout@v4
       - name: Format
         run: nix develop .#ci --command just format
   lint:
     name: Lint
-    runs-on: spark
+    runs-on: nix
     steps:
       - uses: actions/checkout@v4
       - name: Lint
         run: nix develop .#ci --command just lint
   test:
     name: Test
-    runs-on: spark
+    runs-on: nix
     steps:
       - uses: actions/checkout@v4
       - name: Test
