@@ -5,7 +5,7 @@
 An extensible framework for compiling and previewing _any_ documents (LaTeX,
 Typst, Markdown, etc.)&mdash;diagnostics included.
 
-<video src="https://github.com/user-attachments/assets/3b4fbc31-c1c4-4429-a9dc-a68d6185ab2e" width="100%" controls></video>
+<video src="https://github.com/user-attachments/assets/3b4fbc31-c1c4-4429-a9dc-a68d6185ab2e" width="100%" controls muted playsinline></video>
 
 ## Features
 
