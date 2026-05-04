@@ -5,13 +5,12 @@
 ---@class preview.MigrationTest
 ---@field is_github_preview_source fun(url: string?): boolean
 ---@field marker_name string
+---@field session_key string
 
 local M = {}
 
 ---@type string
 local marker_name = 'github-source-migration-v1'
----@type string
-local forgejo_url = 'https://git.barrettruth.com/barrettruth/preview.nvim'
 ---@type string
 local migration_help = ':help preview.nvim-migration'
 ---@type string
@@ -116,9 +115,10 @@ function M.warn_if_github_source(root)
 
   vim.notify(
     (
-      '[preview.nvim]: GitHub install source detected. Use %s for issues, PRs, '
-      .. 'documentation, and updates. See %s.'
-    ):format(forgejo_url, migration_help),
+      "[preview.nvim]: Due to GitHub's historic unreliability, development "
+      .. 'has moved to Forgejo. See %s to optionally update your plugin '
+      .. 'source configuration. This is a one-time warning.'
+    ):format(migration_help),
     vim.log.levels.WARN
   )
 end
@@ -127,6 +127,7 @@ end
 M._test = {
   is_github_preview_source = is_github_preview_source,
   marker_name = marker_name,
+  session_key = session_key,
 }
 
 return M
