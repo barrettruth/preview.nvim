@@ -24,6 +24,7 @@ quality / Test (push)"
 fi
 
 deadline="$(($(date +%s) + 3600))"
+last_pending=""
 while [ "$(date +%s)" -lt "$deadline" ]; do
   payload="$(curl -fsSL \
     -H "Authorization: token $token" \
@@ -52,7 +53,10 @@ CONTEXTS
     exit 0
   fi
 
-  echo "Waiting for quality checks: $pending"
+  if [ "$pending" != "$last_pending" ]; then
+    echo "Waiting for quality checks: $pending"
+    last_pending="$pending"
+  fi
   sleep 10
 done
 
