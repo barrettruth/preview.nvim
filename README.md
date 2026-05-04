@@ -6,10 +6,10 @@ An extensible framework for compiling and previewing _any_ documents (LaTeX,
 Typst, Markdown, etc.)&mdash;diagnostics included.
 
 > [!NOTE]
-> Due to GitHub's historic unreliability, development has moved to
-> [Forgejo](https://git.barrettruth.com/barrettruth/preview.nvim). GitHub is a
-> compatibility mirror. See `:help preview.nvim-migration` to optionally update
-> your plugin source configuration.
+> Due to GitHub's historic unreliability, development, issues, and pull requests
+> have moved to [Forgejo](https://git.barrettruth.com/barrettruth/preview.nvim).
+> See `:help preview.nvim-migration` to optionally update your plugin source
+> configuration.
 
 <video src="https://github.com/user-attachments/assets/3b4fbc31-c1c4-4429-a9dc-a68d6185ab2e" width="100%" controls muted playsinline></video>
 
