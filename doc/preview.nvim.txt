@@ -1,6 +1,6 @@
 *preview.nvim.txt*                    Async document compilation for Neovim
 
-Author:  Barrett Ruth <br.barrettruth@gmail.com> License: GPL-3.0
+Author:  Barrett Ruth <br@barrettruth.com> License: GPL-3.0
 
 ==============================================================================
 INTRODUCTION                                                    *preview.nvim*
@@ -44,8 +44,7 @@ With vim.pack (Neovim 0.12+): >lua
     vim.pack.add({
       'https://git.barrettruth.com/barrettruth/preview.nvim',
     })
-<
-With luarocks: >sh
+< With luarocks: >sh
     luarocks install preview.nvim
 <
 
@@ -53,10 +52,9 @@ No `setup()` call is needed. The plugin loads automatically when
 |vim.g.preview| is set. See |preview-config|.
 
 ==============================================================================
-MIGRATION                                            *preview.nvim-migration*
+MIGRATION                                             *preview.nvim-migration*
 
-Because GitHub has historically been unreliable, development has moved to:
->
+Because GitHub has historically been unreliable, development has moved to: >
     https://git.barrettruth.com/barrettruth/preview.nvim
 <
 Use Forgejo for documentation, issues, pull requests, and active development.
@@ -69,10 +67,8 @@ For vim.pack (Neovim 0.12+): >lua
     vim.pack.add({
       'https://git.barrettruth.com/barrettruth/preview.nvim',
     })
-<
-For package managers that accept an explicit source URL, replace GitHub
-shorthand with:
->
+< For package managers that accept an explicit source URL, replace GitHub
+shorthand with: >
     https://git.barrettruth.com/barrettruth/preview.nvim
 <
 If you prefer not to change the source URL immediately, pin a commit in your
@@ -269,8 +265,8 @@ Built-in failure summaries are labeled with the preset name.
                and reload support. Summary uses Quarto `ERROR:` lines.
 
 Exact preset defaults and parser behavior live in `lua/preview/presets.lua`.
-This section covers stable user-facing defaults and common
-`failure_summary` behavior. See |preview.ProviderConfig|.
+This section covers stable user-facing defaults and common `failure_summary`
+behavior. See |preview.ProviderConfig|.
 
 Pandoc math rendering ~
                                                                 *preview-math*
@@ -278,17 +274,17 @@ Pandoc math rendering ~
 The `markdown` and `github` presets use `--katex` by default, so the browser
 loads KaTeX from a CDN on first view and then caches it.
 
-For offline use, add `--mathml` via `extra_args`. MathML renders natively
-with no external dependencies: >lua
+For offline use, add `--mathml` via `extra_args`. MathML renders natively with
+no external dependencies: >lua
 
     vim.g.preview = {
       github = { extra_args = { '--mathml' } },
     }
 <
 
-Pandoc math flags (`--katex`, `--mathml`, `--mathjax`) are mutually
-exclusive — last flag wins. Because `extra_args` is appended after `args`,
-adding `--mathml` overrides the default `--katex`.
+Pandoc math flags (`--katex`, `--mathml`, `--mathjax`) are mutually exclusive
+— last flag wins. Because `extra_args` is appended after `args`, adding
+`--mathml` overrides the default `--katex`.
 
 Self-contained output with `--embed-resources`: >lua
 
@@ -297,8 +293,8 @@ Self-contained output with `--embed-resources`: >lua
     }
 <
 
-This inlines external resources into the HTML. With `--katex`, compile
-time increases by about 15s per save because pandoc fetches KaTeX during
+This inlines external resources into the HTML. With `--katex`, compile time
+increases by about 15s per save because pandoc fetches KaTeX during
 compilation. Pair with `--mathml` to avoid that penalty: >lua
 
     vim.g.preview = {

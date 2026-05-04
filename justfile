@@ -5,6 +5,7 @@ format:
     nix fmt -- --ci
     stylua --check .
     biome ci .
+    vimdoc-language-server format --check doc/
 
 lint:
     git ls-files '*.lua' | xargs selene --display-style quiet
