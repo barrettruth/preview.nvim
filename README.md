@@ -22,15 +22,14 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 
 ## Installation
 
-With lazy.nvim:
+With `vim.pack` (Neovim 0.12+):
 
 ```lua
-{
-  'barrettruth/preview.nvim',
-  init = function()
-    vim.g.preview = { typst = true, latex = true }
-  end,
-}
+vim.g.preview = { typst = true, latex = true }
+
+vim.pack.add({
+  'https://git.barrettruth.com/barrettruth/preview.nvim',
+})
 ```
 
 Or via [luarocks](https://luarocks.org/modules/barrettruth/preview.nvim):

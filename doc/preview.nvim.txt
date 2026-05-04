@@ -1,6 +1,6 @@
 *preview.nvim.txt*                    Async document compilation for Neovim
 
-Author:  Barrett Ruth <br.barrettruth@gmail.com> License: MIT
+Author:  Barrett Ruth <br.barrettruth@gmail.com> License: GPL-3.0
 
 ==============================================================================
 INTRODUCTION                                                    *preview.nvim*
@@ -19,14 +19,15 @@ CONTENTS                                                    *preview-contents*
   1. Introduction ............................................. |preview.nvim|
   2. Requirements ..................................... |preview-requirements|
   3. Install ............................................... |preview-install|
-  4. Configuration .......................................... |preview-config|
-  5. Presets ............................................... |preview-presets|
-  6. Commands ............................................. |preview-commands|
-  7. Lua API ................................................... |preview-api|
-  8. Events ................................................. |preview-events|
-  9. Health ................................................. |preview-health|
-  10. FAQ ...................................................... |preview-faq|
-  11. SyncTeX .............................................. |preview-synctex|
+  4. Migration ....................................... |preview.nvim-migration|
+  5. Configuration .......................................... |preview-config|
+  6. Presets ............................................... |preview-presets|
+  7. Commands ............................................. |preview-commands|
+  8. Lua API ................................................... |preview-api|
+  9. Events ................................................. |preview-events|
+ 10. Health ................................................. |preview-health|
+ 11. FAQ ...................................................... |preview-faq|
+ 12. SyncTeX .............................................. |preview-synctex|
 
 ==============================================================================
 REQUIREMENTS                                            *preview-requirements*
@@ -37,12 +38,45 @@ REQUIREMENTS                                            *preview-requirements*
 ==============================================================================
 INSTALL                                                      *preview-install*
 
-Install with lazy.nvim: >lua
-    { 'barrettruth/preview.nvim' }
+With vim.pack (Neovim 0.12+): >lua
+    vim.g.preview = { typst = true, latex = true }
+
+    vim.pack.add({
+      'https://git.barrettruth.com/barrettruth/preview.nvim',
+    })
+<
+With luarocks: >sh
+    luarocks install preview.nvim
 <
 
 No `setup()` call is needed. The plugin loads automatically when
 |vim.g.preview| is set. See |preview-config|.
+
+==============================================================================
+MIGRATION                                            *preview.nvim-migration*
+
+Because GitHub has historically been unreliable, development has moved to:
+>
+    https://git.barrettruth.com/barrettruth/preview.nvim
+<
+Use Forgejo for documentation, issues, pull requests, and active development.
+The GitHub repository remains available for compatibility while the migration
+settles.
+
+For vim.pack (Neovim 0.12+): >lua
+    vim.g.preview = { typst = true, latex = true }
+
+    vim.pack.add({
+      'https://git.barrettruth.com/barrettruth/preview.nvim',
+    })
+<
+For package managers that accept an explicit source URL, replace GitHub
+shorthand with:
+>
+    https://git.barrettruth.com/barrettruth/preview.nvim
+<
+If you prefer not to change the source URL immediately, pin a commit in your
+package manager for repeatable installs.
 
 ==============================================================================
 CONFIGURATION                *vim.g.preview* *preview.Config* *preview-config*
