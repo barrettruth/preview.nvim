@@ -54,12 +54,12 @@ No `setup()` call is needed. The plugin loads automatically when
 ==============================================================================
 MIGRATION                                             *preview.nvim-migration*
 
-Because GitHub has historically been unreliable, development has moved to: >
+Due to GitHub's historic unreliability, development, issues, and pull requests
+have moved to: >
     https://git.barrettruth.com/barrettruth/preview.nvim
 <
 Use Forgejo for documentation, issues, pull requests, and active development.
-The GitHub repository remains available for compatibility while the migration
-settles.
+The GitHub repository remains available as a compatibility mirror.
 
 For vim.pack (Neovim 0.12+): >lua
     vim.g.preview = { typst = true, latex = true }
