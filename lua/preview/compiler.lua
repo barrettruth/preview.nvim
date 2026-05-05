@@ -173,7 +173,7 @@ local function failure_summary_message(name, provider, result, ctx)
   if not summary then
     return nil
   end
-  return '[preview.nvim]: ' .. prefix_summary_label(summary_label(provider), summary)
+  return '[preview]: ' .. prefix_summary_label(summary_label(provider), summary)
 end
 
 ---@param name string
@@ -189,10 +189,9 @@ local function compile_failed_message(name, provider, result, ctx, error_count)
   end
   local label = summary_label(provider)
   if error_count > 0 then
-    return '[preview.nvim]: ' .. prefix_summary_label(label, 'compilation failed')
+    return '[preview]: ' .. prefix_summary_label(label, 'compilation failed')
   end
-  return '[preview.nvim]: '
-    .. prefix_summary_label(label, 'compilation failed (see :Preview output)')
+  return '[preview]: ' .. prefix_summary_label(label, 'compilation failed (see :Preview output)')
 end
 
 ---@param output_bufnr integer
@@ -346,7 +345,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
 
   if vim.fn.executable(provider.cmd[1]) ~= 1 then
     vim.notify(
-      '[preview.nvim]: "' .. provider.cmd[1] .. '" is not executable (run :checkhealth preview)',
+      '[preview]: "' .. provider.cmd[1] .. '" is not executable (run :checkhealth preview)',
       vim.log.levels.ERROR
     )
     return
@@ -553,7 +552,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
             end
             last_mtime = new_stat.mtime.sec
             log.dbg('output updated for buffer %d', bufnr)
-            vim.notify('[preview.nvim]: compilation complete', vim.log.levels.INFO)
+            vim.notify('[preview]: compilation complete', vim.log.levels.INFO)
             stderr_acc = {}
             s.has_errors = false
             clear_errors(bufnr, provider)
@@ -571,7 +570,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
     s.is_reload = true
     s.has_errors = false
 
-    vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
+    vim.notify('[preview]: compiling...', vim.log.levels.INFO)
     vim.api.nvim_exec_autocmds('User', {
       pattern = 'PreviewCompileStarted',
       data = { bufnr = bufnr, provider = name },
@@ -620,7 +619,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
       })
       if result.code == 0 then
         log.dbg('compilation succeeded for buffer %d', bufnr)
-        vim.notify('[preview.nvim]: compilation complete', vim.log.levels.INFO)
+        vim.notify('[preview]: compilation complete', vim.log.levels.INFO)
         clear_errors(bufnr, provider)
         vim.api.nvim_exec_autocmds('User', {
           pattern = 'PreviewCompileSuccess',
@@ -667,7 +666,7 @@ function M.compile(bufnr, name, provider, ctx, opts)
   s.provider = name
   s.is_reload = false
 
-  vim.notify('[preview.nvim]: compiling...', vim.log.levels.INFO)
+  vim.notify('[preview]: compiling...', vim.log.levels.INFO)
   vim.api.nvim_exec_autocmds('User', {
     pattern = 'PreviewCompileStarted',
     data = { bufnr = bufnr, provider = name },
@@ -731,7 +730,7 @@ function M.toggle(bufnr, name, provider, ctx_builder)
     else
       log.dbg('toggle off for buffer %d', bufnr)
       stop_watching(bufnr, s)
-      vim.notify('[preview.nvim]: watching stopped', vim.log.levels.INFO)
+      vim.notify('[preview]: watching stopped', vim.log.levels.INFO)
     end
     return
   end
@@ -802,10 +801,7 @@ end
 ---@param ctx preview.Context
 function M.clean(bufnr, name, provider, ctx)
   if not provider.clean then
-    vim.notify(
-      '[preview.nvim]: provider "' .. name .. '" has no clean command',
-      vim.log.levels.WARN
-    )
+    vim.notify('[preview]: provider "' .. name .. '" has no clean command', vim.log.levels.WARN)
     return
   end
 
@@ -829,10 +825,10 @@ function M.clean(bufnr, name, provider, ctx)
     vim.schedule_wrap(function(result)
       if result.code == 0 then
         log.dbg('clean succeeded for buffer %d', bufnr)
-        vim.notify('[preview.nvim]: clean complete', vim.log.levels.INFO)
+        vim.notify('[preview]: clean complete', vim.log.levels.INFO)
       else
         log.dbg('clean failed for buffer %d (exit code %d)', bufnr, result.code)
-        vim.notify('[preview.nvim]: clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
+        vim.notify('[preview]: clean failed: ' .. (result.stderr or ''), vim.log.levels.ERROR)
       end
     end)
   )

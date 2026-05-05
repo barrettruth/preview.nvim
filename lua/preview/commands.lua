@@ -27,7 +27,7 @@ local handlers = {
     if s.watching then
       table.insert(parts, 'watching')
     end
-    vim.notify('[preview.nvim]: ' .. table.concat(parts, ', '), vim.log.levels.INFO)
+    vim.notify('[preview]: ' .. table.concat(parts, ', '), vim.log.levels.INFO)
   end,
 }
 
@@ -38,7 +38,7 @@ local function dispatch(args)
   if handler then
     handler()
   else
-    vim.notify('[preview.nvim]: unknown subcommand: ' .. subcmd, vim.log.levels.ERROR)
+    vim.notify('[preview]: unknown subcommand: ' .. subcmd, vim.log.levels.ERROR)
   end
 end
 

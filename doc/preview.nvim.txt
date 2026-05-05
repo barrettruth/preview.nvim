@@ -117,7 +117,7 @@ Provider fields: ~
 
   {failure_summary}  (function)         Receives (|preview.Result|,
                                         |preview.Context|) and returns a short
-                                        string shown after the `[preview.nvim]:`
+                                        string shown after the `[preview]: `
                                         prefix on failure. Return `nil` to fall
                                         back to the generic failure message.
                                         Built-in presets label these summaries

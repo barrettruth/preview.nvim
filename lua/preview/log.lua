@@ -20,7 +20,7 @@ function M.dbg(msg, ...)
   if not enabled then
     return
   end
-  local formatted = '[preview.nvim]: ' .. string.format(msg, ...)
+  local formatted = '[preview]: ' .. string.format(msg, ...)
   if log_file then
     local f = io.open(log_file, 'a')
     if f then

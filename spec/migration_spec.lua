@@ -79,7 +79,7 @@ describe('migration', function()
     assert.are.equal(1, #notifications)
     assert.are.equal(vim.log.levels.WARN, notifications[1].level)
     assert.are.equal(
-      "[preview.nvim]: Due to GitHub's historic unreliability, development has moved to Forgejo. "
+      "[preview]: Due to GitHub's historic unreliability, development has moved to Forgejo. "
         .. 'See :help preview.nvim-migration to optionally update your plugin source configuration. '
         .. 'This is a one-time warning.',
       notifications[1].message

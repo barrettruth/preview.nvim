@@ -184,7 +184,7 @@ describe('compiler', function()
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: compilation failed' then
+        if msg == '[preview]: compilation failed' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -232,7 +232,7 @@ exit 12]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+        if msg == '[preview]: compilation failed (see :Preview output)' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -272,7 +272,7 @@ exit 12]],
       local captured = {}
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: bad input' then
+        if msg == '[preview]: bad input' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -333,7 +333,7 @@ exit 12]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: typst: expected expression' then
+        if msg == '[preview]: typst: expected expression' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -375,7 +375,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: tectonic: missing_dollar.tex:5: Missing $ inserted' then
+        if msg == '[preview]: tectonic: missing_dollar.tex:5: Missing $ inserted' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -418,7 +418,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: markdown: Unknown option --bogus-flag.' then
+        if msg == '[preview]: markdown: Unknown option --bogus-flag.' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -462,7 +462,7 @@ exit 6]],
       vim.notify = function(msg, level)
         if
           msg
-          == '[preview.nvim]: github: YAML metadata: mapping values are not allowed in this context'
+          == '[preview]: github: YAML metadata: mapping values are not allowed in this context'
         then
           notified = level == vim.log.levels.ERROR
         end
@@ -516,7 +516,7 @@ exit 64]],
       vim.notify = function(msg, level)
         if
           msg
-          == '[preview.nvim]: quarto: YAMLException: missed comma between flow collection entries (3:1)'
+          == '[preview]: quarto: YAMLException: missed comma between flow collection entries (3:1)'
         then
           notified = level == vim.log.levels.ERROR
         end
@@ -569,7 +569,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: asciidoctor: invalid option: --bogus-option' then
+        if msg == '[preview]: asciidoctor: invalid option: --bogus-option' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -618,7 +618,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+        if msg == '[preview]: compilation failed (see :Preview output)' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -661,7 +661,7 @@ exit 12]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: mermaid: compilation failed (see :Preview output)' then
+        if msg == '[preview]: mermaid: compilation failed (see :Preview output)' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -701,7 +701,7 @@ exit 1]],
       local notified = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+        if msg == '[preview]: compilation failed (see :Preview output)' then
           notified = level == vim.log.levels.ERROR
         end
       end
@@ -883,7 +883,7 @@ exit 12]],
       local notified_fail = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: compilation failed' and level == vim.log.levels.ERROR then
+        if msg == '[preview]: compilation failed' and level == vim.log.levels.ERROR then
           notified_fail = true
         end
       end
@@ -935,7 +935,7 @@ exit 12]],
       local captured = {}
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: bad input' and level == vim.log.levels.ERROR then
+        if msg == '[preview]: bad input' and level == vim.log.levels.ERROR then
           notified_fail = true
         end
       end
@@ -996,7 +996,7 @@ exit 12]],
       local notified_fail = false
       local orig = vim.notify
       vim.notify = function(msg, level)
-        if msg == '[preview.nvim]: compilation failed (see :Preview output)' then
+        if msg == '[preview]: compilation failed (see :Preview output)' then
           notified_fail = level == vim.log.levels.ERROR
         end
       end
