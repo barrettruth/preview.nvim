@@ -12,7 +12,7 @@ local M = {}
 ---@type string
 local marker_name = 'github-source-migration-v1'
 ---@type string
-local migration_help = ':help preview.nvim-migration'
+local migration_help = ':help preview-migration'
 ---@type string
 local session_key = 'preview_github_source_migration_warned'
 

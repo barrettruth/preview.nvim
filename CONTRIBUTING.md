@@ -17,7 +17,7 @@ For new behavior, open an issue first unless the change is small and already
 fits the project's scope.
 
 Behavior or configuration changes should update `README.md` and
-`doc/preview.nvim.txt` when appropriate.
+`doc/preview.txt` when appropriate.
 
 ## Development
 

@@ -1,9 +1,9 @@
-*preview.nvim.txt*                    Async document compilation for Neovim
+*preview.txt* *preview.nvim.txt*      Async document compilation for Neovim
 
 Author:  Barrett Ruth <br@barrettruth.com> License: GPL-3.0
 
 ==============================================================================
-INTRODUCTION                                                    *preview.nvim*
+INTRODUCTION                                          *preview* *preview.nvim*
 
 preview.nvim is an extensible framework for compiling documents asynchronously
 in Neovim. It provides a unified interface for any compilation workflow —
@@ -16,18 +16,19 @@ AsciiDoc, PlantUML, Mermaid, Quarto) and supports fully custom providers. See
 ==============================================================================
 CONTENTS                                                    *preview-contents*
 
-  1. Introduction ............................................. |preview.nvim|
+  1. Introduction .................................................. |preview|
   2. Requirements ..................................... |preview-requirements|
   3. Install ............................................... |preview-install|
-  4. Migration ....................................... |preview.nvim-migration|
-  5. Configuration .......................................... |preview-config|
-  6. Presets ............................................... |preview-presets|
-  7. Commands ............................................. |preview-commands|
-  8. Lua API ................................................... |preview-api|
-  9. Events ................................................. |preview-events|
- 10. Health ................................................. |preview-health|
- 11. FAQ ...................................................... |preview-faq|
- 12. SyncTeX .............................................. |preview-synctex|
+  4. Quick Start ....................................... |preview-quick-start|
+  5. Migration ........................................... |preview-migration|
+  6. Configuration .......................................... |preview-config|
+  7. Presets ............................................... |preview-presets|
+  8. Commands ............................................. |preview-commands|
+  9. Lua API ................................................... |preview-api|
+ 10. Events ................................................. |preview-events|
+ 11. Health ................................................. |preview-health|
+ 12. FAQ ....................................................... |preview-faq|
+ 13. SyncTeX ............................................... |preview-synctex|
 
 ==============================================================================
 REQUIREMENTS                                            *preview-requirements*
@@ -52,7 +53,35 @@ No `setup()` call is needed. The plugin loads automatically when
 |vim.g.preview| is set. See |preview-config|.
 
 ==============================================================================
-MIGRATION                                             *preview.nvim-migration*
+QUICK START                                              *preview-quick-start*
+
+A typical session starts by enabling one provider, opening a document, and
+letting preview.nvim manage the compiler loop.
+
+Enable exactly the providers you need before preview.nvim loads: >lua
+    vim.g.preview = { typst = true }
+<
+
+Open a Typst document and start the watch preview from that buffer: >vim
+    :Preview
+<
+
+When you only need a single build, run the compile subcommand instead of
+starting the watcher: >vim
+    :Preview compile
+<
+
+If a compile fails, inspect the raw compiler log after checking diagnostics or
+quickfix: >vim
+    :Preview output
+<
+
+After a successful build, reopen the last artifact without recompiling: >vim
+    :Preview open
+<
+
+==============================================================================
+MIGRATION                         *preview-migration* *preview.nvim-migration*
 
 Due to GitHub's historic unreliability, development, issues, and pull requests
 have moved to: >

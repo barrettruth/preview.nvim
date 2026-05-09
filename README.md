@@ -9,7 +9,7 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 > Due to GitHub's historic unreliability, active development is hosted on
 > [Forgejo](https://git.barrettruth.com/barrettruth/preview.nvim).
 > GitHub is maintained as a read-only mirror.
-> See `:help preview.nvim-migration` to optionally update your plugin source
+> See `:help preview-migration` to optionally update your plugin source
 > configuration.
 
 <video src="https://github.com/user-attachments/assets/3b4fbc31-c1c4-4429-a9dc-a68d6185ab2e" width="100%" controls muted playsinline></video>
@@ -45,10 +45,44 @@ Or via [luarocks](https://luarocks.org/modules/barrettruth/preview.nvim):
 luarocks install preview.nvim
 ```
 
+## Quick Start
+
+Enable exactly the providers you need before preview.nvim loads.
+
+```lua
+vim.g.preview = { typst = true }
+```
+
+Open a Typst document and start the watch preview from that buffer.
+
+```vim
+:Preview
+```
+
+When you only need a single build, run the compile subcommand instead of
+starting the watcher.
+
+```vim
+:Preview compile
+```
+
+If a compile fails, inspect the raw compiler log after checking diagnostics or
+quickfix.
+
+```vim
+:Preview output
+```
+
+After a successful build, reopen the last artifact without recompiling.
+
+```vim
+:Preview open
+```
+
 ## Documentation
 
 ```vim
-:help preview.nvim
+:help preview
 ```
 
 ## FAQ
