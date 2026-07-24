@@ -4,6 +4,7 @@ end
 vim.g.loaded_preview = 1
 
 require('preview.commands').setup()
+require('preview.mappings').setup()
 
 pcall(function()
   require('preview.migration').warn_if_github_source()

@@ -317,6 +317,36 @@ COMMANDS                                                    *preview-commands*
     `status`     Echo compilation status (idle, compiling, watching).
 
 ==============================================================================
+MAPPINGS                                                    *preview-mappings*
+
+preview.nvim defines no physical key mappings. The following normal-mode
+|<Plug>| targets are available for user mappings:
+
+                                                      *<Plug>(preview-toggle)*
+<Plug>(preview-toggle)
+    Toggle auto-compile for the current buffer.
+
+                                                     *<Plug>(preview-compile)*
+<Plug>(preview-compile)
+    Compile the current buffer once.
+
+                                                        *<Plug>(preview-open)*
+<Plug>(preview-open)
+    Open the latest generated output without recompiling.
+
+                                                      *<Plug>(preview-output)*
+<Plug>(preview-output)
+    Open the stored raw compiler output in a scratch split.
+
+                                                       *<Plug>(preview-clean)*
+<Plug>(preview-clean)
+    Run the provider's clean command for the current buffer.
+
+Example: >lua
+    vim.keymap.set('n', '<leader>p', '<Plug>(preview-toggle)')
+<
+
+==============================================================================
 LUA API                                                          *preview-api*
 
 preview.toggle({bufnr?})                                    *preview.toggle()*

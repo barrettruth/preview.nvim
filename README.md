@@ -44,6 +44,23 @@ luarocks install preview.nvim
 :help preview.nvim
 ```
 
+## Mappings
+
+preview.nvim defines no physical key mappings. It exposes stable normal-mode
+mapping targets for user configuration:
+
+| Mapping | Action |
+| --- | --- |
+| `<Plug>(preview-toggle)` | Toggle continuous preview |
+| `<Plug>(preview-compile)` | Compile once |
+| `<Plug>(preview-open)` | Open the latest generated output |
+| `<Plug>(preview-output)` | Show captured compiler output |
+| `<Plug>(preview-clean)` | Remove generated artifacts |
+
+```lua
+vim.keymap.set('n', '<leader>p', '<Plug>(preview-toggle)')
+```
+
 ## FAQ
 
 **Q: How do I define a custom provider?**
