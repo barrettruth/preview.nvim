@@ -43,7 +43,7 @@ With vim.pack (Neovim 0.12+): >lua
     vim.g.preview = { typst = true, latex = true }
 
     vim.pack.add({
-      'https://git.barrettruth.com/barrettruth/preview.nvim',
+      'https://forge.barrettruth.com/barrettruth/preview.nvim',
     })
 < With luarocks: >sh
     luarocks install preview.nvim
@@ -85,7 +85,7 @@ MIGRATION                         *preview-migration* *preview.nvim-migration*
 
 Due to GitHub's historic unreliability, development, issues, and pull requests
 have moved to: >
-    https://git.barrettruth.com/barrettruth/preview.nvim
+    https://forge.barrettruth.com/barrettruth/preview.nvim
 <
 Use Forgejo for documentation, issues, pull requests, and active development.
 The GitHub repository remains available as a compatibility mirror.
@@ -94,11 +94,11 @@ For vim.pack (Neovim 0.12+): >lua
     vim.g.preview = { typst = true, latex = true }
 
     vim.pack.add({
-      'https://git.barrettruth.com/barrettruth/preview.nvim',
+      'https://forge.barrettruth.com/barrettruth/preview.nvim',
     })
 < For package managers that accept an explicit source URL, replace GitHub
 shorthand with: >
-    https://git.barrettruth.com/barrettruth/preview.nvim
+    https://forge.barrettruth.com/barrettruth/preview.nvim
 <
 If you prefer not to change the source URL immediately, pin a commit in your
 package manager for repeatable installs.

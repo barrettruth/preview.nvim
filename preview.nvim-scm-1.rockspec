@@ -3,12 +3,12 @@ package = 'preview.nvim'
 version = 'scm-1'
 
 source = {
-  url = 'git+https://git.barrettruth.com/barrettruth/preview.nvim.git',
+  url = 'git+https://forge.barrettruth.com/barrettruth/preview.nvim.git',
 }
 
 description = {
   summary = 'Async document compilation for Neovim',
-  homepage = 'https://git.barrettruth.com/barrettruth/preview.nvim',
+  homepage = 'https://forge.barrettruth.com/barrettruth/preview.nvim',
   license = 'GPL-3.0',
 }
 

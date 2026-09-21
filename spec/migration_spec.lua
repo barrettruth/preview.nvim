@@ -59,7 +59,7 @@ describe('migration', function()
   it('does not match Forgejo or unrelated remotes', function()
     assert.is_false(
       migration._test.is_github_preview_source(
-        'ssh://git@git.barrettruth.com/barrettruth/preview.nvim.git'
+        'ssh://git@forge.barrettruth.com/barrettruth/preview.nvim.git'
       )
     )
     assert.is_false(
@@ -102,7 +102,8 @@ describe('migration', function()
   end)
 
   it('does not warn for Forgejo installs', function()
-    local root = git_repo_with_origin('ssh://git@git.barrettruth.com/barrettruth/preview.nvim.git')
+    local root =
+      git_repo_with_origin('ssh://git@forge.barrettruth.com/barrettruth/preview.nvim.git')
 
     migration.warn_if_github_source(root)
 
