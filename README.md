@@ -5,9 +5,7 @@
 An extensible framework for compiling and previewing _any_ documents (LaTeX,
 Typst, Markdown, etc.)&mdash;diagnostics included.
 
-<video controls muted playsinline width="100%" poster="assets/preview.webp">
-  <source src="assets/preview.webm" type="video/webm">
-</video>
+<video src="https://forge.barrettruth.com/attachments/255a6821-2d69-4dce-a2d2-4ce7d6b03f2a" poster="https://forge.barrettruth.com/attachments/92afe2e2-bc93-4be2-a572-e871a5430d1d" controls preload="metadata" muted playsinline width="100%"></video>
 
 ## Features
 
