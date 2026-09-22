@@ -12,7 +12,7 @@ Typst, Markdown, etc.)&mdash;diagnostics included.
 > See `:help preview-migration` to optionally update your plugin source
 > configuration.
 
-<video src="https://github.com/user-attachments/assets/3b4fbc31-c1c4-4429-a9dc-a68d6185ab2e" width="100%" controls muted playsinline></video>
+[![preview.nvim demo](assets/preview.webp)](https://forge.barrettruth.com/barrettruth/preview.nvim/media/branch/main/assets/preview.webm)
 
 ## Features
 
