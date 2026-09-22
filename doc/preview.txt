@@ -45,10 +45,6 @@ With vim.pack (Neovim 0.12+): >lua
     vim.pack.add({
       'https://forge.barrettruth.com/barrettruth/preview.nvim',
     })
-< With luarocks: >sh
-    luarocks install preview.nvim
-<
-
 No `setup()` call is needed. The plugin loads automatically when
 |vim.g.preview| is set. See |preview-config|.
 

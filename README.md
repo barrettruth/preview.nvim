@@ -36,12 +36,6 @@ vim.pack.add({
 })
 ```
 
-Or via [luarocks](https://luarocks.org/modules/barrettruth/preview.nvim):
-
-```
-luarocks install preview.nvim
-```
-
 ## Quick Start
 
 Enable exactly the providers you need before preview.nvim loads.
