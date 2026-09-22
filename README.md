@@ -5,6 +5,10 @@
 An extensible framework for compiling and previewing _any_ documents (LaTeX,
 Typst, Markdown, etc.)&mdash;diagnostics included.
 
+> [!NOTE]
+> Active development is hosted on
+> [Forgejo](https://forge.barrettruth.com/barrettruth/preview.nvim).
+
 [![preview.nvim demo](assets/preview.webp)](https://forge.barrettruth.com/barrettruth/preview.nvim/media/branch/main/assets/preview.webm)
 
 ## Features

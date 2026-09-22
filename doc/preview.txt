@@ -83,25 +83,14 @@ After a successful build, reopen the last artifact without recompiling: >vim
 ==============================================================================
 MIGRATION                         *preview-migration* *preview.nvim-migration*
 
-Due to GitHub's historic unreliability, development, issues, and pull requests
-have moved to: >
-    https://forge.barrettruth.com/barrettruth/preview.nvim
-<
-Use Forgejo for documentation, issues, pull requests, and active development.
-The GitHub repository remains available as a compatibility mirror.
-
-For vim.pack (Neovim 0.12+): >lua
+preview.nvim will be removed from GitHub on October 31, 2026. Update your
+plugin source to Forgejo: >lua
     vim.g.preview = { typst = true, latex = true }
 
     vim.pack.add({
       'https://forge.barrettruth.com/barrettruth/preview.nvim',
     })
-< For package managers that accept an explicit source URL, replace GitHub
-shorthand with: >
-    https://forge.barrettruth.com/barrettruth/preview.nvim
 <
-If you prefer not to change the source URL immediately, pin a commit in your
-package manager for repeatable installs.
 
 ==============================================================================
 CONFIGURATION                *vim.g.preview* *preview.Config* *preview-config*
