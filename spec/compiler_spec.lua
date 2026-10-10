@@ -13,6 +13,84 @@ describe('compiler', function()
     return not s or s.process == nil
   end
 
+  describe('reload startup failure', function()
+    local system, notify, ui_open, new_tcp, reload, inject, broadcast
+    local bufnr, root, callback, notices, opened, injected, broadcasts, autocmd, succeeded
+
+    before_each(function()
+      system, notify, ui_open, new_tcp = vim.system, vim.notify, vim.ui.open, vim.uv.new_tcp
+      reload = require('preview.reload')
+      reload.stop()
+      inject, broadcast = reload.inject, reload.broadcast
+      notices, opened, injected, broadcasts, succeeded = {}, 0, 0, 0, false
+      root = vim.fn.tempname()
+      vim.fn.mkdir(root, 'p')
+      vim.fn.writefile({ '<html><body>fixture</body></html>' }, root .. '/output.html')
+      bufnr = helpers.create_buffer({ 'fixture' }, 'text')
+      vim.api.nvim_buf_set_name(bufnr, root .. '/input.txt')
+      vim.bo[bufnr].modified = false
+      vim.system = function(_, _, cb)
+        callback = cb
+        return { kill = function() end }
+      end
+      vim.notify = function(message, level)
+        table.insert(notices, { message = message, level = level })
+      end
+      vim.ui.open = function()
+        opened = opened + 1
+      end
+      vim.uv.new_tcp = function()
+        return nil, 'allocation failed'
+      end
+      reload.inject = function()
+        injected = injected + 1
+      end
+      reload.broadcast = function()
+        broadcasts = broadcasts + 1
+      end
+      autocmd = vim.api.nvim_create_autocmd('User', {
+        pattern = 'PreviewCompileSuccess',
+        callback = function()
+          succeeded = true
+        end,
+      })
+    end)
+
+    after_each(function()
+      vim.system, vim.notify, vim.ui.open, vim.uv.new_tcp = system, notify, ui_open, new_tcp
+      reload.inject, reload.broadcast = inject, broadcast
+      vim.api.nvim_del_autocmd(autocmd)
+      compiler.stop_all()
+      helpers.delete_buffer(bufnr)
+      vim.fn.delete(root, 'rf')
+    end)
+
+    it('reports the failure without injection, broadcast, success, or a viewer', function()
+      compiler.compile(bufnr, 'fixture', {
+        cmd = { 'true' },
+        reload = true,
+        output = root .. '/output.html',
+        open = true,
+      }, { bufnr = bufnr, file = root .. '/input.txt', root = root, ft = 'text' })
+      callback({ code = 0, stdout = '', stderr = '' })
+      assert.is_true(vim.wait(1000, function()
+        return process_done(bufnr)
+      end))
+      assert.are.same({
+        { message = '[preview]: compiling...', level = vim.log.levels.INFO },
+        {
+          message = '[preview]: reload server failed: allocation failed',
+          level = vim.log.levels.ERROR,
+        },
+      }, notices)
+      assert.are.equal(0, opened)
+      assert.are.equal(0, injected)
+      assert.are.equal(0, broadcasts)
+      assert.is_false(succeeded)
+      assert.is_nil(compiler._test.state[bufnr].viewer_open)
+    end)
+  end)
+
   describe('compile', function()
     it('spawns a process and tracks it in state', function()
       local bufnr = helpers.create_buffer({ 'hello' }, 'text')

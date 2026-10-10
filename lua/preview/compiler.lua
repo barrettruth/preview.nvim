@@ -303,10 +303,11 @@ end
 ---@param ctx preview.Context
 ---@return string[]?
 local function resolve_reload_cmd(provider, ctx)
-  if type(provider.reload) == 'function' then
-    return provider.reload(ctx)
-  elseif type(provider.reload) == 'table' then
-    return vim.list_extend({}, provider.reload)
+  local reload = provider.reload
+  if type(reload) == 'function' then
+    return reload(ctx)
+  elseif type(reload) == 'table' then
+    return vim.list_extend({}, reload)
   end
   return nil
 end
@@ -618,6 +619,19 @@ function M.compile(bufnr, name, provider, ctx, opts)
         output = output,
       })
       if result.code == 0 then
+        if provider.reload == true and output_file:match('%.html$') then
+          local r = require('preview.reload')
+          local started, err = r.start()
+          if not started then
+            vim.notify(
+              '[preview]: reload server failed: ' .. (err or 'unknown error'),
+              vim.log.levels.ERROR
+            )
+            return
+          end
+          r.inject(output_file)
+          r.broadcast()
+        end
         log.dbg('compilation succeeded for buffer %d', bufnr)
         vim.notify('[preview]: compilation complete', vim.log.levels.INFO)
         clear_errors(bufnr, provider)
@@ -625,12 +639,6 @@ function M.compile(bufnr, name, provider, ctx, opts)
           pattern = 'PreviewCompileSuccess',
           data = { bufnr = bufnr, provider = name, output = output_file },
         })
-        if provider.reload == true and output_file:match('%.html$') then
-          local r = require('preview.reload')
-          r.start()
-          r.inject(output_file)
-          r.broadcast()
-        end
         cs = state[bufnr]
         if
           provider.open

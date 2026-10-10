@@ -14,24 +14,40 @@ local function make_script(port)
     .. '})()</script>'
 end
 
+---@param port? integer
+---@return boolean, string?
 function M.start(port)
   if server_handle then
-    return
+    return true
   end
-  local server = vim.uv.new_tcp()
-  server:bind('127.0.0.1', port or 0)
-  local sockname = server:getsockname()
-  if sockname then
-    actual_port = sockname.port
+  local server, create_err = vim.uv.new_tcp()
+  if not server then
+    return false, create_err or 'cannot allocate TCP server'
   end
-  server:listen(128, function(err)
+  local bound, bind_err = server:bind('127.0.0.1', port or 0)
+  if not bound then
+    server:close()
+    return false, bind_err
+  end
+  local sockname, name_err = server:getsockname()
+  if not sockname then
+    server:close()
+    return false, name_err
+  end
+  local listening, listen_err = server:listen(128, function(err)
     if err then
       return
     end
     local client = vim.uv.new_tcp()
-    server:accept(client)
+    if not client then
+      return
+    end
+    if not server:accept(client) then
+      client:close()
+      return
+    end
     local buf = ''
-    client:read_start(function(read_err, data)
+    local reading = client:read_start(function(read_err, data)
       if read_err or not data then
         if not client:is_closing() then
           client:close()
@@ -55,8 +71,17 @@ function M.start(port)
         end
       end
     end)
+    if not reading and not client:is_closing() then
+      client:close()
+    end
   end)
+  if not listening then
+    server:close()
+    return false, listen_err
+  end
   server_handle = server
+  actual_port = sockname.port
+  return true
 end
 
 function M.stop()
