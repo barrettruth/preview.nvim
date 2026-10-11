@@ -29,6 +29,7 @@
                 nlua
               ]
             ))
+            pkgs.neovim
             pkgs.just
             pkgs.biome
             pkgs.stylua
@@ -37,7 +38,6 @@
             pkgs.vimdoc-language-server
           ];
           devPackages = devTools ++ [
-            pkgs.neovim
             pkgs.typst
             pkgs.texliveMedium
             pkgs.tectonic
@@ -51,18 +51,15 @@
           ];
           devShell = pkgs.mkShell {
             packages = devPackages;
+            VIMRUNTIME = "${pkgs.neovim}/share/nvim/runtime";
           };
         in
         {
           default = pkgs.mkShell {
             packages = devTools;
+            VIMRUNTIME = "${pkgs.neovim}/share/nvim/runtime";
           };
           dev = devShell;
-          ci = pkgs.mkShell {
-            packages = devTools ++ [
-              pkgs.neovim
-            ];
-          };
           presets = devShell;
         }
       );
