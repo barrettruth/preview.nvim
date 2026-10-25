@@ -35,7 +35,6 @@
             pkgs.stylua
             pkgs.selene
             pkgs.lua-language-server
-            pkgs.vimdoc-language-server
           ];
           devPackages = devTools ++ [
             pkgs.typst
