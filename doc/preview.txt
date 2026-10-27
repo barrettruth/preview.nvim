@@ -20,15 +20,14 @@ CONTENTS                                                    *preview-contents*
   2. Requirements ..................................... |preview-requirements|
   3. Install ............................................... |preview-install|
   4. Quick Start ....................................... |preview-quick-start|
-  5. Migration ........................................... |preview-migration|
-  6. Configuration .......................................... |preview-config|
-  7. Presets ............................................... |preview-presets|
-  8. Commands ............................................. |preview-commands|
-  9. Lua API ................................................... |preview-api|
- 10. Events ................................................. |preview-events|
- 11. Health ................................................. |preview-health|
- 12. FAQ ....................................................... |preview-faq|
- 13. SyncTeX ............................................... |preview-synctex|
+  5. Configuration .......................................... |preview-config|
+  6. Presets ............................................... |preview-presets|
+  7. Commands ............................................. |preview-commands|
+  8. Lua API ................................................... |preview-api|
+  9. Events ................................................. |preview-events|
+ 10. Health ................................................. |preview-health|
+ 11. FAQ ....................................................... |preview-faq|
+ 12. SyncTeX ............................................... |preview-synctex|
 
 ==============================================================================
 REQUIREMENTS                                            *preview-requirements*
@@ -43,7 +42,7 @@ With vim.pack (Neovim 0.12+): >lua
     vim.g.preview = { typst = true, latex = true }
 
     vim.pack.add({
-      'https://forge.barrettruth.com/barrettruth/preview.nvim',
+      'https://github.com/barrettruth/preview.nvim',
     })
 No `setup()` call is needed. The plugin loads automatically when
 |vim.g.preview| is set. See |preview-config|.
@@ -74,18 +73,6 @@ quickfix: >vim
 
 After a successful build, reopen the last artifact without recompiling: >vim
     :Preview open
-<
-
-==============================================================================
-MIGRATION                         *preview-migration* *preview.nvim-migration*
-
-preview.nvim will be removed from GitHub on October 31, 2026. Update your
-plugin source to Forgejo: >lua
-    vim.g.preview = { typst = true, latex = true }
-
-    vim.pack.add({
-      'https://forge.barrettruth.com/barrettruth/preview.nvim',
-    })
 <
 
 ==============================================================================

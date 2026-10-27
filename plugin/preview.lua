@@ -21,10 +21,6 @@ vim.keymap.set('n', '<Plug>(preview-clean)', function()
   require('preview').clean()
 end, { silent = true, desc = 'Clean document preview artifacts' })
 
-pcall(function()
-  require('preview.migration').warn_if_github_source()
-end)
-
 vim.api.nvim_create_autocmd('VimLeavePre', {
   callback = function()
     require('preview.compiler').stop_all()

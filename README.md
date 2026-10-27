@@ -5,7 +5,7 @@
 An extensible framework for compiling and previewing _any_ documents (LaTeX,
 Typst, Markdown, etc.)&mdash;diagnostics included.
 
-<video src="https://forge.barrettruth.com/attachments/255a6821-2d69-4dce-a2d2-4ce7d6b03f2a" poster="https://forge.barrettruth.com/attachments/92afe2e2-bc93-4be2-a572-e871a5430d1d" controls preload="metadata" muted playsinline width="100%"></video>
+<video src="https://github.com/user-attachments/assets/3b4fbc31-c1c4-4429-a9dc-a68d6185ab2e" width="100%" controls muted playsinline></video>
 
 ## Features
 
@@ -28,7 +28,7 @@ With `vim.pack` (Neovim 0.12+):
 vim.g.preview = { typst = true, latex = true }
 
 vim.pack.add({
-  'https://forge.barrettruth.com/barrettruth/preview.nvim',
+  'https://github.com/barrettruth/preview.nvim',
 })
 ```
 
